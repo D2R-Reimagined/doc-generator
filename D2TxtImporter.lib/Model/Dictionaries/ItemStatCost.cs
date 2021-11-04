@@ -382,7 +382,51 @@ namespace D2TxtImporter.lib.Model
                             DescriptionValue = 3;
                             break;
                         case 19:
-                            valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            if (lstValue.Contains("Damage to"))
+                            {
+                                valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min"))
+                            {
+                                valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if (lstValue.Contains("to "))
+                            {
+                                valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if (lstValue.Contains("Resist"))
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
+                            }
+                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Increased Chance") || lstValue.Contains("Damage Taken"))
+                            {
+                                valueString = valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if (lstValue.Contains("Target Defense"))
+                            {
+                                valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if (lstValue.Contains("Regenerate Mana"))
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
+                            }
+                            else if (lstValue.Contains("Damaged Reduced by"))
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
+                            }
+                            else if (lstValue.Contains("Requirements") && value < 0)
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
+                            }
+                            else if (lstValue.Contains("Requirements") && value > 0)
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
+                            }
+                            else
+                            {
+                                valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+
                             break;
                         case 20:
                             valueString = $"{GetValueString(value * -1, value2 * -1)}%";
