@@ -398,7 +398,7 @@ namespace D2TxtImporter.lib.Model
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
                             }
-                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Increased Chance") || lstValue.Contains("Damage Taken"))
+                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Increased Chance") || lstValue.Contains("Damage Taken") || lstValue.Contains("Chance of Open Wounds"))
                             {
                                 valueString = valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -509,6 +509,17 @@ namespace D2TxtImporter.lib.Model
             {
                 valueString = "+" + value + " To Required Level";
             }
+
+            if (lstValue == "fade")
+            {
+                valueString = "Fade";
+            }
+
+            if (lstValue == "item_extrablood")
+            {
+                valueString = "Extra Blood";
+            }
+
 
             // Trim whitespace and remove trailing newline as we sometimes see those in the properties
             valueString = valueString.Trim().Replace("\\n", "");
