@@ -422,6 +422,10 @@ namespace D2TxtImporter.lib.Model
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
                             }
+                            else if(lstValue.Contains("Slain Monsters Rest in Peace"))
+                            {
+                                valueString = lstValue;
+                            }
                             else
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
@@ -499,6 +503,11 @@ namespace D2TxtImporter.lib.Model
                         // Used if the value already contain all information
                         break;
                 }
+            }
+
+            if (lstValue == "item_levelreq")
+            {
+                valueString = "+" + value + " To Required Level";
             }
 
             // Trim whitespace and remove trailing newline as we sometimes see those in the properties
