@@ -36,7 +36,6 @@ namespace D2TxtImporter.lib.Model
 
                 var descr = row["description"].Replace("rune ", "r");
 
-
                 if (!UseDescription)
                 {
                     // Params
@@ -144,7 +143,10 @@ namespace D2TxtImporter.lib.Model
 
                 recipe.CubeRecipeDescription = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(recipe.CubeRecipeDescription);
 
-                result.Add(recipe);
+                if (!recipe.CubeRecipeDescription.ToLower().Contains("corruption orb"))
+                {
+                    result.Add(recipe);
+                }
             }
 
             return result;
