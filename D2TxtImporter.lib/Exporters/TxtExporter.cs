@@ -1,9 +1,11 @@
-﻿using D2TxtImporter.lib.Model;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using D2TxtImporter.lib.Model.Equipment;
+using D2TxtImporter.lib.Model.Items;
+using D2TxtImporter.lib.Model.Types;
 
-namespace D2TxtImporter.lib
+namespace D2TxtImporter.lib.Exporters
 {
     public class TxtExporter
     {

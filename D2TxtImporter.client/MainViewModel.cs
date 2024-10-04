@@ -1,5 +1,7 @@
 ﻿using System.ComponentModel;
 using System.IO;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Items;
 
 namespace D2TxtImporter.client
 {
@@ -54,11 +56,11 @@ namespace D2TxtImporter.client
         {
             get
             {
-                return lib.Model.CubeRecipe.UseDescription;
+                return CubeRecipe.UseDescription;
             }
             set
             {
-                lib.Model.CubeRecipe.UseDescription = value;
+                CubeRecipe.UseDescription = value;
             }
         }
 
@@ -66,11 +68,11 @@ namespace D2TxtImporter.client
         {
             get
             {
-                return lib.ExceptionHandler.ContinueOnException;
+                return ExceptionHandler.ContinueOnException;
             }
             set
             {
-                lib.ExceptionHandler.ContinueOnException = value;
+                ExceptionHandler.ContinueOnException = value;
             }
         }
 

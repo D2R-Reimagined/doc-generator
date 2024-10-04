@@ -1,8 +1,8 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class Skill
     {
@@ -10,16 +10,20 @@ namespace D2TxtImporter.lib.Model
 
         [JsonIgnore]
         public int? Id { get; set; }
+        
         public string CharClass { get; set; }
 
         [JsonIgnore]
         public string SkillDesc { get; set; }
+        
         public int RequiredLevel { get; set; }
 
         [JsonIgnore]
         private static Dictionary<int?, Skill> IdSkillDictionary;
+        
         [JsonIgnore]
         private static Dictionary<string, Skill> NameSkillDictionary;
+
         [JsonIgnore]
         private static Dictionary<string, Skill> DescSkillDictionary;
 
@@ -61,18 +65,18 @@ namespace D2TxtImporter.lib.Model
             {
                 return IdSkillDictionary[Utility.ToNullableInt(skill)];
             }
-            else if (NameSkillDictionary.ContainsKey(skill))
+
+            if (NameSkillDictionary.ContainsKey(skill))
             {
                 return NameSkillDictionary[skill];
             }
-            else if (DescSkillDictionary.ContainsKey(skill))
+
+            if (DescSkillDictionary.ContainsKey(skill))
             {
                 return DescSkillDictionary[skill];
             }
-            else
-            {
-                throw new Exception($"Could not find skill with id, name, or description '{skill}' in Skills.txt");
-            }
+
+            throw new Exception($"Could not find skill with id, name, or description '{skill}' in Skills.txt");
         }
 
         public override string ToString()

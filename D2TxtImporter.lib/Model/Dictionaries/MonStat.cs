@@ -1,18 +1,16 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class MonStat
     {
         [JsonIgnore]
         public string Id { get; set; }
+        
         [JsonIgnore]
         public string Hcldx { get; set; }
+        
         [JsonIgnore]
         public string NameStr { get; set; }
 

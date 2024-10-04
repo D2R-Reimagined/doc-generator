@@ -1,8 +1,10 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Dictionaries;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Equipment
 {
     class Armor : Equipment
     {

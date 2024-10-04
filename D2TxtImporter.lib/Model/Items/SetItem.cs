@@ -1,11 +1,13 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Dictionaries;
+using D2TxtImporter.lib.Model.Equipment;
+using D2TxtImporter.lib.Model.Types;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Items
 {
     public class SetItem : Item
     {
@@ -59,7 +61,7 @@ namespace D2TxtImporter.lib.Model
                 };
 
 
-                Equipment eq = null;
+                Equipment.Equipment eq = null;
                 if (Armor.Armors.ContainsKey(setItem.Code))
                 {
                     eq = Armor.Armors[setItem.Code];
@@ -72,7 +74,7 @@ namespace D2TxtImporter.lib.Model
                 {
                     var misc = Misc.MiscItems[setItem.Code];
 
-                    eq = new Equipment
+                    eq = new Equipment.Equipment
                     {
                         Code = misc.Code,
                         EquipmentType = EquipmentType.Jewelery,

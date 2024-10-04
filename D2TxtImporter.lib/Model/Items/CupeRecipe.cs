@@ -1,21 +1,23 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Dictionaries;
+using D2TxtImporter.lib.Model.Equipment;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Items
 {
     public class CubeRecipe
     {
         public static bool UseDescription { get; set; }
         public string Description { get; set; }
         public string Item { get; set; }
-        [JsonIgnore]
-        public List<string> InputList { get; set; }
-        public string Output { get; set; }
+
+        [JsonIgnore] public List<string> InputList { get; set; }
+
+        private string Output { get; set; }
         public string Input { get; set; }
         public string CubeRecipeDescription { get; set; }
 
@@ -25,128 +27,146 @@ namespace D2TxtImporter.lib.Model
 
             var lines = Importer.ReadTxtFileToDictionaryList(excelFolder + "/CubeMain.txt");
 
-            foreach (var row in lines)
+            try
             {
-                if (row["enabled"] == "0")
+                foreach (var row in lines)
                 {
-                    continue;
-                }
-
-                var recipe = new CubeRecipe();
-
-                var descr = row["description"].Replace("rune ", "r");
-
-                if (!UseDescription)
-                {
-                    // Params
-                    var modifiers = new List<CubeMod>();
-                    for (int i = 1; i <= 5; i++)
+                    if (row["enabled"] == "0")
                     {
-                        if (!string.IsNullOrEmpty(row[$"mod {i}"]))
+                        continue;
+                    }
+
+                    var recipe = new CubeRecipe();
+
+                    var descr = row["description"].Replace("rune ", "r");
+
+                    if (!UseDescription)
+                    {
+                        // Params
+                        var modifiers = new List<CubeMod>();
+                        for (int i = 1; i <= 5; i++)
                         {
-                            modifiers.Add(new CubeMod
+                            if (!string.IsNullOrEmpty(row[$"mod {i}"]))
                             {
-                                Mod = row[$"mod {i}"],
-                                ModChance = row[$"mod {i} chance"],
-                                ModParam = row[$"mod {i} param"],
-                                ModMin = row[$"mod {i} min"],
-                                ModMax = row[$"mod {i} max"]
-                            });
+                                modifiers.Add(new CubeMod
+                                {
+                                    Mod = row[$"mod {i}"],
+                                    ModChance = row[$"mod {i} chance"],
+                                    ModParam = row[$"mod {i} param"],
+                                    ModMin = row[$"mod {i} min"],
+                                    ModMax = row[$"mod {i} max"]
+                                });
+                            }
                         }
-                    }
 
-                    // Input
-                    var numInputs = Utility.ToNullableInt(row["numinputs"]);
-                    if (!numInputs.HasValue)
-                    {
-                        ExceptionHandler.LogException(new Exception($"Cube recipe '{descr}' does not have a numinputs"));
-                    }
-
-                    var inputArray = new List<string>();
-                    for (int i = 1; i <= numInputs.Value; i++)
-                    {
-                        inputArray.Add(row[$"input {i}"]);
-                    }
-                    inputArray.RemoveAll(x => string.IsNullOrEmpty(x));
-
-                    recipe = new CubeRecipe(inputArray.ToArray(), row["output"]);
-
-                    if (recipe.Output.Contains("usetype"))
-                    {
-                        var type = inputArray[0].Replace("\"", "").Split(',')[0];
-                        if (ItemType.ItemTypes.Keys.Contains(type))
+                        // Input
+                        var numInputs = Utility.ToNullableInt(row["numinputs"]);
+                        if (!numInputs.HasValue)
                         {
-                            recipe.Output = recipe.Output.Replace("usetype", ItemType.ItemTypes[type].Name);
+                            ExceptionHandler.LogException(
+                                new Exception($"Cube recipe '{descr}' does not have a numinputs"));
                         }
-                        else
+
+                        var inputArray = new List<string>();
+                        for (int i = 1; i <= numInputs.Value; i++)
                         {
-                            if (type == "any")
+                            try
                             {
-                                recipe.Output = recipe.Output.Replace("usetype", "item");
+                                if (row[$"input {i}"] != null)
+                                {
+                                    inputArray.Add(row[$"input {i}"]);
+                                }
+                                else
+                                {
+                                    break;
+                                }
+                                //inputArray.Add(row[$"input {i}"]);
+                            }
+                            catch (Exception e)
+                            {
+                                ExceptionHandler.LogException(new Exception("Number of inputs likely no matchy. Fix plz. Record to check : " + row["description"]));
+                            }
+                        }
+
+                        inputArray.RemoveAll(x => string.IsNullOrEmpty(x));
+
+                        recipe = new CubeRecipe(inputArray.ToArray(), row["output"]);
+
+                        if (recipe.Output.Contains("usetype"))
+                        {
+                            var type = inputArray[0].Replace("\"", "").Split(',')[0];
+                            if (ItemType.ItemTypes.Keys.Contains(type))
+                            {
+                                recipe.Output = recipe.Output.Replace("usetype", ItemType.ItemTypes[type].Name);
                             }
                             else
                             {
-                                recipe.Output = recipe.Output.Replace("usetype", recipe.InputList[0]);
+                                if (type == "any")
+                                {
+                                    recipe.Output = recipe.Output.Replace("usetype", "item");
+                                }
+                                else
+                                {
+                                    recipe.Output = recipe.Output.Replace("usetype", recipe.InputList[0]);
+                                }
                             }
                         }
+
+                        if (recipe.Output.Contains("useitem"))
+                        {
+                            var item = inputArray[0].Replace("\"", "").Split(',')[0];
+                            if (ItemType.ItemTypes.Keys.Contains(item))
+                            {
+                                recipe.Output = recipe.Output.Replace("useitem", ItemType.ItemTypes[item].Name);
+                            }
+                            else
+                            {
+                                recipe.Output = recipe.Output.Replace("useitem", "");
+                            }
+
+                            if (modifiers.Count > 0 && modifiers[0].Mod == "sock")
+                            {
+                                recipe.Output = $"Socketed {recipe.Output}";
+                            }
+                        }
+
+                        recipe.Input = "";
+                        foreach (var input in recipe.InputList)
+                        {
+                            recipe.Input += $"{input} + ";
+                        }
+
+                        recipe.Input = recipe.Input.Substring(0, recipe.Input.LastIndexOf('+'));
                     }
 
-                    if (recipe.Output.Contains("useitem"))
+                    var matches = Regex.Matches(descr, @"(r\d\d)");
+                    if (matches.Count > 0)
                     {
-                        var item = inputArray[0].Replace("\"", "").Split(',')[0];
-                        if (ItemType.ItemTypes.Keys.Contains(item))
+                        foreach (Match match in matches)
                         {
-                            recipe.Output = recipe.Output.Replace("useitem", ItemType.ItemTypes[item].Name);
-                        }
-                        else
-                        {
-                            recipe.Output = recipe.Output.Replace("useitem", "");
-                        }
-
-                        if (modifiers.Count > 0 && modifiers[0].Mod == "sock")
-                        {
-                            recipe.Output = $"Socketed {recipe.Output}";
-                        }
-                    }
-
-                    recipe.Input = "";
-                    foreach (var input in recipe.InputList)
-                    {
-                        recipe.Input += $"{input} + ";
-                    }
-                    recipe.Input = recipe.Input.Substring(0, recipe.Input.LastIndexOf('+'));
-                }
-
-                var matches = Regex.Matches(descr, @"(r\d\d)");
-                if (matches.Count > 0)
-                {
-                    foreach (Match match in matches)
-                    {
-                        if (Misc.MiscItems.ContainsKey(match.Groups[1].Value))
-                        {
+                            if (!Misc.MiscItems.ContainsKey(match.Groups[1].Value)) continue;
                             var rune = Misc.MiscItems[match.Groups[1].Value];
                             descr = descr.Replace(rune.Code, rune.Name);
                         }
                     }
-                }
 
-                recipe.Description = descr;
+                    recipe.Description = descr;
 
-                if (UseDescription)
-                {
-                    recipe.CubeRecipeDescription = descr;
-                }
-                else
-                {
-                    recipe.CubeRecipeDescription = $"{recipe.Input}= {recipe.Output}";
-                }
+                    recipe.CubeRecipeDescription = UseDescription ? descr : $"{recipe.Input}= {recipe.Output}";
 
-                recipe.CubeRecipeDescription = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(recipe.CubeRecipeDescription);
+                    recipe.CubeRecipeDescription =
+                        System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
+                            recipe.CubeRecipeDescription);
 
-                if (!recipe.CubeRecipeDescription.ToLower().Contains("corruption orb"))
-                {
-                    result.Add(recipe);
+                    if (!recipe.CubeRecipeDescription.ToLower().Contains("corruption orb"))
+                    {
+                        result.Add(recipe);
+                    }
                 }
+            }
+            catch (Exception e)
+            {
+                ExceptionHandler.LogException(e);
             }
 
             return result;
@@ -158,12 +178,11 @@ namespace D2TxtImporter.lib.Model
             return Description;
         }
 
-        public CubeRecipe()
+        private CubeRecipe()
         {
-
         }
 
-        public CubeRecipe(string[] inputArray, string output)
+        private CubeRecipe(string[] inputArray, string output)
         {
             InputList = new List<string>();
             foreach (var input in inputArray)
@@ -205,43 +224,47 @@ namespace D2TxtImporter.lib.Model
             return valueResult;
         }
 
-        public static string ReplaceItemName(string item)
+        private static string ReplaceItemName(string item)
         {
-            if (ItemType.ItemTypes.ContainsKey(item))
+            if (ItemType.ItemTypes.TryGetValue(item, out var type))
             {
-                return ItemType.ItemTypes[item].Name;
+                return type.Name;
             }
-            else if (Misc.MiscItems.ContainsKey(item))
+
+            if (Misc.MiscItems.TryGetValue(item, out var miscItem))
             {
-                return Misc.MiscItems[item].Name;
+                return miscItem.Name;
             }
-            else if (Misc.MiscItems.Values.Any(x => x.Type.Code == item))
+
+            if (Misc.MiscItems.Values.Any(x => x.Type.Code == item))
             {
                 return Misc.MiscItems.Values.First(x => x.Type.Code == item).Name;
             }
-            else if (Misc.MiscItems.Values.Any(x => x.Type2 == item))
+
+            if (Misc.MiscItems.Values.Any(x => x.Type2 == item))
             {
                 return Misc.MiscItems.Values.First(x => x.Type2 == item).Name;
             }
-            else if (Weapon.Weapons.ContainsKey(item))
+
+            if (Weapon.Weapons.TryGetValue(item, out var weapon))
             {
-                return Weapon.Weapons[item].Name;
+                return weapon.Name;
             }
-            else if (Armor.Armors.ContainsKey(item))
+
+            if (Armor.Armors.TryGetValue(item, out var armor))
             {
-                return Armor.Armors[item].Name;
+                return armor.Name;
             }
 
             return item;
         }
 
-        public static string GetParameterString(string[] parameters)
+        private static string GetParameterString(string[] parameters)
         {
             var result = "%d";
 
             foreach (var parameter in parameters)
             {
-
                 switch (parameter)
                 {
                     case "low":
@@ -260,6 +283,7 @@ namespace D2TxtImporter.lib.Model
                         {
                             continue;
                         }
+
                         result = result.Replace("%d", "Magic %d");
                         break;
                     case "rar":
@@ -331,7 +355,6 @@ namespace D2TxtImporter.lib.Model
 
                     default:
                         break;
-
                 }
 
                 if (parameter.StartsWith("qty="))
@@ -340,19 +363,22 @@ namespace D2TxtImporter.lib.Model
                     result = result.Replace(result, $"{quantity} {result}");
                     continue;
                 }
-                else if (parameter.StartsWith("sock="))
+
+                if (parameter.StartsWith("sock="))
                 {
                     var quantity = parameter.Replace("sock=", "");
                     result = result.Replace("%d", $"{quantity} Sockets");
                     continue;
                 }
-                else if (parameter.StartsWith("pre="))
+
+                if (parameter.StartsWith("pre="))
                 {
                     var index = int.Parse(parameter.Replace("pre=", ""));
                     result = result.Replace("%d", $"{MagicPrefix.MagicPrefixes[index].Name} %d");
                     continue;
                 }
-                else if (parameter.StartsWith("suf="))
+
+                if (parameter.StartsWith("suf="))
                 {
                     var index = int.Parse(parameter.Replace("suf=", ""));
                     result = result.Replace("%d", $"%d {MagicSuffix.MagicSuffixes[index].Name}");

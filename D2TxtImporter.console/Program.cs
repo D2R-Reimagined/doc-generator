@@ -1,6 +1,8 @@
 ﻿using CommandLine;
 using System;
 using System.IO;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Items;
 
 namespace D2TxtImporter_console
 {
@@ -14,8 +16,8 @@ namespace D2TxtImporter_console
                 {
                     var importer = new D2TxtImporter.lib.Importer(o.ExcelPath, o.TablePath, o.OutputPath);
 
-                    D2TxtImporter.lib.Model.CubeRecipe.UseDescription = o.CubeRecipeDescription;
-                    D2TxtImporter.lib.ExceptionHandler.ContinueOnException = o.ContinueOnException;
+                    CubeRecipe.UseDescription = o.CubeRecipeDescription;
+                    ExceptionHandler.ContinueOnException = o.ContinueOnException;
 
                     importer.LoadData();
                     importer.ImportModel();

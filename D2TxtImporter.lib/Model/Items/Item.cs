@@ -1,11 +1,10 @@
-﻿using Newtonsoft.Json;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using D2TxtImporter.lib.Model.Dictionaries;
+using D2TxtImporter.lib.Model.Types;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Items
 {
     public class Item
     {
@@ -24,6 +23,7 @@ namespace D2TxtImporter.lib.Model
                 return Table.Tables[Index];
             }
         }
+        
         public string Index { get; set; }
         public bool Enabled { get; set; }
         public int ItemLevel { get; set; }
@@ -31,7 +31,7 @@ namespace D2TxtImporter.lib.Model
         public string Code { get; set; }
         public List<ItemProperty> Properties { get; set; }
         public bool DamageArmorEnhanced { get; set; }
-        public Equipment Equipment { get; set; }
+        public Equipment.Equipment Equipment { get; set; }
 
         public Item()
         {

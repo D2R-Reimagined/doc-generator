@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Types;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Items
 {
     public class Set
     {

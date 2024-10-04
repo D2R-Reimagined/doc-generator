@@ -1,9 +1,9 @@
-﻿using D2TxtImporter.lib.Model;
-using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
+using D2TxtImporter.lib.Model.Items;
+using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib
+namespace D2TxtImporter.lib.Exporters
 {
     public class JsonExporter
     {

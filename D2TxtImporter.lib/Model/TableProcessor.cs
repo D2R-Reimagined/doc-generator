@@ -124,12 +124,12 @@ namespace D2TxtImporter.lib.Model
             var byteArray = ReadAllBytes(br);
             foreach (var hashNode in hashNodes)
             {
-
                 if (hashNode.Active == 0)
                 {
                     continue;
                 }
-                else if (hashNode.Active != 1)
+
+                if (hashNode.Active != 1)
                 {
                     continue;
                 }

@@ -1,12 +1,7 @@
-﻿using D2TxtImporter.lib;
+﻿using System.Collections.Generic;
 using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace D2TxtImporter.lib.Model
+namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class MagicSuffix
     {

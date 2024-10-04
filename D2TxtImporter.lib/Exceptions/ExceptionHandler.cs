@@ -1,12 +1,10 @@
-﻿using D2TxtImporter.lib.Model;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using D2TxtImporter.lib.Model.Items;
+using D2TxtImporter.lib.Model.Types;
 
-namespace D2TxtImporter.lib
+namespace D2TxtImporter.lib.Exceptions
 {
     public class ExceptionHandler
     {
@@ -84,7 +82,6 @@ namespace D2TxtImporter.lib
     {
         private ItemStatCostException(string message) : base(message)
         {
-
         }
 
         public static ItemStatCostException Create(string message)
@@ -103,7 +100,6 @@ namespace D2TxtImporter.lib
     {
         private ItemPropertyException(string message, Exception e) : base(message, e)
         {
-
         }
 
         public static ItemPropertyException Create(string message, Exception e = null)
