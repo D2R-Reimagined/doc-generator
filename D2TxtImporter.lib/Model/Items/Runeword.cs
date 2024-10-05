@@ -26,7 +26,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 // Add the runes
-                var runeArray = new string[] { row["Rune1"], row["Rune2"], row["Rune3"], row["Rune4"], row["Rune5"], row["Rune6"] };
+                var runeArray = new[] { row["Rune1"], row["Rune2"], row["Rune3"], row["Rune4"], row["Rune5"], row["Rune6"] };
                 var runes = new List<Misc>();
 
                 for (int i = 0; i < runeArray.Count(); i++)
@@ -38,7 +38,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 // Add the types
-                var typeArray = new string[] { row["itype1"], row["itype2"], row["itype3"], row["itype4"], row["itype5"], row["itype6"] };
+                var typeArray = new[] { row["itype1"], row["itype2"], row["itype3"], row["itype4"], row["itype5"], row["itype6"] };
                 var types = new List<ItemType>();
 
                 var shieldCounted = false;
@@ -63,6 +63,7 @@ namespace D2TxtImporter.lib.Model.Items
                             {
                                 typeCount++;
                             }
+
                             shieldCounted = true;
                         }
                         else if (type.BodyLoc1 == "rarm" || type.Code == "weap") // Weapon
@@ -71,6 +72,7 @@ namespace D2TxtImporter.lib.Model.Items
                             {
                                 typeCount++;
                             }
+                            
                             weaponCounted = true;
                         }
                         else // Armor
@@ -79,6 +81,7 @@ namespace D2TxtImporter.lib.Model.Items
                             {
                                 typeCount++;
                             }
+                            
                             armorCounted = true;
                         }
                     }
@@ -140,6 +143,7 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
+                            
                             shieldAdded = true;
                         }
                         else if (type.BodyLoc1 == "rarm" || type.Code == "weap") // Weapon
@@ -155,6 +159,7 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
+                           
                             wepAdded = true;
                         }
                         else // Armor
@@ -170,8 +175,41 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
+                            
                             armorAdded = true;
                         }
+                    }
+                }
+                
+                foreach (var property in runeword.Properties)
+                {
+                    if (property.Parameter == "ama")
+                    {
+                        property.PropertyString += " All Amazon Skills";
+                    }
+                    else if (property.Parameter == "sor")
+                    {
+                        property.PropertyString += " All Sorceress Skills";
+                    }
+                    else if (property.Parameter == "nec")
+                    {
+                        property.PropertyString += " All Necromancer Skills";
+                    }
+                    else if (property.Parameter == "pal")
+                    {
+                        property.PropertyString += " All Paladin Skills";
+                    }
+                    else if (property.Parameter == "bar")
+                    {
+                        property.PropertyString += " All Barbarian Skills";
+                    }
+                    else if (property.Parameter == "dru")
+                    {
+                        property.PropertyString += " All Druid Skills";
+                    }
+                    else if (property.Parameter == "ass")
+                    {
+                        property.PropertyString += " All Assassin Skills";
                     }
                 }
 

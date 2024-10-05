@@ -168,7 +168,6 @@ namespace D2TxtImporter.lib.Model.Types
 
             if (minDamage.Count() > 0 && maxDamage.Count() > 0)
             {
-                var props = new List<ItemProperty>();
                 var toRemove = new List<ItemProperty>();
                 var toAdd = new List<ItemProperty>();
 
@@ -236,7 +235,6 @@ namespace D2TxtImporter.lib.Model.Types
 
         public static void CleanupDublicates(List<ItemProperty> properties)
         {
-
             var dupes = properties.GroupBy(x => x.CompareKey).Where(x => x.Skip(1).Any()).ToList();
 
             if (dupes.Count > 0)
@@ -251,11 +249,13 @@ namespace D2TxtImporter.lib.Model.Types
                         min += prop.Min;
                         max += prop.Max;
                     }
+                    
                     var newProp = new ItemProperty(group.First().Property.Code, group.First().Parameter, min, max, group.First().Index, group.First().ItemLevel, group.First().Suffix);
                     properties.RemoveAll(x => x.ItemStatCost.Stat == newProp.ItemStatCost.Stat);
                     properties.Add(newProp);
                 }
             }
+            
             properties = properties.OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
         }
 

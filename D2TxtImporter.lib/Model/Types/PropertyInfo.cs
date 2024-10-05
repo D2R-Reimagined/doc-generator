@@ -4,14 +4,10 @@ namespace D2TxtImporter.lib.Model.Types
 {
     public class PropertyInfo
     {
-        [JsonIgnore]
-        public string Property { get; set; }
-        [JsonIgnore]
-        public string Parameter { get; set; }
-        [JsonIgnore]
-        public int? Min { get; set; }
-        [JsonIgnore]
-        public int? Max { get; set; }
+        [JsonIgnore] public string Property { get; set; }
+        [JsonIgnore] public string Parameter { get; set; }
+        [JsonIgnore] public int? Min { get; set; }
+        [JsonIgnore] public int? Max { get; set; }
 
         public PropertyInfo(string property, string parameter, int? min, int? max)
         {
