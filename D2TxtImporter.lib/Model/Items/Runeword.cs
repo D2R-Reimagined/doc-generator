@@ -183,33 +183,35 @@ namespace D2TxtImporter.lib.Model.Items
                 
                 foreach (var property in runeword.Properties)
                 {
-                    if (property.Parameter == "ama")
+                    switch (property.Parameter)
                     {
-                        property.PropertyString += " All Amazon Skills";
+                        case "ama":
+                            property.PropertyString += " All Amazon Skills";
+                            break;
+                        case "sor":
+                            property.PropertyString += " All Sorceress Skills";
+                            break;
+                        case "nec":
+                            property.PropertyString += " All Necromancer Skills";
+                            break;
+                        case "pal":
+                            property.PropertyString += " All Paladin Skills";
+                            break;
+                        case "bar":
+                            property.PropertyString += " All Barbarian Skills";
+                            break;
+                        case "dru":
+                            property.PropertyString += " All Druid Skills";
+                            break;
+                        case "ass":
+                            property.PropertyString += " All Assassin Skills";
+                            break;
                     }
-                    else if (property.Parameter == "sor")
+
+                    if (property.Property.Code.Contains("/lvl"))
                     {
-                        property.PropertyString += " All Sorceress Skills";
-                    }
-                    else if (property.Parameter == "nec")
-                    {
-                        property.PropertyString += " All Necromancer Skills";
-                    }
-                    else if (property.Parameter == "pal")
-                    {
-                        property.PropertyString += " All Paladin Skills";
-                    }
-                    else if (property.Parameter == "bar")
-                    {
-                        property.PropertyString += " All Barbarian Skills";
-                    }
-                    else if (property.Parameter == "dru")
-                    {
-                        property.PropertyString += " All Druid Skills";
-                    }
-                    else if (property.Parameter == "ass")
-                    {
-                        property.PropertyString += " All Assassin Skills";
+                        property.PropertyString = property.PropertyString.Replace("+", $"+{property.Parameter}");
+                        property.PropertyString += $" Per Level {property.ItemStatCost.DescriptionString2}";
                     }
                 }
 
@@ -217,6 +219,11 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     ItemProperty.CleanupDublicates(runeword.Properties);
                     result.Add(runeword);
+                }
+
+                if (runeword.Name == "Peril")
+                {
+                    Console.WriteLine("Peril");
                 }
             }
 
