@@ -17,7 +17,7 @@ namespace D2TxtImporter.lib.Model.Items
 
         [JsonIgnore] public List<string> InputList { get; set; }
 
-        private string Output { get; set; }
+        public string Output { get; set; }
         public string Input { get; set; }
         public string CubeRecipeDescription { get; set; }
 
