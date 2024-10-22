@@ -10,8 +10,11 @@ namespace D2TxtImporter.lib.Exceptions
     {
         public static bool ContinueOnException { get; set; }
 
-        private readonly static string _exceptionFile = $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/errorlog.txt";
-        private readonly static string _debugFile = $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
+        private readonly static string _exceptionFile =
+            $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/errorlog.txt";
+
+        private readonly static string _debugFile =
+            $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
 
         public static List<string> _exceptionsWritten;
 
@@ -24,6 +27,7 @@ namespace D2TxtImporter.lib.Exceptions
             {
                 File.Delete(_exceptionFile);
             }
+
             if (File.Exists(_debugFile))
             {
                 File.Delete(_debugFile);
@@ -50,8 +54,7 @@ namespace D2TxtImporter.lib.Exceptions
                 }
 
                 ex = ex.InnerException;
-            }
-            while (ex != null);
+            } while (ex != null);
 
             if (!_exceptionsWritten.Contains(debugMessage))
             {
@@ -89,7 +92,8 @@ namespace D2TxtImporter.lib.Exceptions
             var resultMessage = "";
 
             resultMessage += $"Exception loading properties for item: '{Item.CurrentItem.Index}'\n";
-            resultMessage += $"\tCould not generate properties for property '{ItemProperty.CurrentItemProperty.Property.Code}' with parameter '{ItemProperty.CurrentItemProperty.Parameter}' min '{ItemProperty.CurrentItemProperty.Min}' max '{ItemProperty.CurrentItemProperty.Max}' index '{ItemProperty.CurrentItemProperty.Index}' itemlvl '{ItemProperty.CurrentItemProperty.ItemLevel}'\n";
+            resultMessage +=
+                $"\tCould not generate properties for property '{ItemProperty.CurrentItemProperty.Property.Code}' with parameter '{ItemProperty.CurrentItemProperty.Parameter}' min '{ItemProperty.CurrentItemProperty.Min}' max '{ItemProperty.CurrentItemProperty.Max}' index '{ItemProperty.CurrentItemProperty.Index}' itemlvl '{ItemProperty.CurrentItemProperty.ItemLevel}'\n";
             resultMessage += $"\t\t{message}";
 
             return new ItemStatCostException(resultMessage);

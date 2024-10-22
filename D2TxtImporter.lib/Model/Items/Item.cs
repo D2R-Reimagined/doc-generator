@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Types;
 using Newtonsoft.Json;
@@ -17,7 +18,7 @@ namespace D2TxtImporter.lib.Model.Items
             {
                 if (!Table.Tables.ContainsKey(Index))
                 {
-                    throw new Exception($"Could not find translation for '{Index}' in any .tbl files");
+                    ExceptionHandler.LogException(new Exception($"Could not find translation for '{Index}' in any .tbl files"));
                 }
 
                 return Table.Tables[Index];
