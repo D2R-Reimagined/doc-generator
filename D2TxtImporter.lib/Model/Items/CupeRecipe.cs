@@ -157,8 +157,18 @@ namespace D2TxtImporter.lib.Model.Items
                     recipe.CubeRecipeDescription =
                         System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
                             recipe.CubeRecipeDescription);
-
-                    if (!recipe.CubeRecipeDescription.ToLower().Contains("corruption orb"))
+                    var loweredDescription = recipe.CubeRecipeDescription.ToLower();
+                    if (loweredDescription.Contains("corruption orb") || 
+                    loweredDescription.Contains("unstack") || 
+                    loweredDescription.Contains("stack") || 
+                    loweredDescription.Contains("orb of corruption") ||
+                    recipe.Description.Contains("TRANSFER") ||
+                    recipe.Description.Contains("STACK - Stack of") ||
+                    recipe.Description.Contains("RUNE UPGRADE") ||
+                    recipe.Description.Contains("RUNE DOWNGRADE"))
+                    {
+                    }
+                    else
                     {
                         result.Add(recipe);
                     }
