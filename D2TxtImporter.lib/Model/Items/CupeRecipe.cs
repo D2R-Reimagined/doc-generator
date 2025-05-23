@@ -165,7 +165,8 @@ namespace D2TxtImporter.lib.Model.Items
                     recipe.Description.Contains("TRANSFER") ||
                     recipe.Description.Contains("STACK - Stack of") ||
                     recipe.Description.Contains("RUNE UPGRADE") ||
-                    recipe.Description.Contains("RUNE DOWNGRADE"))
+                    recipe.Description.Contains("RUNE DOWNGRADE") ||
+                    recipe.Description.Contains("Dye -"))
                     {
                     }
                     else
