@@ -72,19 +72,23 @@ namespace D2TxtImporter.lib.Model.Items
                         {
                             try
                             {
-                                if (row[$"input {i}"] != null)
+                                string key = $"input {i}";
+
+                                if (row.ContainsKey(key))
                                 {
-                                    inputArray.Add(row[$"input {i}"]);
+                                    var inputValue = row[key];
+                                    if (inputValue != null)
+                                    {
+                                        inputArray.Add(inputValue);
+                                    }
                                 }
-                                else
-                                {
-                                    break;
-                                }
-                                //inputArray.Add(row[$"input {i}"]);
+                                // If key doesn't exist, skip it silently
                             }
                             catch (Exception e)
                             {
-                                ExceptionHandler.LogException(new Exception("Number of inputs likely no matchy. Fix plz. Record to check : " + row["description"]));
+                                ExceptionHandler.LogException(
+                                    new Exception("Number of inputs likely no matchy. Fix plz. Record to check: " + row["description"], e)
+                                );
                             }
                         }
 

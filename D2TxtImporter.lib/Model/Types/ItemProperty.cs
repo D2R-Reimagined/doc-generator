@@ -37,8 +37,8 @@ namespace D2TxtImporter.lib.Model.Types
         [JsonIgnore]
         public string Suffix { get; set; }
 
-        [JsonIgnore]
-        private static List<string> _ignoredProperties = new List<string> { "state", "bloody" };
+        [JsonIgnore] 
+        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", "oskill_hide" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
@@ -161,6 +161,48 @@ namespace D2TxtImporter.lib.Model.Types
                 }
             }
 
+// Remove % from non-% /lvl properties, ignoring known exceptions
+            var ignoredStats = new HashSet<string>
+            {
+                "res-cold/lvl",
+                "res-fire/lvl",
+                "res-ltng/lvl",
+                "res-pois/lvl",
+                "deadly/lvl",
+                "crush/lvl",
+                "wounds/lvl",
+                "dmg-dem/lvl",
+                "dmg-und/lvl"
+            };
+
+            foreach (var prop in result)
+            {
+                var stat = prop.Property.Code?.ToLower();
+                if (stat != null && stat.Contains("/lvl") && !stat.Contains("%/lvl") && !ignoredStats.Contains(stat))
+                {
+                    if (!string.IsNullOrEmpty(prop.PropertyString))
+                    {
+                        prop.PropertyString = prop.PropertyString.Replace("%", "");
+                    }
+                }
+            }
+            
+            //All Stats Fix
+            foreach (var prop in result)
+            {
+                if (prop.Property.Code.Equals("all-stats", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (prop.Min != prop.Max)
+                    {
+                        prop.PropertyString = $"+{prop.Min}-{prop.Max} to all Attributes";
+                    }
+                    else
+                    {
+                        prop.PropertyString = $"+{prop.Min} to all Attributes"; 
+                    }
+                }
+            }
+            
             // Cleanup elemental damage as they are added as 2-3 different parameters
             var minDamage = result.Where(x => x.Property.Stat.Contains("mindam"));
             var maxDamage = result.Where(x => x.Property.Stat.Contains("maxdam"));
@@ -229,34 +271,88 @@ namespace D2TxtImporter.lib.Model.Types
                     }
                 }
             }
-
+            
             return result;
         }
 
         public static void CleanupDublicates(List<ItemProperty> properties)
         {
-            var dupes = properties.GroupBy(x => x.CompareKey).Where(x => x.Skip(1).Any()).ToList();
+            var baseProps = properties.Where(x => string.IsNullOrEmpty(x.Suffix)).ToList();
+            var suffixedProps = properties.Where(x => !string.IsNullOrEmpty(x.Suffix)).ToList();
 
-            if (dupes.Count > 0)
+            // Deduplicate base properties
+            var dupes = baseProps
+                .GroupBy(x => x.CompareKey)
+                .Where(x => x.Skip(1).Any())
+                .ToList();
+
+            foreach (var group in dupes)
             {
-                foreach (var group in dupes)
-                {
-                    int? min = 0;
-                    int? max = 0;
+                int? min = 0;
+                int? max = 0;
 
-                    foreach (var prop in group)
-                    {
-                        min += prop.Min;
-                        max += prop.Max;
-                    }
-                    
-                    var newProp = new ItemProperty(group.First().Property.Code, group.First().Parameter, min, max, group.First().Index, group.First().ItemLevel, group.First().Suffix);
-                    properties.RemoveAll(x => x.ItemStatCost.Stat == newProp.ItemStatCost.Stat);
-                    properties.Add(newProp);
+                foreach (var prop in group)
+                {
+                    min += prop.Min;
+                    max += prop.Max;
+                }
+
+                var first = group.First();
+                var newProp = new ItemProperty(
+                    first.Property.Code,
+                    first.Parameter,
+                    min,
+                    max,
+                    first.Index,
+                    first.ItemLevel,
+                    first.Suffix
+                );
+
+                baseProps.RemoveAll(x => x.ItemStatCost.Stat == newProp.ItemStatCost.Stat);
+                baseProps.Add(newProp);
+            }
+
+            // Group suffix properties by type
+            var armorProps = new List<ItemProperty>();
+            var shieldProps = new List<ItemProperty>();
+            var weaponProps = new List<ItemProperty>();
+            var otherProps = new List<ItemProperty>();
+
+            foreach (var prop in suffixedProps)
+            {
+                var suffix = (prop.Suffix ?? "").Trim();
+                if (suffix == "(Armor)")
+                {
+                    armorProps.Add(prop);
+                }
+                else if (suffix == "(Shield)")
+                {
+                    shieldProps.Add(prop);
+                }
+                else if (suffix == "(Weapon)")
+                {
+                    weaponProps.Add(prop);
+                }
+                else
+                {
+                    otherProps.Add(prop);
                 }
             }
-            
-            properties = properties.OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
+
+            // Sort each group
+            armorProps = armorProps.OrderBy(x => x.PropertyString).ToList();
+            shieldProps = shieldProps.OrderBy(x => x.PropertyString).ToList();
+            weaponProps = weaponProps.OrderBy(x => x.PropertyString).ToList();
+            otherProps = otherProps.OrderBy(x => x.PropertyString).ToList();
+
+            // Final rebuild
+            properties.Clear();
+            properties.AddRange(baseProps.OrderByDescending(x =>
+                x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority));
+            properties.AddRange(weaponProps);
+            properties.AddRange(armorProps);
+            properties.AddRange(shieldProps);
+            properties.AddRange(otherProps);
         }
 
         public override string ToString()

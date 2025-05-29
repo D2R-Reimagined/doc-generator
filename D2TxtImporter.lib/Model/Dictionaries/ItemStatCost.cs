@@ -71,7 +71,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             {
                 var itemStatCost = new ItemStatCost
                 {
-
                     Stat = row["Stat"],
                     Id = int.Parse(row["*ID"]),
                     Op = Utility.ToNullableInt(row["op"]),
@@ -217,7 +216,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 value2 = value2 * 100 / 128;
                             }
                             valueString = GetValueString(value, value2);
-                            valueString = $"{valueString}%";
+                            valueString = $"{valueString}% {lstValue}";
                             break;
                         case 6:
                             double val1 = 0;
@@ -330,6 +329,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 classReplace = CharStat.CharStats[parameter].Class;
                             }
                             lstValue = lstValue.Replace("%d", classReplace);
+                            valueString = $"{valueString} {lstValue}";
                             break;
                         case 14:
                             var par = Utility.ToNullableInt(parameter);
@@ -368,8 +368,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
 
                             valueString = lstValue.Replace("%d%", value.Value.ToString())
-                                                     .Replace("%d", valueString)
-                                                     .Replace("%s", skill.SkillDesc);
+                                .Replace("%d", valueString)
+                                .Replace("%s", skill.SkillDesc);
 
                             if (string.IsNullOrEmpty(skill.SkillDesc))
                             {
@@ -379,15 +379,45 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
                         case 16:
                             valueString = lstValue.Replace("%d", valueString)
-                                                  .Replace("%s", Skill.GetSkill(parameter).Name);
+                                .Replace("%s", Skill.GetSkill(parameter).Name);
                             DescriptionValue = 3;
                             break;
                         case 19:
+                            if (Stat.Contains("perlevel"))
+                            {
+                                double opMath;
+                                double opMath2;
+
+                                // Try to use 'parameter' first
+                                if (!string.IsNullOrEmpty(parameter) && double.TryParse(parameter, out opMath))
+                                {
+                                    opMath = Math.Round(opMath / 8d, 2);
+                                    valueString = $"+{opMath}% {lstValue} (Per Character Level)";
+                                }
+                                // Fallback: check value1 and value2
+                                else if (value == value2)
+                                {
+                                        opMath = Math.Round(value.Value / 8d, 2);
+                                        valueString = $"+{opMath}% {lstValue} (Per on Character Level)"; 
+                                }
+                                else if (value != value2) 
+                                {
+                                            opMath = Math.Round(value.Value / 8d, 2);
+                                            opMath2 = Math.Round(value2.Value / 8d, 2);
+                                            valueString = $"+{opMath}%-{opMath2}% {lstValue} (Per Character Level)"; 
+                                }
+                                else 
+                                {
+                                        throw new Exception($"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'"); 
+                                }
+                                break;
+                            }
                             if (lstValue.Contains("Damage to"))
                             {
                                 valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                                break;
                             }
-                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min"))
+                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating against"))
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -423,7 +453,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
                             }
-                            else if(lstValue.Contains("Slain Monsters Rest in Peace"))
+                            else if (lstValue.Contains("Slain Monsters Rest in Peace"))
                             {
                                 valueString = lstValue;
                             }
@@ -450,16 +480,72 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                         case 27:
                             var charClass = Skill.GetSkill(parameter).CharClass;
                             var reqString = "";
-                            if (!string.IsNullOrEmpty(charClass))
+
+                            if (!string.IsNullOrEmpty(parameter))
                             {
-                                // Add requirement if one is there
-                                if (!CharStat.CharStats.ContainsKey(Skill.GetSkill(parameter).CharClass))
+                                int classNumber;
+                                bool isNumber = int.TryParse(parameter, out classNumber);
+
+                                if (isNumber)
                                 {
-                                    throw ItemStatCostException.Create($"Could not find character skill tab '{Skill.GetSkill(parameter).CharClass}' property");
+                                    // Ensure value1 and value2 are in scope and valid
+                                    if (value >= 6 && value2 <= 35)
+                                    {
+                                        reqString = $"Amazon";
+                                    }
+                                    else if (value >= 36 && value2 <= 65)
+                                    {
+                                        reqString = $"Sorceress";
+                                    }
+                                    else if (value >= 66 && value2 <= 95)
+                                    {
+                                        reqString = $"Necromancer";
+                                    }
+                                    else if (value >= 96 && value2 <= 125)
+                                    {
+                                        reqString = $"Paladin";
+                                    }
+                                    else if (value >= 126 && value2 <= 155)
+                                    {
+                                        reqString = $"Barbarian";
+                                    }
+                                    else if (value >= 221 && value2 <= 250)
+                                    {
+                                        reqString = $"Druid";
+                                    }
+                                    else if (value >= 251 && value2 <= 280)
+                                    {
+                                        reqString = $"Assassin";
+                                    }
+                                    else
+                                    {
+                                        throw ItemStatCostException.Create(
+                                            $"Invalid skill ID range {value} - {value2} for Random Class Skill. Verify the range in Skills.txt "
+                                        );
+                                    }
+                                    //with IDs {value} to {value2} <- Considered adding to string in the cases where skills don't span the full class IDs but did not to reduce confusion.
+                                    valueString = $"+{parameter} to random {reqString} Skill";
                                 }
-                                reqString = $" ({CharStat.CharStats[Skill.GetSkill(parameter).CharClass].Class} Only)";
+                                else
+                                {
+                                    // CharClass is a named class (non-numeric)
+                                    if (!CharStat.CharStats.ContainsKey(charClass))
+                                    {
+                                        throw ItemStatCostException.Create(
+                                            $"Could not find character skill tab '{charClass}' property"
+                                        );
+                                    }
+
+                                    reqString = $" ({CharStat.CharStats[charClass].Class} Only)";
+                                    valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}{reqString}";
+                                }
                             }
-                            valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}{reqString}";
+                            else
+                            {
+                                // No CharClass given — fallback to normal
+                                valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}";
+                            }
+
                             break;
                         case 28:
                             valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}";
@@ -520,7 +606,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             {
                 valueString = "Extra Blood";
             }
-
+            
+            //Assign value to verify removal after export via search
+            if (lstValue == "item_nonclassskill")
+            {
+                valueString = "I_Shall_Not_Pass";  
+            }
 
             // Trim whitespace and remove trailing newline as we sometimes see those in the properties
             valueString = valueString.Trim().Replace("\\n", "");

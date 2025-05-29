@@ -26,7 +26,8 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 // Add the runes
-                var runeArray = new[] { row["Rune1"], row["Rune2"], row["Rune3"], row["Rune4"], row["Rune5"], row["Rune6"] };
+                var runeArray = new[]
+                    { row["Rune1"], row["Rune2"], row["Rune3"], row["Rune4"], row["Rune5"], row["Rune6"] };
                 var runes = new List<Misc>();
 
                 for (int i = 0; i < runeArray.Count(); i++)
@@ -38,7 +39,8 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 // Add the types
-                var typeArray = new[] { row["itype1"], row["itype2"], row["itype3"], row["itype4"], row["itype5"], row["itype6"] };
+                var typeArray = new[]
+                    { row["itype1"], row["itype2"], row["itype3"], row["itype4"], row["itype5"], row["itype6"] };
                 var types = new List<ItemType>();
 
                 var shieldCounted = false;
@@ -72,7 +74,7 @@ namespace D2TxtImporter.lib.Model.Items
                             {
                                 typeCount++;
                             }
-                            
+
                             weaponCounted = true;
                         }
                         else // Armor
@@ -81,7 +83,7 @@ namespace D2TxtImporter.lib.Model.Items
                             {
                                 typeCount++;
                             }
-                            
+
                             armorCounted = true;
                         }
                     }
@@ -102,17 +104,21 @@ namespace D2TxtImporter.lib.Model.Items
                 // Add the properties
                 for (int i = 1; i <= 7; i++)
                 {
-                    propList.Add(new PropertyInfo(row[$"T1Code{i}"], row[$"T1Param{i}"], row[$"T1Min{i}"], row[$"T1Max{i}"]));
+                    propList.Add(new PropertyInfo(row[$"T1Code{i}"], row[$"T1Param{i}"], row[$"T1Min{i}"],
+                        row[$"T1Max{i}"]));
                 }
 
                 try
                 {
-                    var properties = ItemProperty.GetProperties(propList).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
+                    var properties = ItemProperty.GetProperties(propList)
+                        .OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority)
+                        .ToList();
                     runeword.Properties = properties;
                 }
                 catch (Exception e)
                 {
-                    ExceptionHandler.LogException(new Exception($"Could not get properties for runeword '{runeword.Name}' in Runes.txt", e));
+                    ExceptionHandler.LogException(
+                        new Exception($"Could not get properties for runeword '{runeword.Name}' in Runes.txt", e));
                 }
 
                 // Add rune properties
@@ -143,7 +149,7 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
-                            
+
                             shieldAdded = true;
                         }
                         else if (type.BodyLoc1 == "rarm" || type.Code == "weap") // Weapon
@@ -159,7 +165,7 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
-                           
+
                             wepAdded = true;
                         }
                         else // Armor
@@ -175,13 +181,12 @@ namespace D2TxtImporter.lib.Model.Items
 
                                 runeword.Properties.AddRange(properties);
                             }
-                            
+
                             armorAdded = true;
                         }
                     }
                 }
-                
-                foreach (var property in runeword.Properties)
+                 /*foreach (var property in runeword.Properties)
                 {
                     switch (property.Parameter)
                     {
@@ -213,8 +218,8 @@ namespace D2TxtImporter.lib.Model.Items
                         property.PropertyString = property.PropertyString.Replace("+", $"+{property.Parameter}");
                         property.PropertyString += $" Per Level {property.ItemStatCost.DescriptionString2}";
                     }
-                }
-
+                }*/
+                
                 if (runeword.Properties.Count > 0)
                 {
                     ItemProperty.CleanupDublicates(runeword.Properties);

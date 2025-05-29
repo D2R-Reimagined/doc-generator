@@ -15,7 +15,17 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int Durability { get; set; }
         public int ItemLevel { get; set; }
         public ItemType Type { get; set; }
-        public string RequiredClass => string.IsNullOrEmpty(Type.Equiv2) ? "" : ItemType.ItemTypes[Type.Equiv2].Name.Replace(" Item", "");
+        public string RequiredClass
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(Type.Equiv2) || Type.Equiv2.Equals("afwe", StringComparison.OrdinalIgnoreCase))
+                {
+                    return "";
+                }
+                return ItemType.ItemTypes[Type.Equiv2].Name.Replace(" Item", "");
+            }
+        }
 
         public object Clone()
         {
