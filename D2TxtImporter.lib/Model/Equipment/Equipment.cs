@@ -19,7 +19,7 @@ namespace D2TxtImporter.lib.Model.Equipment
         {
             get
             {
-                if (string.IsNullOrEmpty(Type.Equiv2) || Type.Equiv2.Equals("afwe", StringComparison.OrdinalIgnoreCase))
+                if (string.IsNullOrEmpty(Type.Equiv2) || Type.Equiv2.Equals("afwe",StringComparison.OrdinalIgnoreCase) || Type.Equiv2.Equals("merc",StringComparison.OrdinalIgnoreCase))
                 {
                     return "";
                 }

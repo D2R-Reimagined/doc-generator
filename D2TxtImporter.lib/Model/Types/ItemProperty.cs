@@ -43,7 +43,8 @@ namespace D2TxtImporter.lib.Model.Types
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
 
-        public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "")
+        public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0,
+            string suffix = "")
         {
             CurrentItemProperty = this;
 
@@ -56,7 +57,8 @@ namespace D2TxtImporter.lib.Model.Types
 
             if (!EffectProperty.EffectProperties.ContainsKey(property.ToLower()))
             {
-                throw ItemPropertyException.Create($"Could not find property '{property.ToLower()}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
+                throw ItemPropertyException.Create(
+                    $"Could not find property '{property.ToLower()}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
             }
 
             Property = EffectProperty.EffectProperties[property.ToLower()];
@@ -111,7 +113,21 @@ namespace D2TxtImporter.lib.Model.Types
                     break;
             }
 
-            if (!ItemStatCost.ItemStatCosts.ContainsKey(stat))
+            switch (Property.Code)
+            {
+             case "res-all-max":
+                 stat = Property.Code;
+                 break;
+            }
+            
+            switch (Property.Code)
+            {
+                case "all-stats":
+                    stat = Property.Code;
+                    break;
+            }
+
+        if (!ItemStatCost.ItemStatCosts.ContainsKey(stat))
             {
                 throw ItemPropertyException.Create($"Could not find stat '{stat}' in ItemStatCost.txt");
             }
@@ -183,22 +199,6 @@ namespace D2TxtImporter.lib.Model.Types
                     if (!string.IsNullOrEmpty(prop.PropertyString))
                     {
                         prop.PropertyString = prop.PropertyString.Replace("%", "");
-                    }
-                }
-            }
-            
-            //All Stats Fix
-            foreach (var prop in result)
-            {
-                if (prop.Property.Code.Equals("all-stats", StringComparison.OrdinalIgnoreCase))
-                {
-                    if (prop.Min != prop.Max)
-                    {
-                        prop.PropertyString = $"+{prop.Min}-{prop.Max} to all Attributes";
-                    }
-                    else
-                    {
-                        prop.PropertyString = $"+{prop.Min} to all Attributes"; 
                     }
                 }
             }

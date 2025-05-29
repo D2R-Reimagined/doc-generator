@@ -149,6 +149,30 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
 
             ItemStatCosts["res-all"] = resAll;
+            
+            var resAllMax = new ItemStatCost
+            {
+                Stat = "res-all-max",
+                DescriptionPriority = 34,
+                DescriptionFunction = 4, // lstValue
+                DescriptonStringPositive = Table.GetValue("ModStrAllMaxRes"),
+                DescriptionStringNegative = Table.GetValue("ModStrAllMaxRes"),
+                DescriptionValue = 2 // Do not add value
+            };
+            
+            ItemStatCosts["res-all-max"] = resAllMax;
+
+            var allStats = new ItemStatCost
+            {
+                Stat = "all-stats",
+                DescriptionPriority = 34,
+                DescriptionFunction = 1, // lstValue
+                DescriptonStringPositive = Table.GetValue("Moditem2allattrib"),
+                DescriptionStringNegative = Table.GetValue("Moditem2allattrib"),
+                DescriptionValue = 2 // Do not add value
+            };
+            
+            ItemStatCosts["all-stats"] = allStats;
         }
 
         public static void FixBrokenEntries()
@@ -429,7 +453,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
                             }
-                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Increased Chance") || lstValue.Contains("Damage Taken") || lstValue.Contains("Chance of Open Wounds"))
+                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Chance of") || lstValue.Contains("chance of") || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Increased B") || lstValue.Contains("Enhanced De"))
                             {
                                 valueString = valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -441,7 +465,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
-                            else if (lstValue.Contains("Damaged Reduced by"))
+                            else if (lstValue.Contains("Damage Reduced by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
                             }
