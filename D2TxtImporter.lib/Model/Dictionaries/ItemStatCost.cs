@@ -422,7 +422,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 else if (value == value2)
                                 {
                                         opMath = Math.Round(value.Value / 8d, 2);
-                                        valueString = $"+{opMath}% {lstValue} (Per on Character Level)"; 
+                                        valueString = $"+{opMath}% {lstValue} (Per Character Level)"; 
                                 }
                                 else if (value != value2) 
                                 {
@@ -441,7 +441,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                                 break;
                             }
-                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating against"))
+                            if (lstValue.Contains("Takes Damage of"))
+                            {
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString;
+                                break;
+                            }
+                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light"))
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }

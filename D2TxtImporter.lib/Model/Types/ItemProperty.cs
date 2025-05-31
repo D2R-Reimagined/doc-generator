@@ -177,7 +177,7 @@ namespace D2TxtImporter.lib.Model.Types
                 }
             }
 
-// Remove % from non-% /lvl properties, ignoring known exceptions
+            // Remove % from non-% /lvl properties, ignoring known exceptions
             var ignoredStats = new HashSet<string>
             {
                 "res-cold/lvl",
@@ -201,7 +201,17 @@ namespace D2TxtImporter.lib.Model.Types
                         prop.PropertyString = prop.PropertyString.Replace("%", "");
                     }
                 }
+                // Remove % from regen2 property
+                if (stat != null && stat.Contains("regen2"))
+                {
+                    if (!string.IsNullOrEmpty(prop.PropertyString))
+                    {
+                        prop.PropertyString = prop.PropertyString.Replace("%", "");
+                    }
+                }
             }
+            
+            
             
             // Cleanup elemental damage as they are added as 2-3 different parameters
             var minDamage = result.Where(x => x.Property.Stat.Contains("mindam"));
