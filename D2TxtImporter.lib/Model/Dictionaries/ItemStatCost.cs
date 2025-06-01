@@ -173,6 +173,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
             
             ItemStatCosts["all-stats"] = allStats;
+
+            var poisDamage = new ItemStatCost
+            {
+                Stat = "dmg-pois",
+                DescriptionPriority = 92,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("strModPoisonDamage"),
+                DescriptionStringNegative = Table.GetValue("strModPoisonDamage"),
+                DescriptionValue = 2
+            };
+            
+            ItemStatCosts["dmg-pois"] = poisDamage;
         }
 
         public static void FixBrokenEntries()
@@ -187,6 +199,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var fireskills = ItemStatCosts["item_elemskill"];
             fireskills.DescriptonStringPositive = "+%d to Fire Skills";
             fireskills.DescriptionFunction = 1;
+            
         }
 
         public string PropertyString(int? value, int? value2, string parameter, int itemLevel)
@@ -407,7 +420,20 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             DescriptionValue = 3;
                             break;
                         case 19:
-                            if (Stat.Contains("perlevel"))
+                            // Splash Charm Damage Display Fix
+                            if (Stat.Contains("pl_mindamage"))
+                            {
+                                if (value.Value != value2.Value)
+                                {
+                                    valueString = $"+{value}% Min / +{value2}% Max Player Damage";
+                                }
+                                else
+                                {
+                                    valueString = $"+{value}% Player Damage";
+                                }
+                            }
+                            //Per Level Display Fix
+                            else if (Stat.Contains("perlevel"))
                             {
                                 double opMath;
                                 double opMath2;
@@ -434,43 +460,65 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 {
                                         throw new Exception($"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'"); 
                                 }
-                                break;
+                                
                             }
-                            if (lstValue.Contains("Damage to"))
+                            // Handle weapon poison damage here because I can't get it to work properly anywhere else and ChatGPT can't either. :D
+                           else if (lstValue.Contains("Poison Damage Over") && value.HasValue && value2.HasValue && parameter != null)
+                            {
+                                int len = int.Parse(parameter);
+                                int minPoison = (int)Math.Ceiling(value.Value * len / 256.0);
+                                int maxPoison = (int)Math.Ceiling(value2.Value * len / 256.0);
+                                int seconds = len / 25;
+
+                                if (minPoison == maxPoison)
+                                {
+                                    valueString = $"{minPoison} Poison Damage Over {seconds} Seconds";
+                                }
+                                else
+                                {
+                                    valueString = $"{minPoison}-{maxPoison} Poison Damage Over {seconds} Seconds";
+                                }
+
+                                lstValue = null; //Empty this to prevent string duplication
+                                
+                            }
+                            else if (lstValue.Contains("to Raven D") || lstValue.Contains("Max Ravens"))
+                            {
+                                valueString = lstValue;
+                            }
+                            else if (lstValue.Contains("Damage to"))
                             {
                                 valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                                break;
                             }
-                            if (lstValue.Contains("Takes Damage of"))
+                            else if (lstValue.Contains(" Damage of"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString;
-                                break;
                             }
-                            if (lstValue.Contains("to Mana") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light"))
+                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains("to All ")|| lstValue.Contains("to Raven"))
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if (lstValue.Contains("to "))
+                            else if (lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy "))
                             {
-                                valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                                valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
                             else if (lstValue.Contains("Resist"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
                             }
-                            else if (lstValue.Contains("Stamina Drain") || lstValue.Contains("Chance of") || lstValue.Contains("chance of") || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Increased B") || lstValue.Contains("Enhanced De"))
+                            else if (lstValue.Contains("Stamina Drain") || lstValue.IndexOf("chance of", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.IndexOf("chance for", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Increased B") || lstValue.Contains("Enhanced De") || lstValue.Contains(" Skill Damage") || lstValue.Contains(" Maximum Life") || lstValue.Contains(" Maximum Mana") || lstValue.Contains(" Damage Reduction"))
                             {
-                                valueString = valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                                valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if (lstValue.Contains("Target Defense"))
+                            else if (lstValue.Contains("to "))
                             {
-                                valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                                valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
                             else if (lstValue.Contains("Regenerate Mana"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
-                            else if (lstValue.Contains("Damage Reduced by"))
+                            else if (lstValue.Contains("Damage Reduced by") || lstValue.Contains("target by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
                             }

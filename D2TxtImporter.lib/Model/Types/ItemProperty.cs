@@ -38,7 +38,7 @@ namespace D2TxtImporter.lib.Model.Types
         public string Suffix { get; set; }
 
         [JsonIgnore] 
-        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", "oskill_hide" };
+        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", "oskill_hide", "dmg-throw" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
@@ -126,6 +126,12 @@ namespace D2TxtImporter.lib.Model.Types
                     stat = Property.Code;
                     break;
             }
+            switch (Property.Code)
+            {
+                case "dmg-pois":
+                    stat = Property.Code;
+                    break;
+            }
 
         if (!ItemStatCost.ItemStatCosts.ContainsKey(stat))
             {
@@ -210,9 +216,7 @@ namespace D2TxtImporter.lib.Model.Types
                     }
                 }
             }
-            
-            
-            
+
             // Cleanup elemental damage as they are added as 2-3 different parameters
             var minDamage = result.Where(x => x.Property.Stat.Contains("mindam"));
             var maxDamage = result.Where(x => x.Property.Stat.Contains("maxdam"));
