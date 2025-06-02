@@ -647,6 +647,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 }
             }
 
+            // Check for and replace Skill Names for those reworked but not renamed in Skills.txt
+            if (!string.IsNullOrEmpty(valueString))
+            {
+                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                {
+                    { "stun", "Tectonic Slam" },
+                    { "concentrate", "Carnage" },
+                    { "poison explosion", "Poison Volley" },
+                    { "hunger", "Toxic Fangs" }
+                };
+
+                foreach (var pair in replacements)
+                {
+                    valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
+                }
+            }
+            
             // Remove +- in case it happens
             valueString = valueString.Replace("+-", "-");
 
