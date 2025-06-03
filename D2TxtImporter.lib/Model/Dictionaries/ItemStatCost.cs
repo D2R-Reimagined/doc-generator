@@ -185,7 +185,68 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
             
             ItemStatCosts["dmg-pois"] = poisDamage;
+            
+            var fireSkillStat = new ItemStatCost
+            {
+                Stat = "fireskill",
+                DescriptionPriority = 157,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("ModStr3i"),
+                DescriptionStringNegative = Table.GetValue("ModStr3i"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["fireskill"] = fireSkillStat;
+            
+            var coldSkillStat = new ItemStatCost
+            {
+                Stat = "coldskill",
+                DescriptionPriority = 157,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("ModStrcoldskill"),
+                DescriptionStringNegative = Table.GetValue("ModStrcoldskill"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["coldskill"] = coldSkillStat;
+            
+            var lightningSkillStat = new ItemStatCost
+            {
+                Stat = "lightningskill",
+                DescriptionPriority = 157,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("ModStrlightningskill"),
+                DescriptionStringNegative = Table.GetValue("ModStrlightningskill"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["lightningskill"] = lightningSkillStat;
+            
+            var poisonSkillStat = new ItemStatCost
+            {
+                Stat = "poisonskill",
+                DescriptionPriority = 157,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("ModStrpoisonskill"),
+                DescriptionStringNegative = Table.GetValue("ModStrpoisonskill"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["poisonskill"] = poisonSkillStat;
+            
+            var magicSkillStat = new ItemStatCost
+            {
+                Stat = "magicskill",
+                DescriptionPriority = 157,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("ModStrmagicskill"),
+                DescriptionStringNegative = Table.GetValue("ModStrmagicskill"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["magicskill"] = magicSkillStat;
         }
+        
 
         public static void FixBrokenEntries()
         {
@@ -195,11 +256,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             sockets.DescriptonStringPositive = "Socketed";
             sockets.GroupDescriptionStringNegative = "Socketed";
             sockets.DescriptionValue = 3; // Use value as is
-
-            var fireskills = ItemStatCosts["item_elemskill"];
-            fireskills.DescriptonStringPositive = "+%d to Fire Skills";
-            fireskills.DescriptionFunction = 1;
-            
         }
 
         public string PropertyString(int? value, int? value2, string parameter, int itemLevel)
@@ -447,20 +503,26 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 // Fallback: check value1 and value2
                                 else if (value == value2)
                                 {
-                                        opMath = Math.Round(value.Value / 8d, 2);
-                                        valueString = $"+{opMath}% {lstValue} (Per Character Level)"; 
+                                    opMath = Math.Round(value.Value / 8d, 2);
+                                    valueString = $"+{opMath}% {lstValue} (Per Character Level)";
                                 }
-                                else if (value != value2) 
+                                else if (value != value2)
                                 {
-                                            opMath = Math.Round(value.Value / 8d, 2);
-                                            opMath2 = Math.Round(value2.Value / 8d, 2);
-                                            valueString = $"+{opMath}%-{opMath2}% {lstValue} (Per Character Level)"; 
+                                    opMath = Math.Round(value.Value / 8d, 2);
+                                    opMath2 = Math.Round(value2.Value / 8d, 2);
+                                    valueString = $"+{opMath}%-{opMath2}% {lstValue} (Per Character Level)";
                                 }
-                                else 
+                                else
                                 {
-                                        throw new Exception($"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'"); 
+                                    throw new Exception(
+                                        $"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'");
                                 }
-                                
+
+                            }
+                            // Handle All Elemental Skills
+                            else if (Stat.Contains("item_elemskill"))
+                            {
+                                valueString = parameter;
                             }
                             // Handle weapon poison damage here because I can't get it to work properly anywhere else and ChatGPT can't either. :D
                            else if (lstValue.Contains("Poison Damage Over") && value.HasValue && value2.HasValue && parameter != null)
@@ -494,7 +556,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString;
                             }
-                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains("to All ")|| lstValue.Contains("to Raven"))
+                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains(" Skills")|| lstValue.Contains("to Raven"))
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }

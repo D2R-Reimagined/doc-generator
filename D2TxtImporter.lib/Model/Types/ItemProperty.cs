@@ -105,30 +105,19 @@ namespace D2TxtImporter.lib.Model.Types
                 Parameter = Property.Code;
             }
 
-            // Fix manual set
+            // Fix manually set stats
             switch (Property.Code)
             {
                 case "res-all":
-                    stat = Property.Code;
-                    break;
-            }
-
-            switch (Property.Code)
-            {
-             case "res-all-max":
-                 stat = Property.Code;
-                 break;
-            }
-            
-            switch (Property.Code)
-            {
+                case "res-all-max":
                 case "all-stats":
-                    stat = Property.Code;
-                    break;
-            }
-            switch (Property.Code)
-            {
                 case "dmg-pois":
+                case "fireskill":
+                case "coldskill": 
+                case "lightningskill":
+                case "poisonskill": 
+                case "magicskill":
+                    
                     stat = Property.Code;
                     break;
             }
