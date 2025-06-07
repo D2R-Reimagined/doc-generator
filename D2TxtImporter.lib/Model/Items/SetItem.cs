@@ -34,8 +34,11 @@ namespace D2TxtImporter.lib.Model.Items
             foreach (var row in table)
             {
                 var addFunc = Utility.ToNullableInt(row["add func"]);
+                
                 var name = row["index"];
-
+                
+                var rarity = Utility.ToNullableInt(row["rarity"]);
+                
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
                 {
@@ -53,6 +56,7 @@ namespace D2TxtImporter.lib.Model.Items
                     Index = name,
                     Set = row["set"],
                     Enabled = true,
+                    Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
                     Code = row["item"],

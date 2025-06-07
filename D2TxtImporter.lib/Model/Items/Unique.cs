@@ -26,6 +26,8 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 var name = row["index"];
+                
+                var rarity = Utility.ToNullableInt(row["rarity"]);
 
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
@@ -44,10 +46,11 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     Index = name,
                     Enabled = row["enabled"] == "1",
+                    Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
                     Code = code,
-                    DamageArmorEnhanced = false
+                    DamageArmorEnhanced = false,
                 };
 
                 Equipment.Equipment eq = null;
