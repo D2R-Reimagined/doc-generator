@@ -462,7 +462,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                             valueString = lstValue.Replace("%d%", value.Value.ToString())
                                 .Replace("%d", valueString)
-                                .Replace("%s", skill.SkillDesc);
+                                .Replace("%s", CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.SkillDesc));
 
                             if (string.IsNullOrEmpty(skill.SkillDesc))
                             {
@@ -534,11 +534,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                                 if (minPoison == maxPoison)
                                 {
-                                    valueString = $"{minPoison} Poison Damage Over {seconds} Seconds";
+                                    valueString = $"+{minPoison} Poison Damage Over {seconds} Seconds";
                                 }
                                 else
                                 {
-                                    valueString = $"{minPoison}-{maxPoison} Poison Damage Over {seconds} Seconds";
+                                    valueString = $"Adds {minPoison}-{maxPoison} Poison Damage Over {seconds} Seconds";
                                 }
 
                                 lstValue = null; //Empty this to prevent string duplication
@@ -548,7 +548,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue;
                             }
-                            else if (lstValue.Contains("Damage to"))
+                            else if (lstValue.Contains("Damage to") || lstValue.Contains("bonus to Attack"))
                             {
                                 valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -560,7 +560,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if (lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy "))
+                            else if ((lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy ")) && !lstValue.Contains("Ignore"))
                             {
                                 valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -568,23 +568,31 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
                             }
-                            else if (lstValue.Contains("Stamina Drain") || lstValue.IndexOf("chance of", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.IndexOf("chance for", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Increased B") || lstValue.Contains("Enhanced De") || lstValue.Contains(" Skill Damage") || lstValue.Contains(" Maximum Life") || lstValue.Contains(" Maximum Mana") || lstValue.Contains(" Damage Reduction"))
+                            else if (lstValue.Contains("Stamina Drain") || lstValue.IndexOf("chance of", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.IndexOf("chance for", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.Contains("Experience Gained") || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Enhanced De") || lstValue.Contains(" Skill Damage") || lstValue.Contains(" Maximum Life") || lstValue.Contains(" Maximum Mana") || lstValue.Contains(" Damage Reduction") || lstValue.Contains("stolen per hit") || lstValue.Contains("Piercing "))
                             {
                                 valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if ((lstValue.Contains("to Dexterity") || lstValue.Contains("to Strength") || lstValue.Contains("to Vitality") || lstValue.Contains("to Energy")) && value < 0) 
+                            {
+                                valueString = "-" + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                            }
+                            else if ((lstValue.Contains("to Dexterity") || lstValue.Contains("to Strength") || lstValue.Contains("to Vitality") || lstValue.Contains("to Energy")) && value > 0) 
+                            {
+                                valueString = "+" + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
                             else if (lstValue.Contains("to "))
                             {
                                 valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if (lstValue.Contains("Regenerate Mana"))
+                            else if (lstValue.Contains("Regenerate Mana") || lstValue.Contains("Reduces all Vendor"))
                             {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + '+' + value + '%';
                             }
-                            else if (lstValue.Contains("Damage Reduced by") || lstValue.Contains("target by"))
+                            else if (lstValue.Contains("Damage Reduced by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
                             }
-                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by"))
+                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by") || lstValue.Contains("Slows target by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
@@ -592,9 +600,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
                             }
-                            else if (lstValue.Contains("Slain Monsters Rest in Peace"))
+                            else if (lstValue.Contains("Slain Monsters Rest in Peace") || lstValue.Contains("Cannot Be Frozen") || lstValue.Contains("Half Freeze Duration") || lstValue.Contains("Half Freeze Duration") || lstValue.Contains("Ignore") || lstValue.Contains("Prevent Monster") || lstValue.Contains("You feel inco") || lstValue.Contains("Knockback") || lstValue.Contains("Replenishes") || lstValue.Contains("Indestructible"))
                             {
                                 valueString = lstValue;
+                            }
+                            else if (lstValue.Contains("% Fire") || lstValue.Contains("% Cold") || lstValue.Contains("% Lightning") || lstValue.Contains("% Magic"))
+                            {
+                                valueString = '+' + lstValue.Replace("%", valueString + '%');
                             }
                             else
                             {
@@ -709,7 +721,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 }
             }
 
-            // Check for and replace Skill Names for those reworked but not renamed in Skills.txt
+            // Check for and replace Skill Names for those reworked but not renamed in Skills.txt or are mispelled or just completely different
             if (!string.IsNullOrEmpty(valueString))
             {
                 var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
@@ -717,17 +729,36 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     { "stun", "Tectonic Slam" },
                     { "concentrate", "Carnage" },
                     { "poison explosion", "Poison Volley" },
-                    { "hunger", "Toxic Fangs" }
+                    { "hunger", "Toxic Fangs" },
+                    { "quickness", "Burst of Speed" },
+                    { "wearwolf", "Werewolf" },
+                    { "wearbear", "Werebear" },
+                    { "shape shifting", "Lycanthropy" },
+                    { "dopplezon", "Decoy" },
+                    { "bloodgolem", "Blood Golem" },
+                    { "irongolem", "Iron Golem" },
+                    { "firegolem", "Fire Golem" },
+                    { "plague poppy", "Poison Creeper" },
+                    { "cycle of life", "Carrion Vine" },
+                    { "fenris", "Dire Wolf" },
+                    { "vines", "Solar Creeper" },
+                    { "fire trauma", "Fire Blast" },
+                    { "royal strike", "Phoenix Strike" }
                 };
 
                 foreach (var pair in replacements)
                 {
-                    valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
+                    if (valueString.IndexOf(" skills", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
+                        valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
+                    }
                 }
             }
             
             // Remove +- in case it happens
             valueString = valueString.Replace("+-", "-");
+            valueString = valueString.Replace("++", "+");
+            valueString = valueString.Replace("--", "-");
 
             if (DescriptionValue.HasValue && !string.IsNullOrEmpty(lstValue))
             {
