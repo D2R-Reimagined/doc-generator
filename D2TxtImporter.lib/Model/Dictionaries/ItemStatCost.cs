@@ -580,11 +580,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
-                            else if (lstValue.Contains("Damage Reduced by") || lstValue.Contains("target by") || lstValue.Contains("Length Reduced by"))
+                            else if (lstValue.Contains("Damage Reduced by") || lstValue.Contains("target by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
                             }
-                            else if (lstValue.Contains("Requirements") && value < 0)
+                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
