@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using Newtonsoft.Json;
@@ -122,7 +123,7 @@ namespace D2TxtImporter.lib.Model.Types
                     break;
             }
 
-        if (!ItemStatCost.ItemStatCosts.ContainsKey(stat))
+            if (!ItemStatCost.ItemStatCosts.ContainsKey(stat))
             {
                 throw ItemPropertyException.Create($"Could not find stat '{stat}' in ItemStatCost.txt");
             }
@@ -283,7 +284,6 @@ namespace D2TxtImporter.lib.Model.Types
             var baseProps = properties.Where(x => string.IsNullOrEmpty(x.Suffix)).ToList();
             var suffixedProps = properties.Where(x => !string.IsNullOrEmpty(x.Suffix)).ToList();
 
-            // Deduplicate base properties
             var dupes = baseProps
                 .GroupBy(x => x.CompareKey)
                 .Where(x => x.Skip(1).Any())
@@ -315,40 +315,50 @@ namespace D2TxtImporter.lib.Model.Types
                 baseProps.Add(newProp);
             }
 
-            // Group suffix properties by type
-            var armorProps = new List<ItemProperty>();
-            var shieldProps = new List<ItemProperty>();
-            var weaponProps = new List<ItemProperty>();
-            var otherProps = new List<ItemProperty>();
-
-            foreach (var prop in suffixedProps)
+            List<ItemProperty> MergeDuplicates(List<ItemProperty> group)
             {
-                var suffix = (prop.Suffix ?? "").Trim();
-                if (suffix == "(Armor)")
-                {
-                    armorProps.Add(prop);
-                }
-                else if (suffix == "(Shield)")
-                {
-                    shieldProps.Add(prop);
-                }
-                else if (suffix == "(Weapon)")
-                {
-                    weaponProps.Add(prop);
-                }
-                else
-                {
-                    otherProps.Add(prop);
-                }
+                return group
+                    .GroupBy(x => Regex.Replace(x.PropertyString, @"-?\d+(\s*-\s*\d+)?", "").Trim())
+                    .Select(g =>
+                    {
+                        var props = g.ToList();
+                        int? min = props.Sum(p => p.Min ?? 0);
+                        int? max = props.Sum(p => p.Max ?? 0);
+                        var first = props.First();
+                        var newProp = new ItemProperty(
+                            first.Property.Code,
+                            first.Parameter,
+                            min,
+                            max,
+                            first.Index,
+                            first.ItemLevel,
+                            first.Suffix
+                        );
+
+                        // Transform PropertyString if conditions are met
+                        if (!string.IsNullOrEmpty(newProp.PropertyString) &&
+                            newProp.PropertyString.Contains("+") &&
+                            newProp.PropertyString.Contains("to") &&
+                            newProp.PropertyString.Contains("Minimum "))
+                        {
+                            newProp.PropertyString = newProp.PropertyString
+                                .Replace("+", "Adds ")
+                                .Replace("Minimum ", "")
+                                .Replace(" (Weapon)", "");
+                        }
+
+                        return newProp;
+                    })
+                    .OrderBy(x => x.PropertyString)
+                    .ToList();
             }
 
-            // Sort each group
-            armorProps = armorProps.OrderBy(x => x.PropertyString).ToList();
-            shieldProps = shieldProps.OrderBy(x => x.PropertyString).ToList();
-            weaponProps = weaponProps.OrderBy(x => x.PropertyString).ToList();
-            otherProps = otherProps.OrderBy(x => x.PropertyString).ToList();
+            var weaponProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Weapon)").ToList());
+            var armorProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Armor)").ToList());
+            var shieldProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Shield)").ToList());
+            var otherProps = MergeDuplicates(suffixedProps
+                .Where(x => x.Suffix.Trim() != "(Weapon)" && x.Suffix.Trim() != "(Armor)" && x.Suffix.Trim() != "(Shield)").ToList());
 
-            // Final rebuild
             properties.Clear();
             properties.AddRange(baseProps.OrderByDescending(x =>
                 x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority));
