@@ -23,7 +23,8 @@ namespace D2TxtImporter.lib.Model.Items
             "pliers",
             "grabber",
             "gem bag",
-            "Keychain"
+            "Keychain",
+            "rainbow facet"
         };
 
         public string Type { get; set; }
