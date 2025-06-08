@@ -584,15 +584,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if (lstValue.Contains("Regenerate Mana") || lstValue.Contains("Reduces all Vendor"))
+                            else if (lstValue.Contains("Regenerate Mana"))
                             {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + '+' + value + '%';
+                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
                             }
                             else if (lstValue.Contains("Damage Reduced by"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
                             }
-                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by") || lstValue.Contains("Slows target by"))
+                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by") || lstValue.Contains("Slows target by") || lstValue.Contains("Reduces all Vendor"))
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
