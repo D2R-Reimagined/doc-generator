@@ -27,6 +27,7 @@ namespace D2TxtImporter.lib.Model.Items
         
         public string Index { get; set; }
         public bool Enabled { get; set; }
+        public int Rarity { get; set; }
         public int ItemLevel { get; set; }
         public int RequiredLevel { get; set; }
         public string Code { get; set; }

@@ -72,19 +72,23 @@ namespace D2TxtImporter.lib.Model.Items
                         {
                             try
                             {
-                                if (row[$"input {i}"] != null)
+                                string key = $"input {i}";
+
+                                if (row.ContainsKey(key))
                                 {
-                                    inputArray.Add(row[$"input {i}"]);
+                                    var inputValue = row[key];
+                                    if (inputValue != null)
+                                    {
+                                        inputArray.Add(inputValue);
+                                    }
                                 }
-                                else
-                                {
-                                    break;
-                                }
-                                //inputArray.Add(row[$"input {i}"]);
+                                // If key doesn't exist, skip it silently
                             }
                             catch (Exception e)
                             {
-                                ExceptionHandler.LogException(new Exception("Number of inputs likely no matchy. Fix plz. Record to check : " + row["description"]));
+                                ExceptionHandler.LogException(
+                                    new Exception("Number of inputs likely no matchy. Fix plz. Record to check: " + row["description"], e)
+                                );
                             }
                         }
 
@@ -157,16 +161,20 @@ namespace D2TxtImporter.lib.Model.Items
                     recipe.CubeRecipeDescription =
                         System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
                             recipe.CubeRecipeDescription);
-                    var loweredDescription = recipe.CubeRecipeDescription.ToLower();
-                    if (loweredDescription.Contains("corruption orb") || 
-                    loweredDescription.Contains("unstack") || 
-                    loweredDescription.Contains("stack") || 
-                    loweredDescription.Contains("orb of corruption") ||
-                    recipe.Description.Contains("TRANSFER") ||
-                    recipe.Description.Contains("STACK - Stack of") ||
-                    recipe.Description.Contains("RUNE UPGRADE") ||
-                    recipe.Description.Contains("RUNE DOWNGRADE"))
+                    
+                    //Cube Recipe Filters
+                    var loweredDescription = recipe.Description.ToLower();
+
+                    if (loweredDescription.Contains("corrupt item") ||
+                        loweredDescription.Contains("unstack") ||
+                        loweredDescription.Contains("stack") ||
+                        loweredDescription.Contains("transfer in gems") ||
+                        loweredDescription.Contains("rune upgrade") ||
+                        loweredDescription.Contains("rune downgrade") ||
+                        loweredDescription.Contains("dye -") ||
+                        loweredDescription.Contains("socket punch"))
                     {
+                        
                     }
                     else
                     {

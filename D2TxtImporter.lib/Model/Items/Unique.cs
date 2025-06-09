@@ -10,6 +10,23 @@ namespace D2TxtImporter.lib.Model.Items
 {
     public class Unique : Item
     {
+        private static readonly HashSet<string> ItemsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+
+        {
+            // Add parts of the name for unique items you want to ignore case-insensitive
+            "amulet of the viper",
+            "staff of kings",
+            "horadric staff",
+            "hell forge hammer",
+            "khalimflail",
+            "superkhalimflail",
+            "pliers",
+            "grabber",
+            "gem bag",
+            "Keychain",
+            "rainbow facet"
+        };
+
         public string Type { get; set; }
 
         public static List<Unique> Import(string excelFolder)
@@ -26,6 +43,14 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 var name = row["index"];
+
+                // Compare the name ignoring case and ignore items that are in the ItemsToIgnore list
+                if (name != null && ItemsToIgnore.Any(item => name.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    continue;
+                }
+                
+                var rarity = Utility.ToNullableInt(row["rarity"]);
 
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
@@ -44,10 +69,11 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     Index = name,
                     Enabled = row["enabled"] == "1",
+                    Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
                     Code = code,
-                    DamageArmorEnhanced = false
+                    DamageArmorEnhanced = false,
                 };
 
                 Equipment.Equipment eq = null;
