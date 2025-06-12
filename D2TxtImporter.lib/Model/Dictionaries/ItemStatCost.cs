@@ -177,7 +177,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var allElemDmg = new ItemStatCost
             {
                 Stat = "extra-elem",
-                DescriptionPriority = 34,
+                DescriptionPriority = 88,
                 DescriptionFunction = 19,
                 DescriptonStringPositive = Table.GetValue("allelemskilldmg"),
                 DescriptionStringNegative = Table.GetValue("allelemskilldmg"),
@@ -189,7 +189,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var pierceAllElem = new ItemStatCost
             {
                 Stat = "pierce-elem",
-                DescriptionPriority = 34,
+                DescriptionPriority = 87,
                 DescriptionFunction = 19,
                 DescriptonStringPositive = Table.GetValue("PenetrateElePen"),
                 DescriptionStringNegative = Table.GetValue("PenetrateElePen"),
