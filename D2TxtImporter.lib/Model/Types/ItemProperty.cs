@@ -118,6 +118,8 @@ namespace D2TxtImporter.lib.Model.Types
                 case "lightningskill":
                 case "poisonskill": 
                 case "magicskill":
+                case "extra-elem":
+                case "pierce-elem":
                     
                     stat = Property.Code;
                     break;

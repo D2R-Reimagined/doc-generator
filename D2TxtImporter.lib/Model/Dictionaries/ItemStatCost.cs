@@ -173,6 +173,30 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
             
             ItemStatCosts["all-stats"] = allStats;
+            
+            var allElemDmg = new ItemStatCost
+            {
+                Stat = "extra-elem",
+                DescriptionPriority = 88,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("allelemskilldmg"),
+                DescriptionStringNegative = Table.GetValue("allelemskilldmg"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["extra-elem"] = allElemDmg;
+            
+            var pierceAllElem = new ItemStatCost
+            {
+                Stat = "pierce-elem",
+                DescriptionPriority = 87,
+                DescriptionFunction = 19,
+                DescriptonStringPositive = Table.GetValue("PenetrateElePen"),
+                DescriptionStringNegative = Table.GetValue("PenetrateElePen"),
+                DescriptionValue = 3
+            };
+            
+            ItemStatCosts["pierce-elem"] = pierceAllElem;
 
             var poisDamage = new ItemStatCost
             {
@@ -560,7 +584,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
-                            else if ((lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy ")) && !lstValue.Contains("Ignore"))
+                            else if ((lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy ")) && !lstValue.Contains("Ignore") || lstValue.Contains("to All Enemy"))
                             {
                                 valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
