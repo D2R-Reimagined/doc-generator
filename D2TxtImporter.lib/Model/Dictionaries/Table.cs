@@ -98,7 +98,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     {"StrSklTabItem9", "+%d to Curses"},
                     {"StrSklTabItem10", "+%d to Warcries"},
                     {"StrSklTabItem11", "+%d to Combat Skills"},
-                    {"StrSklTabItem12", "+%d to Masteries"},
+                    {"StrSklTabItem12", "+%d to Masteries and Throwing Skills"},
                     {"StrSklTabItem13", "+%d to Cold Skills"},
                     {"StrSklTabItem14", "+%d to Lightning Skills"},
                     {"StrSklTabItem15", "+%d to Fire Skills"},
