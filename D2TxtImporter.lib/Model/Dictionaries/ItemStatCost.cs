@@ -137,6 +137,17 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
 
             ItemStatCosts["eledam"] = eledam;
+            
+            var dmgNorm = new ItemStatCost
+            {
+                Stat = "dmg-norm",
+                DescriptionPriority = ItemStatCosts["mindamage"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = "Adds %min-%max to Damage",
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-norm"] = dmgNorm;
 
             var resAll = new ItemStatCost
             {
@@ -618,6 +629,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
                             else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by") || lstValue.Contains("Slows target by") || lstValue.Contains("Reduces all Vendor"))
                             {
+                                if (value!=value2) 
+                                {
+                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '-' + value2 + '%';
+                                    break;
+                                }
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
                             }
                             else if (lstValue.Contains("Requirements") && value > 0)
@@ -729,12 +745,22 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             if (string.IsNullOrEmpty(valueString))
                             {
                                 valueString = parameter;
+                                break;
                             }
 
                             valueString = $"{lstValue} ({valueString})";
                             break;
                         case 30: // Custom for elemental damage
                             valueString = lstValue.Replace("%d", valueString).Replace("%s", parameter);
+                            break;
+                        case 31: // Custom for normal damage spread
+                            if (value!=value2)
+                            { 
+                                valueString = lstValue.Replace("%min", value.ToString()).Replace("%max", value2.ToString());
+                                break;
+                            } 
+                            
+                            valueString = lstValue.Replace("%min", value.ToString()).Replace("-%max", "");
                             break;
                         default:
                             // Not implemented function

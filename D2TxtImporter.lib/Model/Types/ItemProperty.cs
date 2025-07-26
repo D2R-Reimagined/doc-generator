@@ -120,6 +120,7 @@ namespace D2TxtImporter.lib.Model.Types
                 case "magicskill":
                 case "extra-elem":
                 case "pierce-elem":
+                case "dmg-norm":
                     
                     stat = Property.Code;
                     break;
