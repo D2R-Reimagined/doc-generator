@@ -745,7 +745,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             if (string.IsNullOrEmpty(valueString))
                             {
                                 valueString = parameter;
-                                break;
                             }
 
                             valueString = $"{lstValue} ({valueString})";
