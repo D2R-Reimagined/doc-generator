@@ -152,7 +152,7 @@ namespace D2TxtImporter.lib.Model.Items
 
                             shieldAdded = true;
                         }
-                        else if (type.BodyLoc1 == "rarm" || type.Code == "weap") // Weapon
+                        else if (type.BodyLoc1 == "rarm" || type.Code == "weap"|| type.Code == "mele"|| type.Code == "miss" ) // Weapon
                         {
                             if (!wepAdded)
                             {
