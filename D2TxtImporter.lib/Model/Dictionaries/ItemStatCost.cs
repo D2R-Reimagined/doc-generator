@@ -528,23 +528,24 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 double opMath;
                                 double opMath2;
+                                double opMath3 = OpParam != null ? Math.Pow(2, OpParam.Value) : 0;
 
                                 // Try to use 'parameter' first
                                 if (!string.IsNullOrEmpty(parameter) && double.TryParse(parameter, out opMath))
                                 {
-                                    opMath = Math.Round(opMath / 8d, 2);
+                                    opMath = Math.Round(opMath / opMath3, 2);
                                     valueString = $"+{opMath}% {lstValue} (Per Character Level)";
                                 }
                                 // Fallback: check value1 and value2
                                 else if (value == value2)
                                 {
-                                    opMath = Math.Round(value.Value / 8d, 2);
+                                    opMath = Math.Round(value.Value / opMath3, 2);
                                     valueString = $"+{opMath}% {lstValue} (Per Character Level)";
                                 }
                                 else if (value != value2)
                                 {
-                                    opMath = Math.Round(value.Value / 8d, 2);
-                                    opMath2 = Math.Round(value2.Value / 8d, 2);
+                                    opMath = Math.Round(value.Value / opMath3, 2);
+                                    opMath2 = Math.Round(value2.Value / opMath3, 2);
                                     valueString = $"+{opMath}%-{opMath2}% {lstValue} (Per Character Level)";
                                 }
                                 else
@@ -591,7 +592,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             {
                                 valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString;
                             }
-                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains(" Skills")|| lstValue.Contains("to Raven"))
+                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains(" Skills") || lstValue.Contains("to Raven") || lstValue.Contains("to Level Requirement"))
                             {
                                 valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
                             }
@@ -621,7 +622,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
                             else if (lstValue.Contains("Regenerate Mana"))
                             {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
+                                if (value == value2)
+                                {
+                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
+                                }
+                                else
+                                {
+                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '-' + value2 + '%';
+                                }
                             }
                             else if (lstValue.Contains("Damage Reduced by"))
                             {

@@ -168,8 +168,42 @@ namespace D2TxtImporter.lib.Model.Types
             {
                 if (!string.IsNullOrEmpty(property.Property) && !property.Property.StartsWith("*"))
                 {
-                    var prop = new ItemProperty(property.Property, property.Parameter, property.Min, property.Max, properties.IndexOf(property), itemLevel);
-                    if (!_ignoredProperties.Contains(prop.Property.Code.ToLower())) // Don't add hidden stats
+                    string code = property.Property.Trim().ToLower();
+                    // Replace "dmg-elem" with 3 props
+                    if (code == "dmg-elem")
+                    {
+                        var elems = new[] { "dmg-fire", "dmg-cold", "dmg-ltng" };
+
+                        foreach (var elem in elems)
+                        {
+                            var p = new ItemProperty(
+                                elem,
+                                property.Parameter,
+                                property.Min,
+                                property.Max,
+                                properties.IndexOf(property),
+                                itemLevel
+                            );
+
+                            if (!_ignoredProperties.Contains(p.Property.Code.ToLower()))
+                            {
+                                result.Add(p);
+                            }
+                        }
+
+                        // Skip adding the original dmg-elem
+                        continue;
+                    }
+
+                    // Normal processing
+                    var prop = new ItemProperty(property.Property,
+                        property.Parameter,
+                        property.Min,
+                        property.Max,
+                        properties.IndexOf(property),
+                        itemLevel);
+
+                    if (!_ignoredProperties.Contains(prop.Property.Code.ToLower()))
                     {
                         result.Add(prop);
                     }
@@ -211,8 +245,8 @@ namespace D2TxtImporter.lib.Model.Types
             }
 
             // Cleanup elemental damage as they are added as 2-3 different parameters
-            var minDamage = result.Where(x => x.Property.Stat.Contains("mindam"));
-            var maxDamage = result.Where(x => x.Property.Stat.Contains("maxdam"));
+            var minDamage = result.Where(x => x.Property.Stat.Contains("mindam") && !x.Property.Stat.Contains("level"));
+            var maxDamage = result.Where(x => x.Property.Stat.Contains("maxdam") && !x.Property.Stat.Contains("level"));
             var lenDamage = result.Where(x => x.Property.Stat.Contains("length"));
 
             if (minDamage.Count() > 0 && maxDamage.Count() > 0)
@@ -284,91 +318,103 @@ namespace D2TxtImporter.lib.Model.Types
 
         public static void CleanupDublicates(List<ItemProperty> properties)
         {
-            var baseProps = properties.Where(x => string.IsNullOrEmpty(x.Suffix)).ToList();
+            if (properties == null || properties.Count == 0)
+                return;
+
+            var baseProps     = properties.Where(x => string.IsNullOrEmpty(x.Suffix)).ToList();
             var suffixedProps = properties.Where(x => !string.IsNullOrEmpty(x.Suffix)).ToList();
 
-            var dupes = baseProps
+            var duplicateBaseGroups = baseProps
                 .GroupBy(x => x.CompareKey)
-                .Where(x => x.Skip(1).Any())
-                .ToList();
+                .Where(g => g.Skip(1).Any());
 
-            foreach (var group in dupes)
+            foreach (var group in duplicateBaseGroups)
             {
-                int? min = 0;
-                int? max = 0;
+                var merged = MergeItemPropertyGroup(group, transformWeaponMinText: true);
 
-                foreach (var prop in group)
-                {
-                    min += prop.Min;
-                    max += prop.Max;
-                }
+                baseProps.RemoveAll(x =>
+                    x.ItemStatCost != null &&
+                    merged.ItemStatCost != null &&
+                    x.ItemStatCost.Stat == merged.ItemStatCost.Stat);
 
-                var first = group.First();
-                var newProp = new ItemProperty(
-                    first.Property.Code,
-                    first.Parameter,
-                    min,
-                    max,
-                    first.Index,
-                    first.ItemLevel,
-                    first.Suffix
-                );
-
-                baseProps.RemoveAll(x => x.ItemStatCost.Stat == newProp.ItemStatCost.Stat);
-                baseProps.Add(newProp);
+                baseProps.Add(merged);
             }
 
-            List<ItemProperty> MergeDuplicates(List<ItemProperty> group)
+            List<ItemProperty> MergeDuplicatesByPropertyString(IEnumerable<ItemProperty> source)
             {
-                return group
-                    .GroupBy(x => Regex.Replace(x.PropertyString, @"-?\d+(\s*-\s*\d+)?", "").Trim())
-                    .Select(g =>
-                    {
-                        var props = g.ToList();
-                        int? min = props.Sum(p => p.Min ?? 0);
-                        int? max = props.Sum(p => p.Max ?? 0);
-                        var first = props.First();
-                        var newProp = new ItemProperty(
-                            first.Property.Code,
-                            first.Parameter,
-                            min,
-                            max,
-                            first.Index,
-                            first.ItemLevel,
-                            first.Suffix
-                        );
-
-                        // Transform PropertyString if conditions are met
-                        if (!string.IsNullOrEmpty(newProp.PropertyString) &&
-                            newProp.PropertyString.Contains("+") &&
-                            newProp.PropertyString.Contains("to") &&
-                            newProp.PropertyString.Contains("Minimum "))
-                        {
-                            newProp.PropertyString = newProp.PropertyString
-                                .Replace("+", "Adds ")
-                                .Replace("Minimum ", "")
-                                .Replace(" (Weapon)", "");
-                        }
-
-                        return newProp;
-                    })
+                return source
+                    .GroupBy(x =>
+                        Regex.Replace(x.PropertyString ?? string.Empty,
+                                @"-?\d+(\s*-\s*\d+)?",
+                                string.Empty)
+                            .Trim())
+                    .Select(g => MergeItemPropertyGroup(g, transformWeaponMinText: true))
                     .OrderBy(x => x.PropertyString)
                     .ToList();
             }
 
-            var weaponProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Weapon)").ToList());
-            var armorProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Armor)").ToList());
-            var shieldProps = MergeDuplicates(suffixedProps.Where(x => x.Suffix.Trim() == "(Shield)").ToList());
-            var otherProps = MergeDuplicates(suffixedProps
-                .Where(x => x.Suffix.Trim() != "(Weapon)" && x.Suffix.Trim() != "(Armor)" && x.Suffix.Trim() != "(Shield)").ToList());
+            var weaponProps = MergeDuplicatesByPropertyString(
+                suffixedProps.Where(x => x.Suffix.Trim() == "(Weapon)"));
 
+            var armorProps = MergeDuplicatesByPropertyString(
+                suffixedProps.Where(x => x.Suffix.Trim() == "(Armor)"));
+
+            var shieldProps = MergeDuplicatesByPropertyString(
+                suffixedProps.Where(x => x.Suffix.Trim() == "(Shield)"));
+
+            var otherProps = MergeDuplicatesByPropertyString(
+                suffixedProps.Where(x =>
+                {
+                    var suffix = x.Suffix.Trim();
+                    return suffix != "(Weapon)" &&
+                           suffix != "(Armor)" &&
+                           suffix != "(Shield)";
+                }));
+            
             properties.Clear();
-            properties.AddRange(baseProps.OrderByDescending(x =>
-                x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority));
+            
+            properties.AddRange(
+                baseProps.OrderByDescending(x =>
+                    x.ItemStatCost?.DescriptionPriority ?? 0));
+            
             properties.AddRange(weaponProps);
             properties.AddRange(armorProps);
             properties.AddRange(shieldProps);
             properties.AddRange(otherProps);
+        }
+
+        private static ItemProperty MergeItemPropertyGroup(
+            IEnumerable<ItemProperty> group,
+            bool transformWeaponMinText)
+        {
+            var props = group.ToList();
+            var first = props[0];
+            int? min = props.Sum(p => p.Min ?? 0);
+            int? max = props.Sum(p => p.Max ?? 0);
+
+            var merged = new ItemProperty(
+                first.Property.Code,
+                first.Parameter,
+                min,
+                max,
+                first.Index,
+                first.ItemLevel,
+                first.Suffix
+            );
+
+            if (transformWeaponMinText &&
+                !string.IsNullOrEmpty(merged.PropertyString) &&
+                merged.PropertyString.Contains("+") &&
+                merged.PropertyString.Contains("to") &&
+                merged.PropertyString.Contains("Minimum "))
+            {
+                merged.PropertyString = merged.PropertyString
+                    .Replace("+", "Adds ")
+                    .Replace("Minimum ", string.Empty)
+                    .Replace(" (Weapon)", string.Empty);
+            }
+
+            return merged;
         }
 
         public override string ToString()

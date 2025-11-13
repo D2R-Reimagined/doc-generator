@@ -186,39 +186,6 @@ namespace D2TxtImporter.lib.Model.Items
                         }
                     }
                 }
-                 /*foreach (var property in runeword.Properties)
-                {
-                    switch (property.Parameter)
-                    {
-                        case "ama":
-                            property.PropertyString += " All Amazon Skills";
-                            break;
-                        case "sor":
-                            property.PropertyString += " All Sorceress Skills";
-                            break;
-                        case "nec":
-                            property.PropertyString += " All Necromancer Skills";
-                            break;
-                        case "pal":
-                            property.PropertyString += " All Paladin Skills";
-                            break;
-                        case "bar":
-                            property.PropertyString += " All Barbarian Skills";
-                            break;
-                        case "dru":
-                            property.PropertyString += " All Druid Skills";
-                            break;
-                        case "ass":
-                            property.PropertyString += " All Assassin Skills";
-                            break;
-                    }
-
-                    if (property.Property.Code.Contains("/lvl"))
-                    {
-                        property.PropertyString = property.PropertyString.Replace("+", $"+{property.Parameter}");
-                        property.PropertyString += $" Per Level {property.ItemStatCost.DescriptionString2}";
-                    }
-                }*/
                 
                 if (runeword.Properties.Count > 0)
                 {
