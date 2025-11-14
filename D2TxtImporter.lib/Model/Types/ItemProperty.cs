@@ -40,7 +40,8 @@ namespace D2TxtImporter.lib.Model.Types
         public string Suffix { get; set; }
 
         [JsonIgnore]
-        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", "oskill_hide", "dmg-throw", "uberstone-property" };
+        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", 
+            "oskill_hide", "dmg-throw", "uberstone-property", "ubertorch-property" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
