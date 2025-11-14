@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel;
 using System.IO;
 using D2TxtImporter.lib.Exceptions;
+using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Items;
 
 namespace D2TxtImporter.client
@@ -73,6 +74,16 @@ namespace D2TxtImporter.client
             set
             {
                 ExceptionHandler.ContinueOnException = value;
+            }
+        }
+
+        public bool DuplicateKeyReportEnabled
+        {
+            get => Table.EnableDuplicateReport;
+            set
+            {
+                Table.EnableDuplicateReport = value;
+                OnPropertyChange(nameof(DuplicateKeyReportEnabled));
             }
         }
 

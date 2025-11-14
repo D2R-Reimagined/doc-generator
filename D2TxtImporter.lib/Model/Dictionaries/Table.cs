@@ -10,6 +10,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
         [JsonIgnore]
         public static Dictionary<string, string> Tables;
 
+        // Toggle to enable/disable duplicate key tracking and report writing
+        [JsonIgnore]
+        public static bool EnableDuplicateReport = true;
+
+        // Tracks the origin (id, file) for each first-seen key
+        [JsonIgnore]
+        private static Dictionary<string, OriginInfo> _keyOrigins;
+
+        // Accumulates duplicate key occurrences for later reporting
+        [JsonIgnore]
+        private static readonly List<DuplicateInfo> _duplicates = new List<DuplicateInfo>();
+
         public static void ImportFromTxt(string tableFolder) {
             Tables = new Dictionary<string, string>();
 
@@ -91,6 +103,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
         // { "Key": "Betsy", "enUS": "Mistress of the Pasture" }
         public static void ImportFromJson(string tableFolder) {
             Tables = new Dictionary<string, string>();
+            if (EnableDuplicateReport)
+            {
+                _keyOrigins = new Dictionary<string, OriginInfo>();
+                _duplicates.Clear();
+            }
 
             var files = Directory.GetFiles(tableFolder, "*.json");
 
@@ -124,8 +141,29 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                         if (!string.IsNullOrEmpty(value)) {
                             value = RemoveColorCodes(value);
                         }
-                        
+                        // Collect report info if a duplicate key is encountered (will overwrite previous value)
+                        if (EnableDuplicateReport && Tables.ContainsKey(entry.Key)) {
+                            var currentFile = System.IO.Path.GetFileName(file);
+
+                            if (_keyOrigins != null && _keyOrigins.TryGetValue(entry.Key, out var prev))
+                            {
+                                _duplicates.Add(new DuplicateInfo
+                                {
+                                    Key = entry.Key,
+                                    FirstId = prev.Id,
+                                    FirstFile = prev.FileName,
+                                    NewId = entry.ID,
+                                    NewFile = currentFile
+                                });
+                            }
+                        }
+
                         Tables[entry.Key] = value;
+                        // Track the latest origin of this key for potential future duplicates
+                        if (EnableDuplicateReport)
+                        {
+                            _keyOrigins[entry.Key] = new OriginInfo { Id = entry.ID, FileName = System.IO.Path.GetFileName(file) };
+                        }
                     }
                 }
                 
@@ -160,6 +198,62 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
             public string Key { get; set; }
             public string enUS { get; set; }
 
+        }
+
+        private class OriginInfo
+        {
+            public int Id { get; set; }
+            public string FileName { get; set; }
+        }
+
+        private class DuplicateInfo
+        {
+            public string Key { get; set; }
+            public int FirstId { get; set; }
+            public string FirstFile { get; set; }
+            public int NewId { get; set; }
+            public string NewFile { get; set; }
+        }
+
+        // Write duplicate report into the same output directory used by JsonExporter ("<output>/json")
+        public static void WriteDuplicateReport(string outputRootPath)
+        {
+            try
+            {
+                if (!EnableDuplicateReport)
+                {
+                    return; // Disabled
+                }
+
+                if (_duplicates == null || _duplicates.Count == 0)
+                {
+                    return; // Nothing to write
+                }
+
+                var jsonDir = System.IO.Path.Combine(outputRootPath, "json");
+                if (!Directory.Exists(jsonDir))
+                {
+                    Directory.CreateDirectory(jsonDir);
+                }
+
+                // Write as a simple .txt file with tab-separated values and no BOM to avoid odd characters in some spreadsheet programs
+                var reportPath = System.IO.Path.Combine(jsonDir, "duplicate_table_keys.txt");
+
+                using (var sw = new StreamWriter(reportPath, false, new System.Text.UTF8Encoding(false)))
+                {
+                    // TSV header
+                    sw.WriteLine("Key\tFirstID\tFirstFile\tNewID\tNewFile");
+                    // TSV rows
+                    foreach (var d in _duplicates)
+                    {
+                        sw.WriteLine($"{d.Key}\t{d.FirstId}\t{d.FirstFile}\t{d.NewId}\t{d.NewFile}");
+                    }
+                }
+            }
+            catch (System.Exception ex)
+            {
+                ExceptionHandler.LogException(new System.Exception("Failed to write duplicate table keys report", ex));
+            }
         }
     }
 }

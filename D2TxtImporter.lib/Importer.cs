@@ -92,6 +92,8 @@ namespace D2TxtImporter.lib
             {
                 //TxtExporter.ExportTxt(_outputPath, Uniques, Runewords, CubeRecipes, Sets); // Out of date
                 JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets);
+                // Write duplicate table key report next to JSON exports
+                Table.WriteDuplicateReport(_outputPath);
                 WebExporter.ExportWeb(_outputPath);
             }
             catch (Exception e)

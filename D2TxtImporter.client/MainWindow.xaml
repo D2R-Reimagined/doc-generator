@@ -42,9 +42,11 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <CheckBox Grid.Row="0" IsChecked="{Binding CubeRecipeUseDescription}">Use Cube Recipe Description</CheckBox>
                 <CheckBox Grid.Row="1" IsChecked="{Binding ContinueOnException}">Continue on Exception</CheckBox>
+                <CheckBox Grid.Row="2" IsChecked="{Binding DuplicateKeyReportEnabled}">Write duplicate key report</CheckBox>
             </Grid>
         </GroupBox>
 
