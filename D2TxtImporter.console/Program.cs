@@ -1,6 +1,7 @@
-﻿using CommandLine;
-using System;
+﻿using System;
 using System.IO;
+
+using CommandLine;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Items;
 
@@ -52,7 +53,7 @@ namespace D2TxtImporter_console
         [Option('e', "excelPath", Required = true, HelpText = "Path to the .txt files")]
         public string ExcelPath { get; set; }
 
-        [Option('t', "tablePath", Required = true, HelpText = "Path to the .tbl files")]
+        [Option('t', "tablePath", Required = true, HelpText = "Path to the .tbl or .json files")]
         public string TablePath { get; set; }
 
         [Option('o', "outputPath", Required = true, HelpText = "Path the output is genereted at (must exist)")]

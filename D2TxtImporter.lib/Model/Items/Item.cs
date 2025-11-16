@@ -18,7 +18,7 @@ namespace D2TxtImporter.lib.Model.Items
             {
                 if (!Table.Tables.ContainsKey(Index))
                 {
-                    ExceptionHandler.LogException(new Exception($"Could not find translation for '{Index}' in any .tbl files"));
+                    ExceptionHandler.LogException(new Exception($"Could not find translation for '{Index}' in any .tbl or .json files"));
                 }
 
                 return Table.Tables[Index];

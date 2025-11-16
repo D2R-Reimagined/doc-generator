@@ -27,7 +27,7 @@ namespace D2TxtImporter.client
 
         private void OKButton_Click(object sender, RoutedEventArgs e)
         {
-            this.Close();
+            Close();
         }
     }
 }

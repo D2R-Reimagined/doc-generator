@@ -40,14 +40,14 @@ namespace D2TxtImporter.lib.Model.Types
         public string Suffix { get; set; }
 
         [JsonIgnore]
-        private static List<string> _ignoredProperties = new List<string> { "state", "bloody", 
+        private static List<string> _ignoredProperties = new List<string> { "state", "bloody",
             "oskill_hide", "dmg-throw", "uberstone-property", "ubertorch-property" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
 
         public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "") {
-            
+
             CurrentItemProperty = this;
             Parameter = parameter;
             Min = min;
@@ -73,24 +73,24 @@ namespace D2TxtImporter.lib.Model.Types
                     case "str":
                         propStat = "strength";
                         break;
-                    
+
                     case "dmg-min":
                         propStat = "mindamage";
                         break;
-                    
+
                     case "dmg-max":
                         propStat = "maxdamage";
                         break;
-                    
+
                     case "indestruct":
                         propStat = "item_indesctructible";
                         break;
-                    
+
                     case "poisonlength":
                         Min = null;
                         Max = null;
                         break;
-                    
+
                     default:
                         propStat = propCode;
                         break;
@@ -103,7 +103,7 @@ namespace D2TxtImporter.lib.Model.Types
                     Min = int.TryParse(Parameter, out var parsed) ? parsed : 0;
                     Max = Min;
                 }
-                
+
                 Parameter = Property.Code;
             }
 
@@ -143,7 +143,7 @@ namespace D2TxtImporter.lib.Model.Types
                 throw e;
             }
         }
-
+        
         public ItemProperty(ItemProperty itemProperty) {
             CurrentItemProperty = this;
             Property = itemProperty.Property;
@@ -201,7 +201,7 @@ namespace D2TxtImporter.lib.Model.Types
                 if (!_ignoredProperties.Contains(prop.Property.Code.ToLowerInvariant()))
                     result.Add(prop);
             }
-            
+
             // Remove % from non-% /lvl properties, ignoring known exceptions
             var ignoredStats = new HashSet<string> {
                 "res-cold/lvl", "res-fire/lvl", "res-ltng/lvl", "res-pois/lvl", "deadly/lvl",
@@ -223,7 +223,7 @@ namespace D2TxtImporter.lib.Model.Types
                     prop.PropertyString = prop.PropertyString.Replace("%", "");
                 }
             }
-            
+
             // Cleanup elemental damage (min / max / length)
             var minDamage = result
                 .Where(x => x.Property.Stat.Contains("mindam") && !x.Property.Stat.Contains("level"))
@@ -236,7 +236,7 @@ namespace D2TxtImporter.lib.Model.Types
                 .ToList();
 
             if (minDamage.Any() && maxDamage.Any()) {
-                
+
                 var toRemove = new HashSet<ItemProperty>();
                 var toAdd = new List<ItemProperty>();
 
@@ -275,7 +275,7 @@ namespace D2TxtImporter.lib.Model.Types
                 result.RemoveAll(toRemove.Contains);
                 result.AddRange(toAdd);
             }
-            
+
             lenDamage = result
                 .Where(x => x.Property.Stat.Contains("length"))
                 .ToList();
@@ -284,7 +284,7 @@ namespace D2TxtImporter.lib.Model.Types
                 result.RemoveAll(x =>
                     x.Property.Code == "cold-len" && x.Property.Stat.Contains("length"));
             }
-            
+
             // Min damage sometimes contains both elements, weird.
             minDamage = result
                 .Where(x => x.Property.Stat.Contains("mindam") && !x.Property.Stat.Contains("level"))
@@ -381,7 +381,7 @@ namespace D2TxtImporter.lib.Model.Types
         private static ItemProperty MergeItemPropertyGroup(
             IEnumerable<ItemProperty> group,
             bool transformWeaponMinText) {
-            
+
             var props = group.ToList();
             var first = props[0];
             int? min = props.Sum(p => p.Min ?? 0);

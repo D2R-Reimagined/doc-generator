@@ -18,10 +18,10 @@ namespace D2TxtImporter.lib.Model.Types
         {
             return new DamageType
             {
-                DamageString = this.DamageString,
-                Type = this.Type,
-                MaxDamage = this.MaxDamage,
-                MinDamage = this.MinDamage
+                DamageString = DamageString,
+                Type = Type,
+                MaxDamage = MaxDamage,
+                MinDamage = MinDamage
             };
         }
 

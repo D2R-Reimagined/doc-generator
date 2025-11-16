@@ -3,14 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:D2TxtImporter.client"
         mc:Ignorable="d"
         Title="D2TxtImporter" Height="450" Width="800">
-    <Grid Margin="10px">
+    <Grid Margin="15px">
         <Grid.RowDefinitions>
             <RowDefinition Height="auto"/>
-            <RowDefinition Height="*"/>
+            <!-- Spacer row below browse fields -->
             <RowDefinition Height="auto"/>
+            <!-- Settings group -->
+            <RowDefinition Height="auto"/>
+            <!-- Exports group -->
+            <RowDefinition Height="auto"/>
+            <!-- Bottom buttons -->
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <Grid Grid.Row="0">
             <Grid.ColumnDefinitions>
@@ -37,27 +42,40 @@
             <Button Grid.Row="2" Grid.Column="2" Click="BrowseOutput">Browse</Button>
         </Grid>
 
-        <GroupBox Grid.Row="1" Header="Settings">
-            <Grid Margin="5">
+        <GroupBox Grid.Row="2" Header="Settings">
+            <Grid Margin="10">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
+                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
-                <CheckBox Grid.Row="0" IsChecked="{Binding CubeRecipeUseDescription}">Use Cube Recipe Description</CheckBox>
-                <CheckBox Grid.Row="1" IsChecked="{Binding ContinueOnException}">Continue on Exception</CheckBox>
-                <CheckBox Grid.Row="2" IsChecked="{Binding DuplicateKeyReportEnabled}">Write duplicate key report</CheckBox>
+                <CheckBox Grid.Row="0" IsChecked="{Binding ContinueOnException}">Continue on Exception</CheckBox>
+                <CheckBox Grid.Row="1" IsChecked="{Binding CubeRecipeUseDescription}">Use Cube Recipe Description</CheckBox>
+                <CheckBox Grid.Row="2" IsChecked="{Binding DuplicateKeyReportEnabled}">JSON Key Duplicate Rport</CheckBox>
+                <!-- Move Required Level Report under Duplicate JSON Key Report -->
+                <CheckBox Grid.Row="3" IsChecked="{Binding RequiredLevelReportEnabled}">Required Level Mismatch Report</CheckBox>
             </Grid>
         </GroupBox>
 
-        <Grid Grid.Row="2" Height="20px" VerticalAlignment="Bottom">
+        <!-- Separate Exports group placed on its own grid row -->
+        <GroupBox Grid.Row="3" Header="Exports">
+            <StackPanel Margin="10" Orientation="Vertical">
+                <CheckBox IsChecked="{Binding ExportJson}">Export JSONs</CheckBox>
+                <CheckBox Margin="20,0,0,0" IsChecked="{Binding PrettyPrintJson}">VSC JSON Indents</CheckBox>
+                <!-- Keep blank space above Export Web as previously requested -->
+                <CheckBox Margin="0,10,0,0" IsChecked="{Binding ExportWeb}">Export Web - Legacy</CheckBox>
+            </StackPanel>
+        </GroupBox>
+
+        <Grid Grid.Row="4" Height="20px" VerticalAlignment="Bottom">
             <Grid.ColumnDefinitions>
                 <!--<ColumnDefinition/>-->
                 <ColumnDefinition/>
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" Margin="0 0 2 0" Click="LoadData" IsEnabled="{Binding ImportEnabled, UpdateSourceTrigger=PropertyChanged}">Export</Button>
-            <!--<Button Grid.Column="1" Margin="2 0 0 0" Click="ExportData" IsEnabled="{Binding ExportEnabled, UpdateSourceTrigger=PropertyChanged}">Export</Button>-->
+            <Button Grid.Column="0" Margin="0 0 0 0" Click="LoadData" IsEnabled="{Binding ImportEnabled, UpdateSourceTrigger=PropertyChanged}">Import and Export</Button>
+            <!-- <Button Grid.Column="1" Margin="2 0 0 0" Click="ExportData" IsEnabled="{Binding ExportEnabled, UpdateSourceTrigger=PropertyChanged}">Export</Button> -->
         </Grid>
     </Grid>
 </Window>

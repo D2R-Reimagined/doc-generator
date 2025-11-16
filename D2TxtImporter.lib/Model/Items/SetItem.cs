@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Equipment;
@@ -34,11 +35,11 @@ namespace D2TxtImporter.lib.Model.Items
             foreach (var row in table)
             {
                 var addFunc = Utility.ToNullableInt(row["add func"]);
-                
+
                 var name = row["index"];
-                
+
                 var rarity = Utility.ToNullableInt(row["rarity"]);
-                
+
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
                 {
@@ -68,11 +69,12 @@ namespace D2TxtImporter.lib.Model.Items
                 Equipment.Equipment eq = null;
                 if (Armor.Armors.ContainsKey(setItem.Code))
                 {
-                    eq = Armor.Armors[setItem.Code];
+                    // Clone the base armor to prevent base armor/weapon changes
+                    eq = (Armor)Armor.Armors[setItem.Code].Clone();
                 }
                 else if (Weapon.Weapons.ContainsKey(setItem.Code))
                 {
-                    eq = Weapon.Weapons[setItem.Code];
+                    eq = (Weapon)Weapon.Weapons[setItem.Code].Clone();
                 }
                 else if (Misc.MiscItems.ContainsKey(setItem.Code))
                 {
@@ -94,7 +96,7 @@ namespace D2TxtImporter.lib.Model.Items
                 setItem.Type = eq.Type.Index;
 
                 var propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the base item properties
                 for (int i = 1; i <= 9; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"prop{i}"], row[$"par{i}"], row[$"min{i}"], row[$"max{i}"]));
@@ -110,8 +112,11 @@ namespace D2TxtImporter.lib.Model.Items
                     ExceptionHandler.LogException(new Exception($"Could not get properties for item '{setItem.Name}' in SetItems.txt", e));
                 }
 
+                // Adjust required level using consolidated evaluator (explicit + implied skill/oskill) in a single pass
+                setItem.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("SetItem", setItem.Name, setItem.RequiredLevel, setItem.Properties);
+
                 propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the set bonus properties
                 for (int i = 1; i <= 5; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"aprop{i}a"], row[$"apar{i}a"], row[$"amin{i}a"], row[$"amax{i}a"]));
@@ -151,7 +156,7 @@ namespace D2TxtImporter.lib.Model.Items
                         setItem.Properties.Add(prop);
                         break;
                     case 1:
-                        var setItems = SetItem.SetItems.Where(x => x.Set == setItem.Set && x.Name != setItem.Name).ToList();
+                        var setItems = SetItems.Where(x => x.Set == setItem.Set && x.Name != setItem.Name).ToList();
                         var index = (int)Math.Floor(prop.Index / 2f);
 
                         setItem.SetPropertiesString.Add($"{prop.PropertyString} ({setItems[index].Name})");

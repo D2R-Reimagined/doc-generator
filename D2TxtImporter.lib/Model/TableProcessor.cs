@@ -34,7 +34,7 @@ namespace D2TxtImporter.lib.Model
             [FieldOffset(0x011)]
             public uint FileSize;        // +0x11 - size of the file
 
-            public const int size = 0x15;
+            public const int Size = 0x15;
         };
 
         [StructLayout(LayoutKind.Explicit)]
@@ -58,7 +58,7 @@ namespace D2TxtImporter.lib.Model
             [FieldOffset(0x0F)]
             public ushort StringValLength; // +0x0F - length of the current string value
 
-            public const int size = 0x11;
+            public const int Size = 0x11;
         };
 
         private struct TableList
@@ -85,13 +85,13 @@ namespace D2TxtImporter.lib.Model
                     var header = GetHeader(br);
 
                     // number of bytes to read without header
-                    var numElem = header.FileSize - TblHeader.size;
+                    var numElem = header.FileSize - TblHeader.Size;
 
                     // Check we can read the entire file
                     var byteArray = br.ReadBytes((int)numElem);
                     if (byteArray.Length == numElem)
                     {
-                        br.BaseStream.Position = TblHeader.size;
+                        br.BaseStream.Position = TblHeader.Size;
 
                         // Read the table
                         result = GetStringTable(br, header);
@@ -155,9 +155,9 @@ namespace D2TxtImporter.lib.Model
 
         private static TblHeader GetHeader(BinaryReader br)
         {
-            byte[] readBuffer = new byte[TblHeader.size];
+            byte[] readBuffer = new byte[TblHeader.Size];
 
-            readBuffer = br.ReadBytes(TblHeader.size);
+            readBuffer = br.ReadBytes(TblHeader.Size);
             GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
             var header = (TblHeader)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(TblHeader));
             handle.Free();
@@ -167,9 +167,9 @@ namespace D2TxtImporter.lib.Model
 
         private static TblHashNode GetHashNode(BinaryReader br)
         {
-            byte[] readBuffer = new byte[TblHashNode.size];
+            byte[] readBuffer = new byte[TblHashNode.Size];
 
-            readBuffer = br.ReadBytes(TblHashNode.size);
+            readBuffer = br.ReadBytes(TblHashNode.Size);
             GCHandle handle = GCHandle.Alloc(readBuffer, GCHandleType.Pinned);
             var result = (TblHashNode)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(TblHashNode));
             handle.Free();

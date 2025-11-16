@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Types;
@@ -10,6 +11,9 @@ namespace D2TxtImporter.lib.Model.Equipment
     public class Weapon : Equipment
     {
         public List<DamageType> DamageTypes { get; set; }
+        public int Speed { get; set; }
+        public int StrBonus { get; set; }
+        public int DexBonus { get; set; }
 
         [JsonIgnore]
         public static Dictionary<string, Weapon> Weapons;
@@ -94,10 +98,32 @@ namespace D2TxtImporter.lib.Model.Equipment
                     EquipmentType = EquipmentType.Weapon,
                     RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
                     RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? int.Parse(row["reqdex"]) : 0,
+                    StrBonus = Utility.ToNullableInt(row.ContainsKey("strbonus") ? row["strbonus"] : "0") ?? 0,
+                    DexBonus = Utility.ToNullableInt(row.ContainsKey("dexbonus") ? row["dexbonus"] : "0") ?? 0,
                     Durability = row["nodurability"] == "1" ? 0 : int.Parse(row["durability"]),
                     ItemLevel = itemLevel.Value,
-                    Type = ItemType.ItemTypes[row["type"]]
+                    Type = ItemType.ItemTypes[row["type"]],
+                    Speed = Utility.ToNullableInt(row.ContainsKey("speed") ? row["speed"] : "0") ?? 0,
+                    NormCode = ResolveItemTypeName(row.ContainsKey("normcode") ? row["normcode"] : null),
+                    UberCode = ResolveItemTypeName(row.ContainsKey("ubercode") ? row["ubercode"] : null),
+                    UltraCode = ResolveItemTypeName(row.ContainsKey("ultracode") ? row["ultracode"] : null),
+                    GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
+                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
+
+                // Populate base damage strings for export so weapons.json doesn't contain nulls
+                // Use simple ranges based on parsed min/max for each damage type
+                foreach (var dt in weapon.DamageTypes)
+                {
+                    if (dt.MinDamage == dt.MaxDamage)
+                    {
+                        dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
+                    }
+                    else
+                    {
+                        dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
+                    }
+                }
 
                 Weapons[weapon.Code] = weapon;
             }
@@ -106,18 +132,26 @@ namespace D2TxtImporter.lib.Model.Equipment
         public new object Clone()
         {
             var dmgTypes = new List<DamageType>();
-            this.DamageTypes.ForEach(x => dmgTypes.Add((DamageType)x.Clone()));
+            DamageTypes.ForEach(x => dmgTypes.Add((DamageType)x.Clone()));
 
             return new Weapon
             {
-                EquipmentType = this.EquipmentType,
-                Code = this.Code,
-                RequiredStrength = this.RequiredStrength,
-                RequiredDexterity = this.RequiredDexterity,
-                Durability = this.Durability,
-                ItemLevel = this.ItemLevel,
-                Type = this.Type,
-                DamageTypes = dmgTypes
+                EquipmentType = EquipmentType,
+                Code = Code,
+                RequiredStrength = RequiredStrength,
+                RequiredDexterity = RequiredDexterity,
+                StrBonus = StrBonus,
+                DexBonus = DexBonus,
+                Durability = Durability,
+                ItemLevel = ItemLevel,
+                Type = Type,
+                NormCode = NormCode,
+                UberCode = UberCode,
+                UltraCode = UltraCode,
+                GemSockets = GemSockets,
+                AutoPrefix = AutoPrefix,
+                DamageTypes = dmgTypes,
+                Speed = Speed
             };
         }
 

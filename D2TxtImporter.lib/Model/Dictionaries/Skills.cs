@@ -10,28 +10,28 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         [JsonIgnore]
         public int? Id { get; set; }
-        
+
         public string CharClass { get; set; }
 
         [JsonIgnore]
         public string SkillDesc { get; set; }
-        
+
         public int RequiredLevel { get; set; }
 
         [JsonIgnore]
-        private static Dictionary<int?, Skill> IdSkillDictionary;
-        
-        [JsonIgnore]
-        private static Dictionary<string, Skill> NameSkillDictionary;
+        private static Dictionary<int?, Skill> _idSkillDictionary;
 
         [JsonIgnore]
-        private static Dictionary<string, Skill> DescSkillDictionary;
+        private static Dictionary<string, Skill> _nameSkillDictionary;
+
+        [JsonIgnore]
+        private static Dictionary<string, Skill> _descSkillDictionary;
 
         public static void Import(string excelFolder)
         {
-            IdSkillDictionary = new Dictionary<int?, Skill>();
-            NameSkillDictionary = new Dictionary<string, Skill>();
-            DescSkillDictionary = new Dictionary<string, Skill>();
+            _idSkillDictionary = new Dictionary<int?, Skill>();
+            _nameSkillDictionary = new Dictionary<string, Skill>();
+            _descSkillDictionary = new Dictionary<string, Skill>();
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Skills.txt");
 
@@ -53,9 +53,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     RequiredLevel = reqLevel.Value
                 };
 
-                IdSkillDictionary[skill.Id] = skill;
-                NameSkillDictionary[skill.Name] = skill;
-                DescSkillDictionary[skill.SkillDesc] = skill;
+                _idSkillDictionary[skill.Id] = skill;
+                _nameSkillDictionary[skill.Name] = skill;
+                _descSkillDictionary[skill.SkillDesc] = skill;
             }
         }
 
@@ -63,17 +63,17 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         {
             if (Utility.ToNullableInt(skill).HasValue)
             {
-                return IdSkillDictionary[Utility.ToNullableInt(skill)];
+                return _idSkillDictionary[Utility.ToNullableInt(skill)];
             }
 
-            if (NameSkillDictionary.ContainsKey(skill))
+            if (_nameSkillDictionary.ContainsKey(skill))
             {
-                return NameSkillDictionary[skill];
+                return _nameSkillDictionary[skill];
             }
 
-            if (DescSkillDictionary.ContainsKey(skill))
+            if (_descSkillDictionary.ContainsKey(skill))
             {
-                return DescSkillDictionary[skill];
+                return _descSkillDictionary[skill];
             }
 
             throw new Exception($"Could not find skill with id, name, or description '{skill}' in Skills.txt");

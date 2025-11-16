@@ -43,30 +43,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             foreach (var row in table)
             {
-                // Normalize specific ItemType names before using them
-                var rawIndex = row["ItemType"];
-                var normalizedIndex = rawIndex;
-                if (!string.IsNullOrWhiteSpace(rawIndex))
-                {
-                    var idx = rawIndex.Trim();
-                    if (idx.Equals("Merc Equip", StringComparison.OrdinalIgnoreCase))
-                    {
-                        idx = "Helm";
-                    }
-                    else if (idx.Equals("medium charm", StringComparison.OrdinalIgnoreCase))
-                    {
-                        idx = "Large Charm";
-                    }
-                    else if (idx.Equals("large charm", StringComparison.OrdinalIgnoreCase))
-                    {
-                        idx = "Grand Charm";
-                    }
-                    normalizedIndex = idx;
-                }
-
                 var itemType = new ItemType
                 {
-                    Index = normalizedIndex,
+                    Index = NormalizeIndex(row["ItemType"]),
                     Code = row["Code"],
                     Equiv1 = row["Equiv1"],
                     Equiv2 = row["Equiv2"],
@@ -76,6 +55,33 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                 ItemTypes[itemType.Code] = itemType;
             }
+        }
+
+        private static string NormalizeIndex(string index)
+        {
+            if (index == null)
+            {
+                return null;
+            }
+
+            var value = index.Trim();
+
+            if (value.Equals("medium charm", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Large Charm";
+            }
+
+            if (value.Equals("large charm", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Grand Charm";
+            }
+
+            if (value.Equals("merc equip", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Helm";
+            }
+
+            return value;
         }
 
         public override string ToString()

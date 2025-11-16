@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -7,68 +7,77 @@ using D2TxtImporter.lib.Model.Types;
 
 namespace D2TxtImporter.lib.Model.Dictionaries
 {
-    public class MagicPrefix
+    public class AutoMagic
     {
-        // Original table key for the affix name (e.g., "sounding"). Not exported.
-        [JsonIgnore]
-        public string NameKey { get; set; }
+        // Raw name copied directly from Automagic.txt (not localized, game doesn't read it)
+        public string Name { get; set; }
 
-        // Resolved, localized name via Tables. Throws (via pre-validation) if the key is missing.
-        public string Name { get { return Table.GetValue(NameKey); } }
         public int Level { get; set; }
         public int MaxLevel { get; set; }
         public int LevelReq { get; set; }
         public int Group { get; set; }
-        // New fields requested for export
-        // ClassSpecific is a string code that should resolve to a class name using CharStats (like case 27 logic)
+
+        // Optional class restrictions similar to MagicPrefix/Suffix
         public string ClassSpecific { get; set; }
         public string Class { get; set; }
         public int ClassLevelReq { get; set; }
-        // Final, single list of properties exported (ordered by DescriptionPriority desc with zero-based Index)
+
+        // Built and ordered properties
         public List<ItemProperty> Properties { get; set; }
+
         public List<string> Types { get; set; }
         public List<string> ETypes { get; set; }
-        public string PType { get { return "Prefix"; } }
+
+        public string PType { get { return "Automagic"; } }
 
         [JsonIgnore]
         public int Index { get; set; }
 
         [JsonIgnore]
-        public static Dictionary<int, MagicPrefix> MagicPrefixes;
+        public static Dictionary<int, AutoMagic> AutoMagics;
 
         public static void Import(string excelFolder)
         {
-            MagicPrefixes = new Dictionary<int, MagicPrefix>();
+            AutoMagics = new Dictionary<int, AutoMagic>();
 
-            var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/MagicPrefix.txt");
+            var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Automagic.txt");
 
             var index = 0;
             foreach (var row in table)
             {
-                // Skip entries that are not spawnable
+                // Skip entries that are not spawnable (if column exists)
                 if (row.ContainsKey("spawnable") && row["spawnable"] == "0")
                 {
                     continue;
                 }
+
+                // Skip if group is empty/null, 0, 309, 310, 311, or 312
+                var groupVal = Utility.ToNullableInt(row.ContainsKey("group") ? row["group"] : null);
+                if (!groupVal.HasValue || groupVal.Value == 0 || groupVal.Value == 309 || groupVal.Value == 310 || groupVal.Value == 311 || groupVal.Value == 312 || groupVal.Value == 316 || groupVal.Value == 319)
+                {
+                    continue;
+                }
+
                 index++;
+
                 var level = Utility.ToNullableInt(row.ContainsKey("level") ? row["level"] : null) ?? 0;
 
-                var magicPrefix = new MagicPrefix
+                var automagic = new AutoMagic
                 {
-                    NameKey = row.ContainsKey("name") ? row["name"] : row.ContainsKey("Name") ? row["Name"] : $"prefix_{index}",
+                    Name = row.ContainsKey("name") ? row["name"] : row.ContainsKey("Name") ? row["Name"] : $"automagic_{index}",
                     Index = index - 1,
                     Level = level,
                     MaxLevel = Utility.ToNullableInt(row.ContainsKey("maxlevel") ? row["maxlevel"] : null) ?? 0,
                     LevelReq = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : null) ?? 0,
                     Group = Utility.ToNullableInt(row.ContainsKey("group") ? row["group"] : null) ?? 0,
-                    ClassSpecific = ResolveClassName(GetFirstPresent(row, new []{"classspecific","class specific"})),
-                    Class = ResolveClassName(GetFirstPresent(row, new []{"class","Class"})),
-                    ClassLevelReq = Utility.ToNullableInt(GetFirstPresent(row, new []{"classlevelreq","class levelreq","classlvlreq"})) ?? 0,
+                    ClassSpecific = ResolveClassName(GetFirstPresent(row, new[] { "classspecific", "class specific" })),
+                    Class = ResolveClassName(GetFirstPresent(row, new[] { "class", "Class" })),
+                    ClassLevelReq = Utility.ToNullableInt(GetFirstPresent(row, new[] { "classlevelreq", "class levelreq", "classlvlreq" })) ?? 0,
                     Types = ExtractTypes(row, "itype", 7),
                     ETypes = ExtractTypes(row, "etype", 5)
                 };
 
-                // Build properties via centralized helper to apply global filters (GetProperties)
+                // Build properties via central helper to apply global filters (e.g., skip oskill_hide etc.)
                 var propInfos = new List<PropertyInfo>();
                 for (int i = 1; i <= 3; i++)
                 {
@@ -93,22 +102,22 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             .ToList();
                         for (int i = 0; i < properties.Count; i++)
                         {
-                            properties[i].Index = i; // zero-based index
+                            properties[i].Index = i;
                         }
-                        magicPrefix.Properties = properties;
+                        automagic.Properties = properties;
                     }
                     catch (Exception ex)
                     {
                         var affix = row.ContainsKey("name") ? row["name"] : (row.ContainsKey("Name") ? row["Name"] : "<unknown>");
-                        throw new Exception($"Failed to build properties for MagicPrefix '{affix}'", ex);
+                        throw new Exception($"Failed to build properties for AutoMagic '{affix}'", ex);
                     }
                 }
 
-                MagicPrefixes[index -1] = magicPrefix;
+                AutoMagics[index - 1] = automagic;
             }
         }
 
-        private static string GetFirstPresent(Dictionary<string,string> row, string[] keys)
+        private static string GetFirstPresent(Dictionary<string, string> row, string[] keys)
         {
             foreach (var k in keys)
             {
@@ -117,9 +126,36 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             return null;
         }
 
-        // BuildItemProperty removed in favor of centralized GetProperties
+        private static ItemProperty BuildItemProperty(Dictionary<string, string> row, int modIndex, int level)
+        {
+            var codeKey = $"mod{modIndex}code";
+            var paramKey = $"mod{modIndex}param";
+            var minKey = $"mod{modIndex}min";
+            var maxKey = $"mod{modIndex}max";
 
-        private static List<string> ExtractTypes(Dictionary<string,string> row, string prefix, int count)
+            if (!row.ContainsKey(codeKey) || string.IsNullOrWhiteSpace(row[codeKey]))
+            {
+                return null;
+            }
+
+            var code = row[codeKey];
+            var param = row.ContainsKey(paramKey) ? row[paramKey] : null;
+            var min = Utility.ToNullableInt(row.ContainsKey(minKey) ? row[minKey] : null);
+            var max = Utility.ToNullableInt(row.ContainsKey(maxKey) ? row[maxKey] : null);
+
+            try
+            {
+                var ip = new ItemProperty(code, param, min, max, modIndex, level);
+                return ip;
+            }
+            catch (Exception ex)
+            {
+                var affix = row.ContainsKey("name") ? row["name"] : (row.ContainsKey("Name") ? row["Name"] : "<unknown>");
+                throw new Exception($"Failed to build item property for AutoMagic '{affix}' (mod{modIndex}: code='{code}', param='{param}', min='{min}', max='{max}')", ex);
+            }
+        }
+
+        private static List<string> ExtractTypes(Dictionary<string, string> row, string prefix, int count)
         {
             var list = new List<string>();
             for (int i = 1; i <= count; i++)
@@ -145,7 +181,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         {
             if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
             var key = raw.Trim().ToLower();
-            // Accept both 3-letter codes and already full names
             if (CharStat.CharStats != null)
             {
                 if (CharStat.CharStats.TryGetValue(key, out var cs))
@@ -153,7 +188,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     return cs.Class;
                 }
             }
-            return raw; // fallback to original content
+            return raw;
         }
 
         public override string ToString()

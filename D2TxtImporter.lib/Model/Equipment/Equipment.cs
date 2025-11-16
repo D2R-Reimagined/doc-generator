@@ -15,6 +15,12 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int Durability { get; set; }
         public int ItemLevel { get; set; }
         public ItemType Type { get; set; }
+        // Common additional export fields
+        public string NormCode { get; set; }
+        public string UberCode { get; set; }
+        public string UltraCode { get; set; }
+        public int GemSockets { get; set; }
+        public string AutoPrefix { get; set; }
         public string RequiredClass
         {
             get
@@ -27,17 +33,67 @@ namespace D2TxtImporter.lib.Model.Equipment
             }
         }
 
+        // Shared helper to determine damage string prefixes across equipment/uniques
+        public static string GetDamagePrefix(ItemType type)
+        {
+            if (type == null)
+            {
+                return null;
+            }
+
+            // Shields and Auric Shields use Smite Damage
+            if (string.Equals(type.Code, "shld", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(type.Equiv1, "shld", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(type.Code, "ashd", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Smite Damage";
+            }
+
+            // Boots use Kick Damage
+            if (string.Equals(type.Code, "boot", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(type.Equiv1, "boot", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Kick Damage";
+            }
+
+            return null;
+        }
+
+        // Resolve a code using the JSON/TBL table keys to its display string.
+        // If the key is missing, fall back to the original code to avoid nulls.
+        public static string ResolveItemTypeName(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code))
+            {
+                return null;
+            }
+
+            var value = Table.GetValue(code);
+            if (!string.IsNullOrEmpty(value))
+            {
+                return value;
+            }
+
+            // Fallback to the original code if the key doesn't exist in the tables
+            return code;
+        }
+
         public object Clone()
         {
             return new Equipment
             {
-                EquipmentType = this.EquipmentType,
-                Code = this.Code,
-                RequiredStrength = this.RequiredStrength,
-                RequiredDexterity = this.RequiredDexterity,
-                Durability = this.Durability,
-                ItemLevel = this.ItemLevel,
-                Type = this.Type
+                EquipmentType = EquipmentType,
+                Code = Code,
+                RequiredStrength = RequiredStrength,
+                RequiredDexterity = RequiredDexterity,
+                Durability = Durability,
+                ItemLevel = ItemLevel,
+                Type = Type,
+                NormCode = NormCode,
+                UberCode = UberCode,
+                UltraCode = UltraCode,
+                GemSockets = GemSockets,
+                AutoPrefix = AutoPrefix
             };
         }
     }

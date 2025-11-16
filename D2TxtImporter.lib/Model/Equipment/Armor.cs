@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using Newtonsoft.Json;
@@ -22,6 +23,9 @@ namespace D2TxtImporter.lib.Model.Equipment
         [JsonIgnore]
         public static Dictionary<string, Armor> Armors;
         public string ArmorString { get; set; }
+        public int? Block { get; set; }
+        public int StrBonus { get; set; }
+        public int DexBonus { get; set; }
 
         public static void Import(string excelFolder)
         {
@@ -46,7 +50,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                     ExceptionHandler.LogException(new Exception($"Could not find MinAC for armor '{name}' in Armor.txt"));
                 }
 
-                var maxAc = Utility.ToNullableInt(row["minac"]);
+                var maxAc = Utility.ToNullableInt(row["maxac"]);
                 if (!maxAc.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find MaxAC for armor '{name}' in Armor.txt"));
@@ -66,7 +70,7 @@ namespace D2TxtImporter.lib.Model.Equipment
 
 
                 var itemLevel = Utility.ToNullableInt(row["level"]);
-                if (!durability.HasValue)
+                if (!itemLevel.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find Item Level for armor '{name}' in Armor.txt"));
                 }
@@ -78,13 +82,50 @@ namespace D2TxtImporter.lib.Model.Equipment
                     MaxAc = maxAc.Value,
                     RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
                     RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? int.Parse(row["reqdex"]) : 0,
+                    StrBonus = Utility.ToNullableInt(row.ContainsKey("strbonus") ? row["strbonus"] : "0") ?? 0,
+                    DexBonus = Utility.ToNullableInt(row.ContainsKey("dexbonus") ? row["dexbonus"] : "0") ?? 0,
                     Type = type,
                     EquipmentType = EquipmentType.Armor,
                     Durability = durability.Value,
                     MinDamage = Utility.ToNullableInt(row["mindam"]),
                     MaxDamage = Utility.ToNullableInt(row["maxdam"]),
-                    ItemLevel = itemLevel.Value
+                    ItemLevel = itemLevel.Value,
+                    NormCode = ResolveItemTypeName(row.ContainsKey("normcode") ? row["normcode"] : null),
+                    UberCode = ResolveItemTypeName(row.ContainsKey("ubercode") ? row["ubercode"] : null),
+                    UltraCode = ResolveItemTypeName(row.ContainsKey("ultracode") ? row["ultracode"] : null),
+                    GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
+                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
+
+                // Set block only for shields or shield-equivalent types
+                if (type != null && (string.Equals(type.Equiv1, "shld", StringComparison.OrdinalIgnoreCase) || string.Equals(type.Code, "shld", StringComparison.OrdinalIgnoreCase)))
+                {
+                    armor.Block = Utility.ToNullableInt(row.ContainsKey("block") ? row["block"] : "0") ?? 0;
+                }
+
+                // Populate damage strings for armor that can deal damage (e.g., shields/boots)
+                if (armor.MinDamage.HasValue && armor.MinDamage.Value > 0)
+                {
+                    armor.DamageStringPrefix = GetDamagePrefix(type) ?? armor.DamageStringPrefix;
+                    if (armor.MinDamage.Value == armor.MaxDamage.Value)
+                    {
+                        armor.DamageString = $"{armor.MinDamage.Value}";
+                    }
+                    else
+                    {
+                        armor.DamageString = $"{armor.MinDamage.Value} to {armor.MaxDamage.Value}";
+                    }
+                }
+
+                // Populate base armor string so armors.json does not contain null values
+                if (armor.MinAc == armor.MaxAc)
+                {
+                    armor.ArmorString = $"{armor.MaxAc}";
+                }
+                else
+                {
+                    armor.ArmorString = $"{armor.MinAc}-{armor.MaxAc}";
+                }
 
                 Armors[armor.Code] = armor;
             }
@@ -94,20 +135,28 @@ namespace D2TxtImporter.lib.Model.Equipment
         {
             return new Armor
             {
-                EquipmentType = this.EquipmentType,
-                Code = this.Code,
-                RequiredStrength = this.RequiredStrength,
-                RequiredDexterity = this.RequiredDexterity,
-                Durability = this.Durability,
-                ItemLevel = this.ItemLevel,
-                Type = this.Type,
-                MinAc = this.MinAc,
-                MaxAc = this.MaxAc,
-                MinDamage = this.MinDamage,
-                MaxDamage = this.MaxDamage,
-                DamageString = this.DamageString,
-                DamageStringPrefix = this.DamageStringPrefix,
-                ArmorString = this.ArmorString
+                EquipmentType = EquipmentType,
+                Code = Code,
+                RequiredStrength = RequiredStrength,
+                RequiredDexterity = RequiredDexterity,
+                StrBonus = StrBonus,
+                DexBonus = DexBonus,
+                Durability = Durability,
+                ItemLevel = ItemLevel,
+                Type = Type,
+                NormCode = NormCode,
+                UberCode = UberCode,
+                UltraCode = UltraCode,
+                GemSockets = GemSockets,
+                AutoPrefix = AutoPrefix,
+                MinAc = MinAc,
+                MaxAc = MaxAc,
+                MinDamage = MinDamage,
+                MaxDamage = MaxDamage,
+                DamageString = DamageString,
+                DamageStringPrefix = DamageStringPrefix,
+                ArmorString = ArmorString,
+                Block = Block
             };
         }
 

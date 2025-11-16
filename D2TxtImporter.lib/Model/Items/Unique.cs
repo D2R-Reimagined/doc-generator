@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Equipment;
@@ -10,7 +11,7 @@ namespace D2TxtImporter.lib.Model.Items
 {
     public class Unique : Item
     {
-        private static readonly HashSet<string> ItemsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        private static readonly HashSet<string> _itemsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
 
         {
             // Add parts of the name for unique items you want to ignore case-insensitive
@@ -45,11 +46,11 @@ namespace D2TxtImporter.lib.Model.Items
                 var name = row["index"];
 
                 // Compare the name ignoring case and ignore items that are in the ItemsToIgnore list
-                if (name != null && ItemsToIgnore.Any(item => name.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0))
+                if (name != null && _itemsToIgnore.Any(item => name.IndexOf(item, StringComparison.OrdinalIgnoreCase) >= 0))
                 {
                     continue;
                 }
-                
+
                 var rarity = Utility.ToNullableInt(row["rarity"]);
 
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
@@ -121,6 +122,9 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get properties for unique '{unique.Name}' in UniqueItems.txt", e));
                 }
+
+                // Adjust required level using consolidated evaluator (explicit + implied skill/oskill) in a single pass
+                unique.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("Unique", unique.Name, unique.RequiredLevel, unique.Properties);
 
                 AddDamageArmorString(unique);
 
@@ -231,22 +235,11 @@ namespace D2TxtImporter.lib.Model.Items
                     armor.ArmorString = $"{minAc}-{maxAc}";
                 }
 
-                // Handle smite damage
+                // Handle smite/kick damage using a shared helper
                 if (armor.MinDamage.HasValue && armor.MinDamage.Value > 0)
                 {
-                    switch (armor.Type.Equiv1)
-                    {
-                        case "shie":
-                        case "ashd": // pala shield
-                            armor.DamageStringPrefix = "Smite Damage";
-                            break;
-                        case "boot":
-                            armor.DamageStringPrefix = "Kick Damage";
-                            break;
-                        default:
-                            armor.DamageStringPrefix = "Unhandled Damage Prefix";
-                            break;
-                    }
+                    var prefix = D2TxtImporter.lib.Model.Equipment.Equipment.GetDamagePrefix(armor.Type);
+                    armor.DamageStringPrefix = prefix ?? "Unhandled Damage Prefix";
 
                     if (armor.MinDamage.Value == armor.MaxDamage.Value)
                     {

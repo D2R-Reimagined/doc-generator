@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.IO;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Items;
@@ -8,12 +9,15 @@ namespace D2TxtImporter.client
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private D2TxtImporter.lib.Importer _importer;
-        private string excelPath;
-        private string tablePath;
-        private string outputPath;
+        private lib.Importer _importer;
+        private string _excelPath;
+        private string _tablePath;
+        private string _outputPath;
+        private bool _exportJson = true;
+        private bool _exportWeb = true;
+        private bool _prettyPrintJson = true;
 
-        public D2TxtImporter.lib.Importer Importer
+        public lib.Importer Importer
         {
             get => _importer;
             set
@@ -25,9 +29,9 @@ namespace D2TxtImporter.client
 
         public string ExcelPath
         {
-            get => excelPath; set
+            get => _excelPath; set
             {
-                excelPath = value;
+                _excelPath = value;
                 OnPropertyChange(nameof(ExcelPath));
                 OnPropertyChange(nameof(ImportEnabled));
             }
@@ -35,9 +39,9 @@ namespace D2TxtImporter.client
 
         public string TablePath
         {
-            get => tablePath; set
+            get => _tablePath; set
             {
-                tablePath = value;
+                _tablePath = value;
                 OnPropertyChange(nameof(TablePath));
                 OnPropertyChange(nameof(ImportEnabled));
             }
@@ -45,9 +49,9 @@ namespace D2TxtImporter.client
 
         public string OutputPath
         {
-            get => outputPath; set
+            get => _outputPath; set
             {
-                outputPath = value;
+                _outputPath = value;
                 OnPropertyChange(nameof(OutputPath));
                 OnPropertyChange(nameof(ImportEnabled));
             }
@@ -84,6 +88,46 @@ namespace D2TxtImporter.client
             {
                 Table.EnableDuplicateReport = value;
                 OnPropertyChange(nameof(DuplicateKeyReportEnabled));
+            }
+        }
+
+        public bool RequiredLevelReportEnabled
+        {
+            get => RequiredLevelReport.Enabled;
+            set
+            {
+                RequiredLevelReport.Enabled = value;
+                OnPropertyChange(nameof(RequiredLevelReportEnabled));
+            }
+        }
+
+        public bool ExportJson
+        {
+            get => _exportJson;
+            set
+            {
+                _exportJson = value;
+                OnPropertyChange(nameof(ExportJson));
+            }
+        }
+
+        public bool ExportWeb
+        {
+            get => _exportWeb;
+            set
+            {
+                _exportWeb = value;
+                OnPropertyChange(nameof(ExportWeb));
+            }
+        }
+
+        public bool PrettyPrintJson
+        {
+            get => _prettyPrintJson;
+            set
+            {
+                _prettyPrintJson = value;
+                OnPropertyChange(nameof(PrettyPrintJson));
             }
         }
 

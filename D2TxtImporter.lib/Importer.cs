@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Exporters;
 using D2TxtImporter.lib.Model.Dictionaries;
@@ -16,6 +16,12 @@ namespace D2TxtImporter.lib
         private string _outputPath;
         private string _excelPath;
         private string _tablePath;
+
+        // Export toggles (default to true)
+        public bool ExportJson { get; set; } = true;
+        public bool ExportWeb { get; set; } = true;
+        // JSON formatting toggle (pretty print) — default ON
+        public bool PrettyPrintJson { get; set; } = true;
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
@@ -33,12 +39,12 @@ namespace D2TxtImporter.lib
 
             if (!Directory.Exists(excelPath))
             {
-                throw new Exception($"Could not find excel directory at '{_excelPath}'");
+                throw new Exception($"Could not find excel directory at '{excelPath}'");
             }
 
             if (!Directory.Exists(tablePath))
             {
-                throw new Exception($"Could not find table directory at '{_tablePath}'");
+                throw new Exception($"Could not find table directory at '{tablePath}'");
             }
 
             _outputPath = outputDir.Trim('/', '\\');
@@ -51,16 +57,18 @@ namespace D2TxtImporter.lib
             try
             {
                 Table.ImportFromTbl(_tablePath);
-                MagicPrefix.Import(_excelPath);
-                MagicSuffix.Import(_excelPath);
                 ItemStatCost.Import(_excelPath);
                 EffectProperty.Import(_excelPath);
                 ItemType.Import(_excelPath);
-                Armor.Import(_excelPath);
-                Weapon.Import(_excelPath);
                 Skill.Import(_excelPath);
                 CharStat.Import(_excelPath);
                 MonStat.Import(_excelPath);
+                // Now load affixes which depend on the above
+                MagicPrefix.Import(_excelPath);
+                MagicSuffix.Import(_excelPath);
+                AutoMagic.Import(_excelPath);
+                Armor.Import(_excelPath);
+                Weapon.Import(_excelPath);
                 Misc.Import(_excelPath);
                 Gem.Import(_excelPath);
                 SetItem.Import(_excelPath);
@@ -68,6 +76,7 @@ namespace D2TxtImporter.lib
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                throw; // Re-throw so callers receive the exception (e.g., missing key)
             }
         }
 
@@ -75,6 +84,8 @@ namespace D2TxtImporter.lib
         {
             try
             {
+                // Start a fresh required-level report to avoid duplication across runs
+                RequiredLevelReport.Clear();
                 Uniques = Unique.Import(_excelPath);
                 Runewords = Runeword.Import(_excelPath);
                 CubeRecipes = CubeRecipe.Import(_excelPath);
@@ -83,6 +94,7 @@ namespace D2TxtImporter.lib
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                throw; // propagate
             }
         }
 
@@ -91,14 +103,26 @@ namespace D2TxtImporter.lib
             try
             {
                 //TxtExporter.ExportTxt(_outputPath, Uniques, Runewords, CubeRecipes, Sets); // Out of date
-                JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets);
-                // Write duplicate table key report next to JSON exports
+                if (ExportJson)
+                {
+                    JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets, PrettyPrintJson);
+                }
+
+                // Write duplicate table key report next to JSON exports directory
                 Table.WriteDuplicateReport(_outputPath);
-                WebExporter.ExportWeb(_outputPath);
+
+                // Write required-level property report if enabled
+                RequiredLevelReport.WriteReport(_outputPath);
+
+                if (ExportWeb)
+                {
+                    WebExporter.ExportWeb(_outputPath);
+                }
             }
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                throw; // propagate
             }
         }
 
@@ -142,10 +166,15 @@ namespace D2TxtImporter.lib
                     table.Add(row);
                 }
 
-                return table;   
+                return table;
             } catch (Exception e)
             {
-                ExceptionHandler.WriteException(e);
+                ExceptionHandler.WriteException(new Exception($"Failed to read or parse txt file '{path}'", e));
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    // WriteException already rethrows when ContinueOnException is false, but guard here for clarity
+                    throw;
+                }
                 return null;
             }
         }

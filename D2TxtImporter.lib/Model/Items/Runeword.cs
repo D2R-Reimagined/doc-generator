@@ -5,14 +5,16 @@ using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Types;
 
-namespace D2TxtImporter.lib.Model.Items {
-   
-    public class Runeword : Item {
-        
+namespace D2TxtImporter.lib.Model.Items
+{
+
+    public class Runeword : Item
+    {
+
         public List<Misc> Runes { get; set; }
         public List<ItemType> Types { get; set; }
         public static List<Runeword> Import(string excelFolder) {
-            
+
             var result = new List<Runeword>();
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Runes.txt");
 
@@ -44,9 +46,9 @@ namespace D2TxtImporter.lib.Model.Items {
 
                 for (int i = 0; i < typeArray.Count(); i++) {
                     if (!string.IsNullOrEmpty(typeArray[i]) && !typeArray[i].StartsWith("*")) {
-                        if (!ItemType.ItemTypes.ContainsKey(typeArray[i])) 
+                        if (!ItemType.ItemTypes.ContainsKey(typeArray[i]))
                             throw new Exception("Cannot find item type " + typeArray[i]);
-                        
+
                         var type = ItemType.ItemTypes[typeArray[i]];
                         types.Add(type);
 
@@ -65,7 +67,7 @@ namespace D2TxtImporter.lib.Model.Items {
 
                             weaponCounted = true;
                         }
-                        
+
                         else {
                             if (!armorCounted) {
                                 typeCount++;
@@ -87,7 +89,7 @@ namespace D2TxtImporter.lib.Model.Items {
                 };
 
                 var propList = new List<PropertyInfo>();
-               
+
                 // Add the properties
                 for (int i = 1; i <= 7; i++) {
                     propList.Add(new PropertyInfo(row[$"T1Code{i}"], row[$"T1Param{i}"], row[$"T1Min{i}"],
@@ -95,11 +97,11 @@ namespace D2TxtImporter.lib.Model.Items {
                 }
 
                 try {
-                   
+
                     var properties = ItemProperty.GetProperties(propList)
                         .OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority)
                         .ToList();
-                   
+
                     runeword.Properties = properties;
                 }
                 catch (Exception e) {
@@ -139,7 +141,7 @@ namespace D2TxtImporter.lib.Model.Items {
                         else if (type.BodyLoc1 == "rarm" || type.Code == "weap"|| type.Code == "mele"|| type.Code == "miss" )
                         {
                             if (!wepAdded) {
-                                
+
                                 var properties = runeGem.WeaponProperties.Select(x => new ItemProperty(x)).ToList();
 
                                 if (typeCount > 1) {
@@ -151,10 +153,10 @@ namespace D2TxtImporter.lib.Model.Items {
 
                             wepAdded = true;
                         }
-                        
+
                         else {
                             if (!armorAdded) {
-                               
+
                                 var properties = runeGem.HelmProperties.Select(x => new ItemProperty(x)).ToList();
 
                                 if (typeCount > 1) {
@@ -168,9 +170,13 @@ namespace D2TxtImporter.lib.Model.Items {
                         }
                     }
                 }
-                
+
                 if (runeword.Properties.Count > 0) {
                     ItemProperty.CleanupDublicates(runeword.Properties);
+
+                    // Adjust required level using consolidated evaluator (explicit + implied skill/oskill) in a single pass
+                    runeword.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("Runeword", runeword.Name, runeword.RequiredLevel, runeword.Properties);
+
                     result.Add(runeword);
                 }
             }

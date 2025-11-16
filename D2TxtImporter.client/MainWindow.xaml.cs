@@ -1,13 +1,12 @@
 ﻿using System;
 using System.IO;
 using System.Windows;
+
 using Microsoft.WindowsAPICodePack.Dialogs;
 
 namespace D2TxtImporter.client
 {
-    /// <summary>
     /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
         private readonly MainViewModel _mainViewModel;
@@ -23,6 +22,12 @@ namespace D2TxtImporter.client
             _mainViewModel.TablePath = Properties.Settings.Default.TablePath;
             _mainViewModel.OutputPath = Properties.Settings.Default.OutputPath;
             _mainViewModel.CubeRecipeUseDescription = Properties.Settings.Default.CubeRecipeUseDescription;
+            // Load persisted checkbox settings with requested defaults (defined in Settings.settings)
+            _mainViewModel.DuplicateKeyReportEnabled = Properties.Settings.Default.DuplicateKeyReportEnabled;
+            _mainViewModel.RequiredLevelReportEnabled = Properties.Settings.Default.RequiredLevelReportEnabled;
+            _mainViewModel.ExportJson = Properties.Settings.Default.ExportJson;
+            _mainViewModel.ExportWeb = Properties.Settings.Default.ExportWeb;
+            _mainViewModel.PrettyPrintJson = Properties.Settings.Default.PrettyPrintJson;
         }
 
         private void BrowseExcel(object sender, RoutedEventArgs e)
@@ -64,6 +69,19 @@ namespace D2TxtImporter.client
 
         private void LoadData(object sender, RoutedEventArgs e)
         {
+            // Centered-button confirmation dialog before starting an import/export run
+            var dialog = new ConfirmDialog(
+                "This will import data and export files.\nExisting output files will be overwritten.\n\nDo you want to continue?",
+                "Confirm Import");
+            dialog.Owner = this;
+            var confirm = dialog.ShowDialog() == true;
+
+            if (!confirm)
+            {
+                // User chose Cancel — abort operation
+                return;
+            }
+
             try
             {
                 // Update settings
@@ -71,10 +89,20 @@ namespace D2TxtImporter.client
                 Properties.Settings.Default.TablePath = _mainViewModel.TablePath;
                 Properties.Settings.Default.OutputPath = _mainViewModel.OutputPath;
                 Properties.Settings.Default.CubeRecipeUseDescription = _mainViewModel.CubeRecipeUseDescription;
+                Properties.Settings.Default.DuplicateKeyReportEnabled = _mainViewModel.DuplicateKeyReportEnabled;
+                Properties.Settings.Default.RequiredLevelReportEnabled = _mainViewModel.RequiredLevelReportEnabled;
+                Properties.Settings.Default.ExportJson = _mainViewModel.ExportJson;
+                Properties.Settings.Default.ExportWeb = _mainViewModel.ExportWeb;
+                Properties.Settings.Default.PrettyPrintJson = _mainViewModel.PrettyPrintJson;
                 Properties.Settings.Default.Save();
 
                 // Import data
-                _mainViewModel.Importer = new D2TxtImporter.lib.Importer(_mainViewModel.ExcelPath, _mainViewModel.TablePath, _mainViewModel.OutputPath);
+                _mainViewModel.Importer = new lib.Importer(_mainViewModel.ExcelPath, _mainViewModel.TablePath, _mainViewModel.OutputPath)
+                {
+                    ExportJson = _mainViewModel.ExportJson,
+                    ExportWeb = _mainViewModel.ExportWeb,
+                    PrettyPrintJson = _mainViewModel.PrettyPrintJson
+                };
                 _mainViewModel.Importer.LoadData();
                 _mainViewModel.Importer.ImportModel();
 
@@ -97,7 +125,7 @@ namespace D2TxtImporter.client
             }
             else
             {
-                MessageBox.Show("Success!");
+                MessageBox.Show("Export Successful!");
             }
         }
 

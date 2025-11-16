@@ -2,15 +2,19 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Equipment;
+
 using Newtonsoft.Json;
 
-namespace D2TxtImporter.lib.Model.Items {
-    
-    public class CubeRecipe {
-        
+namespace D2TxtImporter.lib.Model.Items
+{
+
+    public class CubeRecipe
+    {
+
         public static bool UseDescription { get; set; }
         public string Description { get; set; }
         public string Item { get; set; }
@@ -19,7 +23,7 @@ namespace D2TxtImporter.lib.Model.Items {
         public string Input { get; set; }
         public string CubeRecipeDescription { get; set; }
         public static List<CubeRecipe> Import(string excelFolder) {
-            
+
             var result = new List<CubeRecipe>();
             var lines = Importer.ReadTxtFileToDictionaryList(excelFolder + "/CubeMain.txt");
 
@@ -35,7 +39,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     if (!UseDescription) {
                         // Params
                         var modifiers = new List<CubeMod>();
-                        
+
                         for (int i = 1; i <= 5; i++) {
                             if (!string.IsNullOrEmpty(row[$"mod {i}"])) {
                                 modifiers.Add(new CubeMod {
@@ -47,26 +51,26 @@ namespace D2TxtImporter.lib.Model.Items {
                                 });
                             }
                         }
-                        
+
                         // Input
                         var numInputs = Utility.ToNullableInt(row["numinputs"]);
-                        
+
                         if (!numInputs.HasValue) {
                             ExceptionHandler.LogException(
                                 new Exception($"Cube recipe '{descr}' does not have a numinputs"));
                         }
 
                         var inputArray = new List<string>();
-                        
+
                         for (int i = 1; i <= numInputs.Value; i++) {
                             try {
-                                
+
                                 string key = $"input {i}";
 
                                 if (row.ContainsKey(key)) {
-                                   
+
                                     var inputValue = row[key];
-                                    
+
                                     if (inputValue != null) {
                                         inputArray.Add(inputValue);
                                     }
@@ -85,9 +89,9 @@ namespace D2TxtImporter.lib.Model.Items {
                         recipe = new CubeRecipe(inputArray.ToArray(), row["output"]);
 
                         if (recipe.Output.Contains("usetype")) {
-                           
+
                             var type = inputArray[0].Replace("\"", "").Split(',')[0];
-                          
+
                             if (ItemType.ItemTypes.Keys.Contains(type)) {
                                 recipe.Output = recipe.Output.Replace("usetype", ItemType.ItemTypes[type].Name);
                             }
@@ -102,9 +106,9 @@ namespace D2TxtImporter.lib.Model.Items {
                         }
 
                         if (recipe.Output.Contains("useitem")) {
-                        
+
                             var item = inputArray[0].Replace("\"", "").Split(',')[0];
-                          
+
                             if (ItemType.ItemTypes.Keys.Contains(item)) {
                                 recipe.Output = recipe.Output.Replace("useitem", ItemType.ItemTypes[item].Name);
                             }
@@ -118,7 +122,7 @@ namespace D2TxtImporter.lib.Model.Items {
                         }
 
                         recipe.Input = "";
-                       
+
                         foreach (var input in recipe.InputList) {
                             recipe.Input += $"{input} + ";
                         }
@@ -127,7 +131,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     }
 
                     var matches = Regex.Matches(descr, @"(r\d\d)");
-                    
+
                     if (matches.Count > 0) {
                         foreach (Match match in matches) {
                             if (!Misc.MiscItems.ContainsKey(match.Groups[1].Value)) continue;
@@ -140,7 +144,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     recipe.CubeRecipeDescription = UseDescription ? descr : $"{recipe.Input}= {recipe.Output}";
                     recipe.CubeRecipeDescription = System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(
                             recipe.CubeRecipeDescription);
-                    
+
                     //Cube Recipe Filters
                     var loweredDescription = recipe.Description.ToLower();
 
@@ -156,7 +160,7 @@ namespace D2TxtImporter.lib.Model.Items {
                         loweredDescription.Contains("transfer in key") ||
                         loweredDescription.Contains("transfer out key"))
                     {
-                        
+
                     }
                     else {
                         result.Add(recipe);
@@ -179,9 +183,9 @@ namespace D2TxtImporter.lib.Model.Items {
         }
 
         private CubeRecipe(string[] inputArray, string output) {
-            
+
             InputList = new List<string>();
-            
+
             foreach (var input in inputArray) {
                 var inputParams = input.Replace("\"", "").Split(',');
                 var item = ReplaceItemName(inputParams[0]);
@@ -201,7 +205,7 @@ namespace D2TxtImporter.lib.Model.Items {
         }
 
         private static string GetOutput(string output) {
-            
+
             var outputParams = output.Replace("\"", "").Split(',');
             var item = ReplaceItemName(outputParams[0]);
 
@@ -245,7 +249,7 @@ namespace D2TxtImporter.lib.Model.Items {
         }
 
         private static string GetParameterString(string[] parameters) {
-           
+
             var result = "%d";
 
             foreach (var parameter in parameters) {
@@ -253,7 +257,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     case "low":
                         result = result.Replace("%d", "Low Quality %d");
                         break;
-                    
+
                     case "hig":
                         result = result.Replace("%d", "High Quality %d");
                         break;
@@ -261,7 +265,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     case "nor":
                         result = result.Replace("%d", "Normal %d");
                         break;
-                    
+
                     case "mag":
                         // If the magic item has a sufix, don't add magic to it
                         if (parameters.Any(x => x.StartsWith("pre=") || x.StartsWith("suf="))) {
@@ -270,23 +274,23 @@ namespace D2TxtImporter.lib.Model.Items {
 
                         result = result.Replace("%d", "Magic %d");
                         break;
-                    
+
                     case "rar":
                         result = result.Replace("%d", "Rare %d");
                         break;
-                    
+
                     case "set":
                         result = result.Replace("%d", "Set %d");
                         break;
-                    
+
                     case "uni":
                         result = result.Replace("%d", "Unique %d");
                         break;
-                    
+
                     case "orf":
                         result = result.Replace("%d", "Crafted %d");
                         break;
-                    
+
                     case "tmp":
                         result = result.Replace("%d", "Tempered %d");
                         break;
@@ -294,7 +298,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     case "eth":
                         result = result.Replace("%d", "Etheral %d");
                         break;
-                    
+
                     case "noe":
                         result = result.Replace("%d", "Not Etheral %d");
                         break;
@@ -305,14 +309,14 @@ namespace D2TxtImporter.lib.Model.Items {
 
                     case "pre": // todo
                         break;
-                    
+
                     case "suf": // todo
                         break;
 
                     case "rep":
                         result = result.Replace("%d", "%d Repair durability");
                         break;
-                    
+
                     case "rch":
                         result = result.Replace("%d", "%d Recharge Quantity");
                         break;
@@ -320,15 +324,15 @@ namespace D2TxtImporter.lib.Model.Items {
                     case "upg": // Include?
                         result = result.Replace("%d", "%d upgraded");
                         break;
-                    
+
                     case "bas":
                         result = result.Replace("%d", "basic %d");
                         break;
-                    
+
                     case "exc":
                         result = result.Replace("%d", "exceptional %d");
                         break;
-                    
+
                     case "eli":
                         result = result.Replace("%d", "elite %d");
                         break;
@@ -340,7 +344,7 @@ namespace D2TxtImporter.lib.Model.Items {
                     case "uns":
                         result = result.Replace("%d", "Destroy gems %d");
                         break;
-                    
+
                     case "rem":
                         result = result.Replace("%d", "Remove gems %d");
                         break;
@@ -354,33 +358,33 @@ namespace D2TxtImporter.lib.Model.Items {
                 }
 
                 if (parameter.StartsWith("qty=")) {
-                 
+
                     var quantity = parameter.Replace("qty=", "");
-                    
+
                     result = result.Replace(result, $"{quantity} {result}");
                     continue;
                 }
 
                 if (parameter.StartsWith("sock=")) {
-                  
+
                     var quantity = parameter.Replace("sock=", "");
-                 
+
                     result = result.Replace("%d", $"{quantity} Sockets");
                     continue;
                 }
 
                 if (parameter.StartsWith("pre=")) {
-                   
+
                     var index = int.Parse(parameter.Replace("pre=", ""));
-                    
+
                     result = result.Replace("%d", $"{MagicPrefix.MagicPrefixes[index].Name} %d");
                     continue;
                 }
 
                 if (parameter.StartsWith("suf=")) {
-                   
+
                     var index = int.Parse(parameter.Replace("suf=", ""));
-                   
+
                     result = result.Replace("%d", $"%d {MagicSuffix.MagicSuffixes[index].Name}");
                     continue;
                 }

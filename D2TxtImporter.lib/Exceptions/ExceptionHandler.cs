@@ -16,11 +16,11 @@ namespace D2TxtImporter.lib.Exceptions
         private readonly static string _debugFile =
             $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
 
-        public static List<string> _exceptionsWritten;
+        public static List<string> ExceptionsWritten;
 
         public static void Initialize()
         {
-            _exceptionsWritten = new List<string>();
+            ExceptionsWritten = new List<string>();
 
             // Empty output files
             if (File.Exists(_exceptionFile))
@@ -56,9 +56,9 @@ namespace D2TxtImporter.lib.Exceptions
                 ex = ex.InnerException;
             } while (ex != null);
 
-            if (!_exceptionsWritten.Contains(debugMessage))
+            if (!ExceptionsWritten.Contains(debugMessage))
             {
-                _exceptionsWritten.Add(debugMessage);
+                ExceptionsWritten.Add(debugMessage);
 
                 File.AppendAllText(_exceptionFile, errorMessage + "\n");
                 File.AppendAllText(_debugFile, debugMessage + "\n");

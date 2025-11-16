@@ -4,9 +4,9 @@ using D2TxtImporter.lib.Exceptions;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Dictionaries {
-    
+
     public class Table {
-        
+
         [JsonIgnore]
         public static Dictionary<string, string> Tables;
 
@@ -23,7 +23,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
         private static readonly List<DuplicateInfo> _duplicates = new List<DuplicateInfo>();
 
         public static void ImportFromTxt(string tableFolder) {
+            // Case-sensitive keys by default; do not trim or normalize casing
             Tables = new Dictionary<string, string>();
+            if (EnableDuplicateReport)
+            {
+                _keyOrigins = new Dictionary<string, OriginInfo>();
+                _duplicates.Clear();
+            }
 
             var files = Directory.GetFiles(tableFolder, "*.txt");
             foreach (var file in files) {
@@ -32,6 +38,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                 foreach (var line in lines) {
                     var values = line.Split('\t');
 
+                    // Keep key casing and whitespace as-is (only strip wrapping quotes from format)
                     var key = values[0].Trim('"');
                     var value = values[1].Trim('"');
 
@@ -39,11 +46,31 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                         continue;
                     }
 
+                    if (EnableDuplicateReport && Tables.ContainsKey(key))
+                    {
+                        var currentFile = Path.GetFileName(file);
+                        if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
+                        {
+                            _duplicates.Add(new DuplicateInfo
+                            {
+                                Key = key,
+                                FirstId = prev.Id,
+                                FirstFile = prev.FileName,
+                                NewId = 0,
+                                NewFile = currentFile
+                            });
+                        }
+                    }
+
                     Tables[key] = value;
+                    if (EnableDuplicateReport)
+                    {
+                        _keyOrigins[key] = new OriginInfo { Id = 0, FileName = Path.GetFileName(file) };
+                    }
                 }
             }
         }
-        
+
         public static void ImportFromTbl(string tableFolder) {
             // Prefer JSON if present, to avoid changing callers.
             var jsonFiles = Directory.GetFiles(tableFolder, "*.json");
@@ -53,7 +80,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                 return;
             }
 
+            // Case-sensitive keys by default; do not trim or normalize casing
             Tables = new Dictionary<string, string>();
+            if (EnableDuplicateReport)
+            {
+                _keyOrigins = new Dictionary<string, OriginInfo>();
+                _duplicates.Clear();
+            }
 
             var files = Directory.GetFiles(tableFolder, "*.tbl");
 
@@ -63,7 +96,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
             }
 
             foreach (var file in files) {
-                
+
                 var hashTable = TableProcessor.ReadTablesFile(file);
 
                 foreach (var tableEntry in hashTable) {
@@ -74,7 +107,33 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                         value = RemoveColorCodes(value);
                     }
 
-                    Tables[tableEntry.Key] = value;
+                    // Keep key as-is (no trimming or normalization)
+                    var key = tableEntry.Key;
+                    if (string.IsNullOrEmpty(key)) {
+                        continue;
+                    }
+
+                    if (EnableDuplicateReport && Tables.ContainsKey(key))
+                    {
+                        var currentFile = Path.GetFileName(file);
+                        if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
+                        {
+                            _duplicates.Add(new DuplicateInfo
+                            {
+                                Key = key,
+                                FirstId = prev.Id,
+                                FirstFile = prev.FileName,
+                                NewId = 0,
+                                NewFile = currentFile
+                            });
+                        }
+                    }
+
+                    Tables[key] = value;
+                    if (EnableDuplicateReport)
+                    {
+                        _keyOrigins[key] = new OriginInfo { Id = 0, FileName = Path.GetFileName(file) };
+                    }
                 }
             }
         }
@@ -93,15 +152,21 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                     i += 3;
                     continue;
                 }
+                // Also remove any '*' characters per requirement
+                if (input[i] == '*') {
+                    i++;
+                    continue;
+                }
                 result.Append(input[i]);
                 i++;
             }
             return result.ToString();
         }
-        
+
         // Expects each .json file to contain an array of objects with at least:
         // { "Key": "Betsy", "enUS": "Mistress of the Pasture" }
         public static void ImportFromJson(string tableFolder) {
+            // Case-sensitive keys by default; do not trim or normalize casing
             Tables = new Dictionary<string, string>();
             if (EnableDuplicateReport)
             {
@@ -135,38 +200,44 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                         }
 
                         // Use Key for lookup, enUS as the text value.
-                        var value = entry.enUS ?? string.Empty;
+                        var value = entry.EnUs ?? string.Empty;
 
                         // S color codes
                         if (!string.IsNullOrEmpty(value)) {
                             value = RemoveColorCodes(value);
                         }
-                        // Collect report info if a duplicate key is encountered (will overwrite previous value)
-                        if (EnableDuplicateReport && Tables.ContainsKey(entry.Key)) {
-                            var currentFile = System.IO.Path.GetFileName(file);
+                        // Keep key as-is (no trimming)
+                        var key = entry.Key;
+                        if (string.IsNullOrEmpty(key)) {
+                            continue;
+                        }
 
-                            if (_keyOrigins != null && _keyOrigins.TryGetValue(entry.Key, out var prev))
+                        // Collect report info if a duplicate key is encountered (will overwrite previous value)
+                        if (EnableDuplicateReport && Tables.ContainsKey(key)) {
+                            var currentFile = Path.GetFileName(file);
+
+                            if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
                             {
                                 _duplicates.Add(new DuplicateInfo
                                 {
-                                    Key = entry.Key,
+                                    Key = key,
                                     FirstId = prev.Id,
                                     FirstFile = prev.FileName,
-                                    NewId = entry.ID,
+                                    NewId = entry.Id,
                                     NewFile = currentFile
                                 });
                             }
                         }
 
-                        Tables[entry.Key] = value;
+                        Tables[key] = value;
                         // Track the latest origin of this key for potential future duplicates
                         if (EnableDuplicateReport)
                         {
-                            _keyOrigins[entry.Key] = new OriginInfo { Id = entry.ID, FileName = System.IO.Path.GetFileName(file) };
+                            _keyOrigins[key] = new OriginInfo { Id = entry.Id, FileName = Path.GetFileName(file) };
                         }
                     }
                 }
-                
+
                 catch (System.Exception ex) {
                     ExceptionHandler.LogException(
                         new System.Exception($"Failed to read JSON table file '{file}'", ex));
@@ -175,6 +246,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
         }
 
         public static string GetValue(string key) {
+            if (string.IsNullOrEmpty(key)) {
+                return null;
+            }
+
+            // Try exact lookup first (case-sensitive)
             if (Tables.ContainsKey(key)) {
                 var value = Tables[key];
 
@@ -185,18 +261,38 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                 return value;
             }
 
-            if (!string.IsNullOrEmpty(key)) {
-                ExceptionHandler.LogException(
-                    new System.Exception($"Could not find key '{key}' in any table file (.json/.tbl)"));
+            // If not found, check if a case-insensitive match exists to signal casing issue
+            string caseMismatchKey = null;
+            foreach (var existing in Tables.Keys)
+            {
+                if (string.Equals(existing, key, System.StringComparison.OrdinalIgnoreCase) && existing != key)
+                {
+                    caseMismatchKey = existing;
+                    break;
+                }
             }
+
+            if (caseMismatchKey != null)
+            {
+                // Try to include file information if we have it
+                var file = _keyOrigins != null && _keyOrigins.TryGetValue(caseMismatchKey, out var origin)
+                    ? origin.FileName
+                    : "tables";
+                // Throw to allow user to fix input and rerun
+                throw new System.Exception($"Key not found for \"{key}\" in \"{file}\"");
+            }
+
+            // Otherwise, report generic missing key
+            ExceptionHandler.LogException(
+                new System.Exception($"Could not find key '{key}' in any table file (.json/.tbl)."));
             return null;
         }
 
         private class JsonTableEntry {
-            
-            public int ID { get; set; }
+
+            public int Id { get; set; }
             public string Key { get; set; }
-            public string enUS { get; set; }
+            public string EnUs { get; set; }
 
         }
 
@@ -230,14 +326,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries {
                     return; // Nothing to write
                 }
 
-                var jsonDir = System.IO.Path.Combine(outputRootPath, "json");
+                var jsonDir = Path.Combine(outputRootPath, "json");
                 if (!Directory.Exists(jsonDir))
                 {
                     Directory.CreateDirectory(jsonDir);
                 }
 
                 // Write as a simple .txt file with tab-separated values and no BOM to avoid odd characters in some spreadsheet programs
-                var reportPath = System.IO.Path.Combine(jsonDir, "duplicate_table_keys.txt");
+                var reportPath = Path.Combine(jsonDir, "jason key duplicates.txt");
 
                 using (var sw = new StreamWriter(reportPath, false, new System.Text.UTF8Encoding(false)))
                 {
