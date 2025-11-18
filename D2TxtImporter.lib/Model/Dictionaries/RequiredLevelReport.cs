@@ -79,6 +79,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     sw.WriteLine("ItemType\tItemName\tPropertyName\tPropertyReqLevel\tItemReqBefore");
                     foreach (var e in _entries)
                     {
+                        // Skip Runeword entries in the file output (case-insensitive)
+                        if (e.ItemType != null && e.ItemType.Equals("Runeword", StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
+
                         sw.WriteLine($"{e.ItemType}\t{e.ItemName}\t{e.PropertyName}\t{e.PropertyReqLevel}\t{e.ItemReqBefore}");
                     }
                 }

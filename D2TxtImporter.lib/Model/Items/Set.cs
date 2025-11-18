@@ -74,14 +74,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 set.SetItems = SetItem.SetItems.Where(x => x.Set == set.Index).ToList();
-
-                // Adjust set level by any property that explicitly increases required level (single pass helper)
-                var levelIncrease = RequiredLevelReport.ComputeRequiredLevelIncrease(set.PartialProperties, set.FullProperties);
-                set.Level += levelIncrease;
-
-                // Note: Do not adjust set level based on implied requirements from Partial/Full properties.
-                // Only explicit +Required Level modifiers (item_levelreq) should affect the set Level.
-
+                
                 result.Add(set);
             }
 

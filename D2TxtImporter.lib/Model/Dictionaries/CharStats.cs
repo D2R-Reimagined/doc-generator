@@ -38,7 +38,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/CharStats.txt");
 
-            foreach (var row in table) {
+            foreach (var row in table) 
+            {
                 var charStat = new CharStat {
                     Class = row["class"].ToString(),
                     StrAllSkills = row["StrAllSkills"],
@@ -51,7 +52,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             }
         }
 
-        public override string ToString() {
+        public override string ToString() 
+        {
             return Class;
         }
     }

@@ -52,7 +52,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 var rarity = Utility.ToNullableInt(row["rarity"]);
-
+                
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
                 {
@@ -66,6 +66,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 var code = row["code"];
+                
                 var unique = new Unique
                 {
                     Index = name,
@@ -83,10 +84,12 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     eq = (Armor)Armor.Armors[code].Clone();
                 }
+                
                 else if (Weapon.Weapons.ContainsKey(code))
                 {
                     eq = (Weapon)Weapon.Weapons[code].Clone();
                 }
+                
                 else if (Misc.MiscItems.ContainsKey(code))
                 {
                     var misc = Misc.MiscItems[code];
@@ -98,6 +101,7 @@ namespace D2TxtImporter.lib.Model.Items
                         Type = misc.Type
                     };
                 }
+                
                 else
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find code '{code}' in Weapons.txt, Armor.txt, or Misc.txt for set item '{unique.Name}' in UniqueItems.txt"));
@@ -118,6 +122,7 @@ namespace D2TxtImporter.lib.Model.Items
                     var properties = ItemProperty.GetProperties(propList, unique.ItemLevel).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
                     unique.Properties = properties;
                 }
+                
                 catch (Exception e)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get properties for unique '{unique.Name}' in UniqueItems.txt", e));

@@ -132,7 +132,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 Stat = "eledam",
                 DescriptionPriority = ItemStatCosts["firemindam"].DescriptionPriority,
                 DescriptionFunction = 30,
-                DescriptonStringPositive = "Adds +%d Weapon %s Damage",
+                DescriptonStringPositive = "Adds %d Weapon %s Damage",
                 DescriptionValue = 3
             };
 
@@ -294,28 +294,35 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             sockets.DescriptionValue = 3; // Use value as is
         }
 
-        public string PropertyString(int? value, int? value2, string parameter, int itemLevel) {
+        public string PropertyString(int? value, int? value2, string parameter, int itemLevel) 
+        {
 
             string lstValue;
             var valueString = GetValueString(value, value2);
 
-            if (DescriptonStringPositive == null) {
+            if (DescriptonStringPositive == null) 
+            {
                 lstValue = Stat;
             }
-            else if (value2.HasValue && value2.Value < 0) {
+            else if (value2.HasValue && value2.Value < 0) 
+            {
                 lstValue = DescriptionStringNegative;
             }
             else {
                 lstValue = DescriptonStringPositive;
             }
 
-            if (DescriptionFunction.HasValue) {
-                if (DescriptionFunction.Value >= 1 && DescriptionFunction.Value <= 4 && lstValue.Contains("%d")) {
+            if (DescriptionFunction.HasValue) 
+            {
+                if (DescriptionFunction.Value >= 1 && DescriptionFunction.Value <= 4 && lstValue.Contains("%d")) 
+                {
                     valueString = lstValue.Replace("%d", valueString);
                     DescriptionValue = 3;
                 }
-                else {
-                    switch (DescriptionFunction.Value) {
+                else 
+                {
+                    switch (DescriptionFunction.Value) 
+                    {
                         case 1:
                             valueString = $"+{valueString}";
                             break;
@@ -333,10 +340,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
 
                         case 5:
-                            if (value.HasValue) {
+                            if (value.HasValue) 
+                            {
                                 value = value * 100 / 128;
                             }
-                            if (value2.HasValue) {
+                            if (value2.HasValue) 
+                            {
                                 value2 = value2 * 100 / 128;
                             }
                             valueString = GetValueString(value, value2);
@@ -347,11 +356,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             double val1 = 0;
                             double val2 = 0;
 
-                            if (value.HasValue && value2.HasValue) {
+                            if (value.HasValue && value2.HasValue)
+                            {
                                 val1 = CalculatePerLevel(value.Value.ToString(), Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(value2.Value.ToString(), Op, OpParam, Stat);
                             }
-                            else {
+                            else
+                            {
                                 val1 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                             }
@@ -366,11 +377,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             val1 = 0;
                             val2 = 0;
 
-                            if (value.HasValue && value2.HasValue) {
+                            if (value.HasValue && value2.HasValue) 
+                            {
                                 val1 = CalculatePerLevel(value.Value.ToString(), Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(value2.Value.ToString(), Op, OpParam, Stat);
                             }
-                            else {
+                            else 
+                            {
                                 val1 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                             }
@@ -385,11 +398,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             val1 = 0;
                             val2 = 0;
 
-                            if (value.HasValue && value2.HasValue) {
+                            if (value.HasValue && value2.HasValue) 
+                            {
                                 val1 = CalculatePerLevel(value.Value.ToString(), Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(value2.Value.ToString(), Op, OpParam, Stat);
                             }
-                            else {
+                            else 
+                            {
                                 val1 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                             }
@@ -404,11 +419,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             val1 = 0;
                             val2 = 0;
 
-                            if (value.HasValue && value2.HasValue) {
+                            if (value.HasValue && value2.HasValue) 
+                            {
                                 val1 = CalculatePerLevel(value.Value.ToString(), Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(value2.Value.ToString(), Op, OpParam, Stat);
                             }
-                            else {
+                            else 
+                            {
                                 val1 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                                 val2 = CalculatePerLevel(parameter, Op, OpParam, Stat);
                             }
@@ -434,15 +451,19 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                             var regex = Regex.Match(parameter, @"randclassskill(\d+)"); // Work with custom randclasskill(digit)
 
-                            if (regex.Success) {
+                            if (regex.Success) 
+                            {
                                 classReplace = "(Random Class)";
                                 valueString = $"+{regex.Groups[1].Value}";
                             }
-                            else if (parameter == "randclassskill") {
+                            else if (parameter == "randclassskill")
+                            {
                                 classReplace = "(Random Class)";
                             }
-                            else {
-                                if (!CharStat.CharStats.ContainsKey(parameter)) {
+                            else 
+                            {
+                                if (!CharStat.CharStats.ContainsKey(parameter)) 
+                                {
                                     throw ItemStatCostException.Create($"Could not find character class '{parameter}'\nNote: if you have made a custom version of 'randclassskill' to support different amount of skills change them to 'randclassskill<d>' for example 'randclassskill5' is supported.");
                                 }
                                 classReplace = CharStat.CharStats[parameter].Class;
@@ -453,12 +474,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                         case 14:
                             var par = Utility.ToNullableInt(parameter);
-                            if (!par.HasValue) {
+                            if (!par.HasValue) 
+                            {
                                 throw ItemStatCostException.Create(
                                     $"Could not convert parameter '{parameter}' to a valid integer");
                             }
 
-                            if (!CharStat.SkillTabs.ContainsKey(par.Value)) {
+                            if (!CharStat.SkillTabs.ContainsKey(par.Value)) 
+                            {
                                 throw ItemStatCostException.Create(
                                     $"Could not find skill tab with id {par.Value}");
                             }
@@ -466,7 +489,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             var skillTab = CharStat.SkillTabs[par.Value];
                             var className = CharStat.CharStats.Values.First(x => x.StrSkillTab1 == skillTab ||x.StrSkillTab2 == skillTab || x.StrSkillTab3 == skillTab).Class;
 
-                            if (!Table.Tables.ContainsKey(skillTab)) {
+                            if (!Table.Tables.ContainsKey(skillTab)) 
+                            {
                                 throw ItemStatCostException.Create(
                                     $"Could not find translation key '{skillTab}' in any .tbl or .json file");
                             }
@@ -479,7 +503,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = value2.Value.ToString();
                             var skill = Skill.GetSkill(parameter);
 
-                            if (value2.Value == 0) {
+                            if (value2.Value == 0) 
+                            {
                                 val1 = Math.Min(Math.Ceiling((itemLevel - (skill.RequiredLevel - 1)) / 3.9), 20);
                                 val2 = Math.Min(Math.Round((99 - (skill.RequiredLevel - 1)) / 3.9), 20);
 
@@ -490,7 +515,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 .Replace("%d", valueString)
                                 .Replace("%s", CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.SkillDesc));
 
-                            if (string.IsNullOrEmpty(skill.SkillDesc)) {
+                            if (string.IsNullOrEmpty(skill.SkillDesc))
+                            {
                                 throw ItemStatCostException.Create($"Skill for property has missing 'skilldesc' in Skills.txt: name: '{skill.Name}', id: '{skill.Id}'");
                             }
                             break;
@@ -503,31 +529,38 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                         case 19:
                             // Splash Charm Damage Display Fix
-                            if (Stat.Contains("pl_mindamage")) {
-                                if (value.Value != value2.Value) {
+                            if (Stat.Contains("pl_mindamage")) 
+                            {
+                                if (value.Value != value2.Value) 
+                                {
                                     valueString = $"+{value}% Min / +{value2}% Max Player Damage";
                                 }
-                                else {
+                                else 
+                                {
                                     valueString = $"+{value}% Player Damage";
                                 }
                             }
 
                             //Per Level Display Fix
-                            else if (Stat.Contains("perlevel")) {
+                            else if (Stat.Contains("perlevel"))
+                            {
 
                                 var opMath = OpParam != null ? Math.Pow(2, OpParam.Value) : 0;
                                 double.TryParse(parameter, out var lvlGrowth);
                                 string perLvlCalc;
 
                                 // Try to use 'parameter' first
-                                if (!string.IsNullOrEmpty(parameter)) {
+                                if (!string.IsNullOrEmpty(parameter)) 
+                                {
                                     perLvlCalc = Math.Round(lvlGrowth / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
                                 // Fallback: check value1 and value2
-                                else if (value == value2) {
+                                else if (value == value2)
+                                {
                                     perLvlCalc = Math.Round(value.Value / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
-                                else if (value != value2) {
+                                else if (value != value2) 
+                                {
                                     perLvlCalc = Math.Round(value.Value / opMath, 2).ToString(CultureInfo.InvariantCulture) + " - " + Math.Round(value2.Value / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
                                 else {
@@ -545,15 +578,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 int maxPoison = (int)Math.Ceiling(value2.Value * len / 256.0);
                                 int seconds = len / 25;
 
-                                if (minPoison == maxPoison) {
+                                if (minPoison == maxPoison) 
+                                {
                                     valueString = $"Adds {minPoison} Poison Damage over {seconds} Seconds";
                                 }
-                                else {
+                                else 
+                                {
                                     valueString = $"Adds {minPoison}-{maxPoison} Poison Damage over {seconds} Seconds";
                                 }
                             }
 
-                            else {
+                            else 
+                            {
                                 valueString = lstValue.Replace("%d%", valueString).Replace("%+d%", '+'+valueString).Replace("%d", valueString).Replace("%+d", '+'+valueString);
                             }
                             break;
@@ -563,7 +599,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
 
                         case 23:
-                            if (!MonStat.MonStats.ContainsKey(parameter)) {
+                            if (!MonStat.MonStats.ContainsKey(parameter)) 
+                            {
                                 throw ItemStatCostException.Create($"Could not find monster with id '{parameter}' in MonStats.txt");
                             }
 
@@ -581,12 +618,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             var charClass = skillRandSkill.CharClass;
                             string reqString;
 
-                            if (!string.IsNullOrEmpty(parameter)) {
-                                if (int.TryParse(parameter, out _)) {
+                            if (!string.IsNullOrEmpty(parameter)) 
+                            {
+                                if (int.TryParse(parameter, out _)) 
+                                {
                                     var skillRandName = GetClassNameForRange(value, value2);
                                     valueString = $"+{parameter} Random {skillRandName} Skill";
                                 }
-                                else {
+                                else 
+                                {
                                     // Named class / skill
                                     if (!CharStat.CharStats.TryGetValue(charClass, out var charInfo)) {
                                         throw ItemStatCostException.Create($"Could not find character skill tab '{charClass}' property");
@@ -597,7 +637,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 }
                             }
 
-                            else {
+                            else 
+                            {
                                 // No CharClass given — fallback to normal
                                 valueString = $"+{valueString} to {skillRandSkill.Name}";
                             }
@@ -608,7 +649,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
 
                         case 29: // Custom for sockets
-                            if (string.IsNullOrEmpty(valueString)) {
+                            if (string.IsNullOrEmpty(valueString)) 
+                            {
                                 valueString = parameter;
                             }
 
@@ -633,8 +675,10 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             }
 
             // Check for and replace Skill Names for those reworked but not renamed in Skills.txt or are mispelled or just completely different
-            if (!string.IsNullOrEmpty(valueString)) {
-                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) {
+            if (!string.IsNullOrEmpty(valueString)) 
+            {
+                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase) 
+                {
                     { "stun", "Tectonic Slam" },
                     { "concentrate", "Carnage" },
                     { "poison explosion", "Poison Volley" },
@@ -655,15 +699,19 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     { "royal strike", "Phoenix Strike" }
                 };
 
-                foreach (var pair in replacements) {
-                    if (valueString.IndexOf(" skills", StringComparison.OrdinalIgnoreCase) < 0) {
+                foreach (var pair in replacements) 
+                {
+                    if (valueString.IndexOf(" skills", StringComparison.OrdinalIgnoreCase) < 0) 
+                    {
                         valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
                     }
                 }
             }
 
-            if (DescriptionValue.HasValue && !string.IsNullOrEmpty(lstValue)) {
-                switch (DescriptionValue.Value) {
+            if (DescriptionValue.HasValue && !string.IsNullOrEmpty(lstValue)) 
+            {
+                switch (DescriptionValue.Value) 
+                {
                     case 0:
                         valueString = lstValue;
                         break;
@@ -681,7 +729,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 }
             }
 
-            switch (lstValue) {
+            switch (lstValue) 
+            {
                 case "item_levelreq":
                     valueString = "+" + value + " to Required Level";
                     break;
@@ -712,7 +761,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         private static double CalculatePerLevel(string parameter, int? op, int? opParam, string stat) {
             var para = Utility.ToNullableInt(parameter);
-            if (!para.HasValue) {
+            if (!para.HasValue) 
+            {
                 throw ItemStatCostException.Create($"Could not calculate per level, as parameter '{parameter}' is not a valid integer");
             }
 
@@ -724,14 +774,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             var valueString = "";
 
-            if (value.HasValue) {
+            if (value.HasValue) 
+            {
                 valueString += value.Value.ToString(CultureInfo.InvariantCulture);
 
-                if (value2.HasValue && value.Value != value2.Value) {
-                    if (value2.Value >= 0) {
+                if (value2.HasValue && value.Value != value2.Value) 
+                {
+                    if (value2.Value >= 0) 
+                    {
                         valueString += $"-{value2.Value.ToString(CultureInfo.InvariantCulture)}";
                     }
-                    else {
+                    else 
+                    {
                         valueString += $" to {value2.Value.ToString(CultureInfo.InvariantCulture)}";
                     }
                 }

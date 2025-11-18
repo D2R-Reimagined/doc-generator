@@ -40,14 +40,14 @@ namespace D2TxtImporter.lib.Model.Types
         public string Suffix { get; set; }
 
         [JsonIgnore]
-        private static List<string> _ignoredProperties = new List<string> { "state", "bloody",
-            "oskill_hide", "dmg-throw", "uberstone-property", "ubertorch-property" };
+        private static List<string> _ignoredProperties = new List<string> 
+            { "state", "bloody", "oskill_hide", "dmg-throw", "uberstone-property", "ubertorch-property" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
 
-        public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "") {
-
+        public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "")
+        {
             CurrentItemProperty = this;
             Parameter = parameter;
             Min = min;
@@ -56,9 +56,9 @@ namespace D2TxtImporter.lib.Model.Types
             ItemLevel = ItemLevel;
             Suffix = suffix;
 
-            if (!EffectProperty.EffectProperties.ContainsKey(property.ToLower())) {
-                throw ItemPropertyException.Create(
-                    $"Could not find property '{property.ToLower()}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
+            if (!EffectProperty.EffectProperties.ContainsKey(property.ToLower())) 
+            {
+                throw ItemPropertyException.Create($"Could not find property '{property.ToLower()}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
             }
 
             Property = EffectProperty.EffectProperties[property.ToLower()];
@@ -66,10 +66,11 @@ namespace D2TxtImporter.lib.Model.Types
             var propStat = Property.Stat;
             var propCode = Property.Code;
 
-
-            if (string.IsNullOrEmpty(propStat)) {
+            if (string.IsNullOrEmpty(propStat)) 
+            {
                 // Fix wrongly spelled and hardcoded stats
-                switch (Property.Code) {
+                switch (Property.Code) 
+                {
                     case "str":
                         propStat = "strength";
                         break;
@@ -98,8 +99,10 @@ namespace D2TxtImporter.lib.Model.Types
             }
 
             // Fix all class skills displaying as amazon and random class skills to show correct value
-            if (propStat == "item_addclassskills") {
-                if (propCode == "randclassskill") {
+            if (propStat == "item_addclassskills") 
+            {
+                if (propCode == "randclassskill")
+                {
                     Min = int.TryParse(Parameter, out var parsed) ? parsed : 0;
                     Max = Min;
                 }
@@ -108,7 +111,8 @@ namespace D2TxtImporter.lib.Model.Types
             }
 
             // Fix manually set stats
-            switch (propCode) {
+            switch (propCode) 
+            {
                 case "res-all":
                 case "res-all-max":
                 case "all-stats":
@@ -126,17 +130,21 @@ namespace D2TxtImporter.lib.Model.Types
                     break;
             }
 
-            if (!ItemStatCost.ItemStatCosts.ContainsKey(propStat)) {
+            if (!ItemStatCost.ItemStatCosts.ContainsKey(propStat))
+            {
                 throw ItemPropertyException.Create($"Could not find stat '{propStat}' in ItemStatCost.txt");
             }
 
             ItemStatCost = ItemStatCost.ItemStatCosts[propStat];
 
-            try {
+            try
+            {
                 PropertyString = ItemStatCost.PropertyString(Min, Max, Parameter, itemLevel);
             }
-            catch (Exception e) {
-                if (e as ItemStatCostException == null) {
+            catch (Exception e) 
+            {
+                if (e as ItemStatCostException == null) 
+                {
                     throw ItemPropertyException.Create($"Could not generate properties for property '{property}' with parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}'", e);
                 }
 
@@ -144,7 +152,8 @@ namespace D2TxtImporter.lib.Model.Types
             }
         }
         
-        public ItemProperty(ItemProperty itemProperty) {
+        public ItemProperty(ItemProperty itemProperty)
+        {
             CurrentItemProperty = this;
             Property = itemProperty.Property;
             Parameter = itemProperty.Parameter;
@@ -155,11 +164,13 @@ namespace D2TxtImporter.lib.Model.Types
             Index = itemProperty.Index;
         }
 
-        public static List<ItemProperty> GetProperties(List<PropertyInfo> properties, int itemLevel = 0) {
+        public static List<ItemProperty> GetProperties(List<PropertyInfo> properties, int itemLevel = 0) 
+        {
             var result = new List<ItemProperty>();
 
             // Build ItemProperty list
-            for (int i = 0; i < properties.Count; i++) {
+            for (int i = 0; i < properties.Count; i++) 
+            {
                 var property = properties[i];
 
                 if (string.IsNullOrEmpty(property.Property) || property.Property.StartsWith("*"))
@@ -168,7 +179,8 @@ namespace D2TxtImporter.lib.Model.Types
                 var codeLower = property.Property.Trim().ToLowerInvariant();
 
                 // Replace "dmg-elem" with 3 element-specific props
-                if (codeLower == "dmg-elem") {
+                if (codeLower == "dmg-elem") 
+                {
                     foreach (var elem in new[] { "dmg-fire", "dmg-cold", "dmg-ltng" })
                     {
                         var p = new ItemProperty(
@@ -203,12 +215,14 @@ namespace D2TxtImporter.lib.Model.Types
             }
 
             // Remove % from non-% /lvl properties, ignoring known exceptions
-            var ignoredStats = new HashSet<string> {
+            var ignoredStats = new HashSet<string>
+            {
                 "res-cold/lvl", "res-fire/lvl", "res-ltng/lvl", "res-pois/lvl", "deadly/lvl",
                 "crush/lvl", "wounds/lvl", "dmg-dem/lvl", "dmg-und/lvl"
             };
 
-            foreach (var prop in result) {
+            foreach (var prop in result) 
+            {
                 if (string.IsNullOrEmpty(prop.PropertyString))
                     continue;
 
@@ -219,7 +233,8 @@ namespace D2TxtImporter.lib.Model.Types
                 var statLower = stat.ToLowerInvariant();
                 bool stripPercent = (statLower.Contains("/lvl") && !statLower.Contains("%/lvl") && !ignoredStats.Contains(statLower)) || statLower.Contains("regen2");
 
-                if (stripPercent) {
+                if (stripPercent)
+                {
                     prop.PropertyString = prop.PropertyString.Replace("%", "");
                 }
             }
@@ -235,15 +250,18 @@ namespace D2TxtImporter.lib.Model.Types
                 .Where(x => x.Property.Stat.Contains("length"))
                 .ToList();
 
-            if (minDamage.Any() && maxDamage.Any()) {
+            if (minDamage.Any() && maxDamage.Any()) 
+            {
 
                 var toRemove = new HashSet<ItemProperty>();
                 var toAdd = new List<ItemProperty>();
 
-                foreach (var minDam in minDamage) {
+                foreach (var minDam in minDamage) 
+                {
                     var minDamProperty = minDam.Property.Stat.Replace("mindam", "");
 
-                    foreach (var maxDam in maxDamage) {
+                    foreach (var maxDam in maxDamage) 
+                    {
                         var maxDamProperty = maxDam.Property.Stat.Replace("maxdam", "");
                         if (!string.Equals(minDamProperty, maxDamProperty, StringComparison.Ordinal))
                             continue;
@@ -262,7 +280,8 @@ namespace D2TxtImporter.lib.Model.Types
                         toRemove.Add(minDam);
                         toRemove.Add(maxDam);
 
-                        foreach (var lenDam in lenDamage) {
+                        foreach (var lenDam in lenDamage) 
+                        {
                             var lenDamProperty = lenDam.Property.Stat.Replace("length", "");
                             if (minDamProperty == lenDamProperty)
                                 toRemove.Add(lenDam);
@@ -280,7 +299,8 @@ namespace D2TxtImporter.lib.Model.Types
                 .Where(x => x.Property.Stat.Contains("length"))
                 .ToList();
 
-            if (lenDamage.Any()) {
+            if (lenDamage.Any()) 
+            {
                 result.RemoveAll(x =>
                     x.Property.Code == "cold-len" && x.Property.Stat.Contains("length"));
             }
@@ -293,15 +313,18 @@ namespace D2TxtImporter.lib.Model.Types
                 .Where(x => x.Property.Stat.Contains("maxdam") && !x.Property.Stat.Contains("level"))
                 .ToList();
 
-            if (minDamage.Any() && !maxDamage.Any()) {
-                foreach (var minDam in minDamage) {
+            if (minDamage.Any() && !maxDamage.Any()) 
+            {
+                foreach (var minDam in minDamage) 
+                {
                     if (minDam.Min == minDam.Max || string.IsNullOrEmpty(minDam.PropertyString))
                         continue;
 
                     var s = minDam.PropertyString;
 
                     // Case-insensitive check for life/mana stolen lines
-                    if (s.IndexOf("stolen per", StringComparison.OrdinalIgnoreCase) < 0) {
+                    if (s.IndexOf("stolen per", StringComparison.OrdinalIgnoreCase) < 0)
+                    {
                         s = s.Replace("+", "Adds ");
                     }
 
@@ -313,8 +336,8 @@ namespace D2TxtImporter.lib.Model.Types
             return result;
         }
 
-
-        public static void CleanupDublicates(List<ItemProperty> properties) {
+        public static void CleanupDublicates(List<ItemProperty> properties) 
+        {
             if (properties == null || properties.Count == 0)
                 return;
 
@@ -325,7 +348,8 @@ namespace D2TxtImporter.lib.Model.Types
                 .GroupBy(x => x.CompareKey)
                 .Where(g => g.Skip(1).Any());
 
-            foreach (var group in duplicateBaseGroups) {
+            foreach (var group in duplicateBaseGroups) 
+            {
                 var merged = MergeItemPropertyGroup(group, transformWeaponMinText: true);
 
                 baseProps.RemoveAll(x =>
@@ -336,7 +360,8 @@ namespace D2TxtImporter.lib.Model.Types
                 baseProps.Add(merged);
             }
 
-            List<ItemProperty> MergeDuplicatesByPropertyString(IEnumerable<ItemProperty> source) {
+            List<ItemProperty> MergeDuplicatesByPropertyString(IEnumerable<ItemProperty> source) 
+            {
                 return source
                     .GroupBy(x =>
                         Regex.Replace(x.PropertyString ?? string.Empty,
@@ -380,7 +405,8 @@ namespace D2TxtImporter.lib.Model.Types
 
         private static ItemProperty MergeItemPropertyGroup(
             IEnumerable<ItemProperty> group,
-            bool transformWeaponMinText) {
+            bool transformWeaponMinText) 
+        {
 
             var props = group.ToList();
             var first = props[0];
@@ -412,7 +438,8 @@ namespace D2TxtImporter.lib.Model.Types
             return merged;
         }
 
-        public override string ToString() {
+        public override string ToString() 
+        {
             return Property.ToString();
         }
     }

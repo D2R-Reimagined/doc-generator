@@ -19,12 +19,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public int MaxLevel { get; set; }
         public int LevelReq { get; set; }
         public int Group { get; set; }
-        // New fields requested for export
-        // ClassSpecific is a string code that should resolve to a class name using CharStats (like case 27 logic)
         public string ClassSpecific { get; set; }
         public string Class { get; set; }
         public int ClassLevelReq { get; set; }
-        // Final, single list of properties exported (ordered by DescriptionPriority desc with zero-based Index)
         public List<ItemProperty> Properties { get; set; }
         public List<string> Types { get; set; }
         public List<string> ETypes { get; set; }
@@ -117,8 +114,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             return null;
         }
 
-        // BuildItemProperty removed in favor of centralized GetProperties
-
         private static List<string> ExtractTypes(Dictionary<string,string> row, string prefix, int count)
         {
             var list = new List<string>();
@@ -153,7 +148,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     return cs.Class;
                 }
             }
-            return raw; // fallback to original content
+            return raw;
         }
 
         public override string ToString()

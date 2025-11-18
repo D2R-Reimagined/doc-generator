@@ -35,18 +35,17 @@ namespace D2TxtImporter.lib.Model.Items
             foreach (var row in table)
             {
                 var addFunc = Utility.ToNullableInt(row["add func"]);
-
                 var name = row["index"];
-
                 var rarity = Utility.ToNullableInt(row["rarity"]);
-
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
+                
                 if (!itemLevel.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find item level for '{name}' in SetItems.txt"));
                 }
 
                 var requiredLevel = Utility.ToNullableInt(row["lvl req"]);
+                
                 if (!requiredLevel.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find required level for '{name}' in SetItems.txt"));
@@ -72,10 +71,12 @@ namespace D2TxtImporter.lib.Model.Items
                     // Clone the base armor to prevent base armor/weapon changes
                     eq = (Armor)Armor.Armors[setItem.Code].Clone();
                 }
+                
                 else if (Weapon.Weapons.ContainsKey(setItem.Code))
                 {
                     eq = (Weapon)Weapon.Weapons[setItem.Code].Clone();
                 }
+                
                 else if (Misc.MiscItems.ContainsKey(setItem.Code))
                 {
                     var misc = Misc.MiscItems[setItem.Code];
@@ -87,6 +88,7 @@ namespace D2TxtImporter.lib.Model.Items
                         Type = misc.Type
                     };
                 }
+                
                 else
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find code '{setItem.Code}' in Weapons.txt, Armor.txt, or Misc.txt for set item '{setItem.Name}' in SetItems.txt"));
@@ -112,7 +114,7 @@ namespace D2TxtImporter.lib.Model.Items
                     ExceptionHandler.LogException(new Exception($"Could not get properties for item '{setItem.Name}' in SetItems.txt", e));
                 }
 
-                // Adjust required level using consolidated evaluator (explicit + implied skill/oskill) in a single pass
+                // Adjust required level
                 setItem.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("SetItem", setItem.Name, setItem.RequiredLevel, setItem.Properties);
 
                 propList = new List<PropertyInfo>();
@@ -128,6 +130,7 @@ namespace D2TxtImporter.lib.Model.Items
                     var setProperties = ItemProperty.GetProperties(propList, setItem.ItemLevel).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
                     setItem.SetProperties = setProperties;
                 }
+                
                 catch (Exception e)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get set properties for item '{setItem.Name}' in SetItems.txt", e));
@@ -155,19 +158,19 @@ namespace D2TxtImporter.lib.Model.Items
                     case 0:
                         setItem.Properties.Add(prop);
                         break;
+                    
                     case 1:
                         var setItems = SetItems.Where(x => x.Set == setItem.Set && x.Name != setItem.Name).ToList();
                         var index = (int)Math.Floor(prop.Index / 2f);
 
                         setItem.SetPropertiesString.Add($"{prop.PropertyString} ({setItems[index].Name})");
                         break;
+                    
                     case 2:
                         setItem.SetPropertiesString.Add($"{prop.PropertyString} ({Math.Floor(prop.Index / 2f) + 2} Items)");
                         break;
                 }
-            }
-
-
+            } 
         }
     }
 }

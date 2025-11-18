@@ -15,7 +15,6 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int Durability { get; set; }
         public int ItemLevel { get; set; }
         public ItemType Type { get; set; }
-        // Common additional export fields
         public string NormCode { get; set; }
         public string UberCode { get; set; }
         public string UltraCode { get; set; }
@@ -60,7 +59,6 @@ namespace D2TxtImporter.lib.Model.Equipment
         }
 
         // Resolve a code using the JSON/TBL table keys to its display string.
-        // If the key is missing, fall back to the original code to avoid nulls.
         public static string ResolveItemTypeName(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
