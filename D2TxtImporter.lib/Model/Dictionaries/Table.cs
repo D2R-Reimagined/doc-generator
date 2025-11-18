@@ -22,7 +22,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         // Accumulates duplicate key occurrences for later reporting
         [JsonIgnore]
-        private static readonly List<DuplicateInfo> _duplicates = new List<DuplicateInfo>();
+        private static readonly List<DuplicateInfo> Duplicates = new List<DuplicateInfo>();
+
+        // Tracks first-seen file for each numeric ID (JSON import only),
+        // used to log duplicate ID usages alongside key duplicates
+        [JsonIgnore]
+        private static Dictionary<int, string> _idFirstFiles;
 
         public static void ImportFromTxt(string tableFolder) {
             // Case-sensitive keys by default; do not trim or normalize casing
@@ -30,7 +35,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             if (EnableDuplicateReport)
             {
                 _keyOrigins = new Dictionary<string, OriginInfo>();
-                _duplicates.Clear();
+                Duplicates.Clear();
+                _idFirstFiles = new Dictionary<int, string>();
             }
 
             var files = Directory.GetFiles(tableFolder, "*.txt");
@@ -56,7 +62,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                         var currentFile = Path.GetFileName(file);
                         if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
                         {
-                            _duplicates.Add(new DuplicateInfo
+                            Duplicates.Add(new DuplicateInfo
                             {
                                 Key = key,
                                 FirstId = prev.Id,
@@ -91,7 +97,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             if (EnableDuplicateReport)
             {
                 _keyOrigins = new Dictionary<string, OriginInfo>();
-                _duplicates.Clear();
+                Duplicates.Clear();
+                _idFirstFiles = new Dictionary<int, string>();
             }
 
             var files = Directory.GetFiles(tableFolder, "*.tbl");
@@ -129,7 +136,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                         var currentFile = Path.GetFileName(file);
                         if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
                         {
-                            _duplicates.Add(new DuplicateInfo
+                            Duplicates.Add(new DuplicateInfo
                             {
                                 Key = key,
                                 FirstId = prev.Id,
@@ -186,7 +193,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             if (EnableDuplicateReport)
             {
                 _keyOrigins = new Dictionary<string, OriginInfo>();
-                _duplicates.Clear();
+                Duplicates.Clear();
+                _idFirstFiles = new Dictionary<int, string>();
             }
 
             var files = Directory.GetFiles(tableFolder, "*.json");
@@ -232,6 +240,28 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             continue;
                         }
 
+                        // Record duplicate numeric ID usages (JSON only), regardless of key equality
+                        if (EnableDuplicateReport && _idFirstFiles != null)
+                        {
+                            var currentFileName = Path.GetFileName(file);
+                            if (_idFirstFiles.TryGetValue(entry.Id, out var firstFileForId))
+                            {
+                                Duplicates.Add(new DuplicateInfo
+                                {
+                                    // Interleave into the same report: write the ID in the Key column
+                                    Key = "ID:" + entry.Id.ToString(),
+                                    FirstId = entry.Id,
+                                    FirstFile = firstFileForId,
+                                    NewId = entry.Id,
+                                    NewFile = currentFileName
+                                });
+                            }
+                            else
+                            {
+                                _idFirstFiles[entry.Id] = currentFileName;
+                            }
+                        }
+
                         // Collect report info if a duplicate key is encountered (will overwrite previous value)
                         if (EnableDuplicateReport && Tables.ContainsKey(key)) 
                         {
@@ -239,7 +269,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                             if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
                             {
-                                _duplicates.Add(new DuplicateInfo
+                                Duplicates.Add(new DuplicateInfo
                                 {
                                     Key = key,
                                     FirstId = prev.Id,
@@ -347,7 +377,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     return; // Disabled
                 }
 
-                if (_duplicates == null || _duplicates.Count == 0)
+                if (Duplicates == null || Duplicates.Count == 0)
                 {
                     return; // Nothing to write
                 }
@@ -366,7 +396,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     // TSV header
                     sw.WriteLine("Key\tFirstID\tFirstFile\tNewID\tNewFile");
                     // TSV rows
-                    foreach (var d in _duplicates)
+                    foreach (var d in Duplicates)
                     {
                         sw.WriteLine($"{d.Key}\t{d.FirstId}\t{d.FirstFile}\t{d.NewId}\t{d.NewFile}");
                     }

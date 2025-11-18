@@ -12,12 +12,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         // Original table key for the affix name (e.g., "sounding"). Not exported.
         [JsonIgnore]
         public string NameKey { get; set; }
-
-        // Resolved, localized name via Tables. Throws (via pre-validation) if the key is missing.
+        
         public string Name { get { return Table.GetValue(NameKey); } }
         public int Level { get; set; }
         public int MaxLevel { get; set; }
-        public int LevelReq { get; set; }
+        public int RequiredLevel { get; set; }
         public int Group { get; set; }
         public string ClassSpecific { get; set; }
         public string Class { get; set; }
@@ -56,7 +55,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     Index = index - 1,
                     Level = level,
                     MaxLevel = Utility.ToNullableInt(row.ContainsKey("maxlevel") ? row["maxlevel"] : null) ?? 0,
-                    LevelReq = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : null) ?? 0,
+                    RequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : null) ?? 0,
                     Group = Utility.ToNullableInt(row.ContainsKey("group") ? row["group"] : null) ?? 0,
                     ClassSpecific = ResolveClassName(GetFirstPresent(row, new []{"classspecific","class specific"})),
                     Class = ResolveClassName(GetFirstPresent(row, new []{"class","Class"})),

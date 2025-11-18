@@ -30,7 +30,7 @@ namespace D2TxtImporter.lib.Model.Types
         public ItemStatCost ItemStatCost { get; set; }
 
         private string _propertyString;
-        public string PropertyString { get => _propertyString + Suffix; set { _propertyString = value; } }
+        public string PropertyString { get => _propertyString + Suffix; private set => _propertyString = value; }
         public int Index { get; set; }
 
         [JsonIgnore]
@@ -38,10 +38,6 @@ namespace D2TxtImporter.lib.Model.Types
 
         [JsonIgnore]
         public string Suffix { get; set; }
-
-        [JsonIgnore]
-        private static List<string> _ignoredProperties = new List<string> 
-            { "state", "bloody", "oskill_hide", "dmg-throw", "uberstone-property", "ubertorch-property" };
 
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
@@ -53,7 +49,7 @@ namespace D2TxtImporter.lib.Model.Types
             Min = min;
             Max = max;
             Index = index;
-            ItemLevel = ItemLevel;
+            ItemLevel = itemLevel;
             Suffix = suffix;
 
             if (!EffectProperty.EffectProperties.ContainsKey(property.ToLower())) 
@@ -109,25 +105,11 @@ namespace D2TxtImporter.lib.Model.Types
 
                 Parameter = Property.Code;
             }
-
-            // Fix manually set stats
-            switch (propCode) 
-            {
-                case "res-all":
-                case "res-all-max":
-                case "all-stats":
-                case "dmg-pois":
-                case "fireskill":
-                case "coldskill":
-                case "lightningskill":
-                case "poisonskill":
-                case "magicskill":
-                case "extra-elem":
-                case "pierce-elem":
-                case "dmg-norm":
-
-                    propStat = Property.Code;
-                    break;
+            
+            // Check hash list for manually set stats
+            if (ManualStatCodes.Contains(propCode)) 
+            { 
+                propStat = Property.Code; 
             }
 
             if (!ItemStatCost.ItemStatCosts.ContainsKey(propStat))
@@ -143,12 +125,12 @@ namespace D2TxtImporter.lib.Model.Types
             }
             catch (Exception e) 
             {
-                if (e as ItemStatCostException == null) 
+                if (!(e is ItemStatCostException)) 
                 {
                     throw ItemPropertyException.Create($"Could not generate properties for property '{property}' with parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}'", e);
                 }
 
-                throw e;
+                throw;
             }
         }
         
@@ -164,173 +146,201 @@ namespace D2TxtImporter.lib.Model.Types
             Index = itemProperty.Index;
         }
 
-        public static List<ItemProperty> GetProperties(List<PropertyInfo> properties, int itemLevel = 0) 
+        public static List<ItemProperty> GetProperties(List<PropertyInfo> properties, int itemLevel = 0)
         {
-            var result = new List<ItemProperty>();
+            var result = new List<ItemProperty>(properties?.Count ?? 0);
+            if (properties == null || properties.Count == 0)
+                return result;
 
-            // Build ItemProperty list
-            for (int i = 0; i < properties.Count; i++) 
+            // Normalize once
+            int n = properties.Count;
+            var code = new string[n]; // lower-cased and trimmed code
+            var param = new string[n];
+            var min = new int?[n];
+            var max = new int?[n];
+            for (int i = 0; i < n; i++)
             {
-                var property = properties[i];
+                var p = properties[i];
+                var c = (p?.Property ?? string.Empty).Trim();
+                code[i] = c.ToLowerInvariant();
+                param[i] = p?.Parameter;
+                min[i] = p?.Min;
+                max[i] = p?.Max;
+            }
 
-                if (string.IsNullOrEmpty(property.Property) || property.Property.StartsWith("*"))
-                    continue;
+            // Index by code (first occurrences are sufficient to mirror previous FindIndex semantics)
+            var idxByCode = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
+            void AddIdx(string k, int i)
+            {
+                if (!idxByCode.TryGetValue(k, out var lst)) { lst = new List<int>(1); idxByCode[k] = lst; }
+                lst.Add(i);
+            }
+            for (int i = 0; i < n; i++)
+            {
+                if (!string.IsNullOrEmpty(code[i]))
+                    AddIdx(code[i], i);
+            }
 
-                var codeLower = property.Property.Trim().ToLowerInvariant();
+            bool TryFirst(string k, out int idx)
+            {
+                if (idxByCode.TryGetValue(k, out var lst) && lst.Count > 0)
+                { idx = lst[0]; return true; }
+                idx = -1; return false;
+            }
 
-                // Replace "dmg-elem" with 3 element-specific props
-                if (codeLower == "dmg-elem") 
+            string GetPoisLenParam(PropertyInfo lenProp)
+            {
+                if (lenProp == null) return string.Empty;
+                if (!string.IsNullOrEmpty(lenProp.Parameter) && int.TryParse(lenProp.Parameter, out _))
+                    return lenProp.Parameter;
+                if (lenProp.Min.HasValue) return lenProp.Min.Value.ToString(CultureInfo.InvariantCulture);
+                if (lenProp.Max.HasValue) return lenProp.Max.Value.ToString(CultureInfo.InvariantCulture);
+                return string.Empty;
+            }
+
+            var consumed = new bool[n];
+            var aggregatesAt = new Dictionary<int, List<ItemProperty>>();
+            void AddAgg(int atIndex, ItemProperty ip)
+            {
+                if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
                 {
-                    foreach (var elem in new[] { "dmg-fire", "dmg-cold", "dmg-ltng" })
-                    {
-                        var p = new ItemProperty(
-                            elem,
-                            property.Parameter,
-                            property.Min,
-                            property.Max,
-                            i,
-                            itemLevel
-                        );
+                    if (!aggregatesAt.TryGetValue(atIndex, out var lst))
+                    { lst = new List<ItemProperty>(1); aggregatesAt[atIndex] = lst; }
+                    lst.Add(ip);
+                }
+            }
 
-                        if (!_ignoredProperties.Contains(p.Property.Code.ToLowerInvariant()))
-                            result.Add(p);
+            // Cold: aggregate only when all three are present; drop orphaned len
+            if (TryFirst("cold-min", out var iCmin) & TryFirst("cold-max", out var iCmax) & TryFirst("cold-len", out var iClen))
+            {
+                bool hasLower = min[iCmin].HasValue;
+                bool hasUpper = max[iCmax].HasValue;
+                if (hasLower && hasUpper)
+                {
+                    int at = Math.Min(iClen, Math.Min(iCmin, iCmax));
+                    var ip = new ItemProperty("dmg-cold", string.Empty, min[iCmin], max[iCmax], at, itemLevel);
+                    AddAgg(at, ip);
+                    consumed[iCmin] = consumed[iCmax] = consumed[iClen] = true;
+                }
+                else
+                {
+                    // Keep originals, drop len
+                    consumed[iClen] = true;
+                }
+            }
+            else if (TryFirst("cold-len", out var iColdLenOnly))
+            {
+                // Orphaned len: drop
+                consumed[iColdLenOnly] = true;
+            }
+
+            // Poison: triplet and pair logic
+            bool hasPmin = TryFirst("pois-min", out var iPmin);
+            bool hasPmax = TryFirst("pois-max", out var iPmax);
+            bool hasPlen = TryFirst("pois-len", out var iPlen);
+            if (hasPlen)
+            {
+                var lenProp = properties[iPlen];
+                var lenParam = GetPoisLenParam(lenProp);
+                if (hasPmin && hasPmax)
+                {
+                    bool lower = min[iPmin].HasValue; bool upper = max[iPmax].HasValue;
+                    if (lower && upper)
+                    {
+                        int at = Math.Min(iPlen, Math.Min(iPmin, iPmax));
+                        var ip = new ItemProperty("dmg-pois", lenParam, min[iPmin], max[iPmax], at, itemLevel);
+                        AddAgg(at, ip);
+                        consumed[iPmin] = consumed[iPmax] = consumed[iPlen] = true;
                     }
-
-                    // Skip adding the original dmg-elem
-                    continue;
-                }
-
-                // Normal processing
-                var prop = new ItemProperty(
-                    property.Property,
-                    property.Parameter,
-                    property.Min,
-                    property.Max,
-                    i,
-                    itemLevel
-                );
-
-                if (!_ignoredProperties.Contains(prop.Property.Code.ToLowerInvariant()))
-                    result.Add(prop);
-            }
-
-            // Remove % from non-% /lvl properties, ignoring known exceptions
-            var ignoredStats = new HashSet<string>
-            {
-                "res-cold/lvl", "res-fire/lvl", "res-ltng/lvl", "res-pois/lvl", "deadly/lvl",
-                "crush/lvl", "wounds/lvl", "dmg-dem/lvl", "dmg-und/lvl"
-            };
-
-            foreach (var prop in result) 
-            {
-                if (string.IsNullOrEmpty(prop.PropertyString))
-                    continue;
-
-                var stat = prop.Property.Code;
-                if (string.IsNullOrEmpty(stat))
-                    continue;
-
-                var statLower = stat.ToLowerInvariant();
-                bool stripPercent = (statLower.Contains("/lvl") && !statLower.Contains("%/lvl") && !ignoredStats.Contains(statLower)) || statLower.Contains("regen2");
-
-                if (stripPercent)
-                {
-                    prop.PropertyString = prop.PropertyString.Replace("%", "");
-                }
-            }
-
-            // Cleanup elemental damage (min / max / length)
-            var minDamage = result
-                .Where(x => x.Property.Stat.Contains("mindam") && !x.Property.Stat.Contains("level"))
-                .ToList();
-            var maxDamage = result
-                .Where(x => x.Property.Stat.Contains("maxdam") && !x.Property.Stat.Contains("level"))
-                .ToList();
-            var lenDamage = result
-                .Where(x => x.Property.Stat.Contains("length"))
-                .ToList();
-
-            if (minDamage.Any() && maxDamage.Any()) 
-            {
-
-                var toRemove = new HashSet<ItemProperty>();
-                var toAdd = new List<ItemProperty>();
-
-                foreach (var minDam in minDamage) 
-                {
-                    var minDamProperty = minDam.Property.Stat.Replace("mindam", "");
-
-                    foreach (var maxDam in maxDamage) 
+                    else
                     {
-                        var maxDamProperty = maxDam.Property.Stat.Replace("maxdam", "");
-                        if (!string.Equals(minDamProperty, maxDamProperty, StringComparison.Ordinal))
-                            continue;
+                        // Cannot form proper range; drop len only
+                        consumed[iPlen] = true;
+                    }
+                }
+                else if (hasPmin)
+                {
+                    // Keep pois-min; add aggregate with min's endpoints; consume len
+                    bool hasAny = min[iPmin].HasValue || max[iPmin].HasValue;
+                    if (hasAny)
+                    {
+                        int at = Math.Min(iPlen, iPmin);
+                        var ip = new ItemProperty("dmg-pois", lenParam, min[iPmin], max[iPmin], at, itemLevel);
+                        AddAgg(at, ip);
+                    }
+                    consumed[iPlen] = true;
+                }
+                else if (hasPmax)
+                {
+                    // Keep pois-max; add aggregate with max's endpoints; consume len
+                    bool hasAny = min[iPmax].HasValue || max[iPmax].HasValue;
+                    if (hasAny)
+                    {
+                        int at = Math.Min(iPlen, iPmax);
+                        var ip = new ItemProperty("dmg-pois", lenParam, min[iPmax], max[iPmax], at, itemLevel);
+                        AddAgg(at, ip);
+                    }
+                    consumed[iPlen] = true;
+                }
+                else
+                {
+                    // Orphaned len: drop
+                    consumed[iPlen] = true;
+                }
+            }
 
-                        var damagePropertyName = minDamProperty == "light" ? "lightning" : minDamProperty;
-                        damagePropertyName = char.ToUpperInvariant(damagePropertyName[0]) + damagePropertyName.Substring(1);
-
-                        var newProp = new ItemProperty(
-                            "eledam",
-                            damagePropertyName,
-                            minDam.Min,
-                            maxDam.Max,
-                            minDam.Index
-                        );
-
-                        toRemove.Add(minDam);
-                        toRemove.Add(maxDam);
-
-                        foreach (var lenDam in lenDamage) 
+            // Build result in a single pass. After finishing index i, append aggregates whose source index <= i.
+            var aggKeys = aggregatesAt.Keys.OrderBy(x => x).ToArray();
+            int aggPtr = 0;
+            for (int i = 0; i < n; i++)
+            {
+                if (!consumed[i])
+                {
+                    var p = properties[i];
+                    if (string.IsNullOrEmpty(p.Property) || p.Property.StartsWith("*"))
+                    {
+                        // Do not add, but still consider flushing aggregates for this index
+                    }
+                    else
+                    {
+                        var cLower = code[i];
+                        if (cLower == "dmg-elem")
                         {
-                            var lenDamProperty = lenDam.Property.Stat.Replace("length", "");
-                            if (minDamProperty == lenDamProperty)
-                                toRemove.Add(lenDam);
+                            foreach (var elem in new[] { "dmg-fire", "dmg-cold", "dmg-ltng" })
+                            {
+                                var ip = new ItemProperty(elem, param[i], min[i], max[i], i, itemLevel);
+                                if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
+                                    result.Add(ip);
+                            }
                         }
-
-                        toAdd.Add(newProp);
+                        else
+                        {
+                            var ip = new ItemProperty(p.Property, p.Parameter, p.Min, p.Max, i, itemLevel);
+                            if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
+                                result.Add(ip);
+                        }
                     }
                 }
 
-                result.RemoveAll(toRemove.Contains);
-                result.AddRange(toAdd);
-            }
-
-            lenDamage = result
-                .Where(x => x.Property.Stat.Contains("length"))
-                .ToList();
-
-            if (lenDamage.Any()) 
-            {
-                result.RemoveAll(x =>
-                    x.Property.Code == "cold-len" && x.Property.Stat.Contains("length"));
-            }
-
-            // Min damage sometimes contains both elements, weird.
-            minDamage = result
-                .Where(x => x.Property.Stat.Contains("mindam") && !x.Property.Stat.Contains("level"))
-                .ToList();
-            maxDamage = result
-                .Where(x => x.Property.Stat.Contains("maxdam") && !x.Property.Stat.Contains("level"))
-                .ToList();
-
-            if (minDamage.Any() && !maxDamage.Any()) 
-            {
-                foreach (var minDam in minDamage) 
+                // Flush aggregates whose at-index is <= current i
+                while (aggPtr < aggKeys.Length && aggKeys[aggPtr] <= i)
                 {
-                    if (minDam.Min == minDam.Max || string.IsNullOrEmpty(minDam.PropertyString))
-                        continue;
-
-                    var s = minDam.PropertyString;
-
-                    // Case-insensitive check for life/mana stolen lines
-                    if (s.IndexOf("stolen per", StringComparison.OrdinalIgnoreCase) < 0)
+                    foreach (var ip in aggregatesAt[aggKeys[aggPtr]])
                     {
-                        s = s.Replace("+", "Adds ");
+                        result.Add(ip);
                     }
-
-                    s = s.Replace("Minimum ", "").Replace("to ", "");
-                    minDam.PropertyString = s;
+                    aggPtr++;
                 }
+            }
+
+            // Flush any remaining aggregates (with at-index greater than any original index)
+            while (aggPtr < aggKeys.Length)
+            {
+                foreach (var ip in aggregatesAt[aggKeys[aggPtr]])
+                {
+                    result.Add(ip);
+                }
+                aggPtr++;
             }
 
             return result;
@@ -437,6 +447,36 @@ namespace D2TxtImporter.lib.Model.Types
 
             return merged;
         }
+        
+        private static readonly List<string> IgnoredProperties = new List<string> 
+        { 
+            "state", 
+            "bloody", 
+            "oskill_hide", 
+            "dmg-throw",
+            "uberstone-property", 
+            "ubertorch-property"
+        };
+        
+        private static readonly HashSet<string> ManualStatCodes = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "res-all",
+            "res-all-max",
+            "all-stats",
+            "fireskill",
+            "coldskill",
+            "lightningskill",
+            "poisonskill",
+            "magicskill",
+            "extra-elem",
+            "pierce-elem",
+            "dmg-pois",
+            "dmg-norm",
+            "dmg-fire",
+            "dmg-cold",
+            "dmg-ltng",
+            "dmg-mag"
+        };
 
         public override string ToString() 
         {

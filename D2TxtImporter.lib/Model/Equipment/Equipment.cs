@@ -8,8 +8,10 @@ namespace D2TxtImporter.lib.Model.Equipment
     {
         public EquipmentType EquipmentType { get; set; }
         public string Name { get { return Table.GetValue(Code); } }
-        [JsonIgnore]
         public string Code { get; set; }
+        // Base required level coming from base equipment tables (Armor.txt / Weapons.txt)
+        // Used to ensure Uniques/SetItems cannot have a lower required level than the base.
+        public int? BaseRequiredLevel { get; set; }
         public int RequiredStrength { get; set; }
         public int RequiredDexterity { get; set; }
         public int Durability { get; set; }
@@ -82,6 +84,7 @@ namespace D2TxtImporter.lib.Model.Equipment
             {
                 EquipmentType = EquipmentType,
                 Code = Code,
+                BaseRequiredLevel = BaseRequiredLevel,
                 RequiredStrength = RequiredStrength,
                 RequiredDexterity = RequiredDexterity,
                 Durability = Durability,

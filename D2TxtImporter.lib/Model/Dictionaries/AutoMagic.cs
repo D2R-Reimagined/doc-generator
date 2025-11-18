@@ -14,7 +14,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         public int Level { get; set; }
         public int MaxLevel { get; set; }
-        public int LevelReq { get; set; }
+        public int RequiredLevel { get; set; }
         public int Group { get; set; }
 
         // Optional class restrictions similar to MagicPrefix/Suffix
@@ -68,7 +68,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     Index = index - 1,
                     Level = level,
                     MaxLevel = Utility.ToNullableInt(row.ContainsKey("maxlevel") ? row["maxlevel"] : null) ?? 0,
-                    LevelReq = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : null) ?? 0,
+                    RequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : null) ?? 0,
                     Group = Utility.ToNullableInt(row.ContainsKey("group") ? row["group"] : null) ?? 0,
                     ClassSpecific = ResolveClassName(GetFirstPresent(row, new[] { "classspecific", "class specific" })),
                     Class = ResolveClassName(GetFirstPresent(row, new[] { "class", "Class" })),

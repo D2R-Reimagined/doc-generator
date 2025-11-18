@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -137,6 +138,66 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
 
             ItemStatCosts["eledam"] = eledam;
+            
+            var dmgLtng = new ItemStatCost
+            {
+                Stat = "dmg-ltng",
+                DescriptionPriority = ItemStatCosts["lightmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModLightningDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModLightningDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-ltng"] = dmgLtng;
+            
+            var dmgCold = new ItemStatCost
+            {
+                Stat = "dmg-cold",
+                DescriptionPriority = ItemStatCosts["coldmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModColdDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModColdDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-cold"] = dmgCold;
+            
+            var dmgFire = new ItemStatCost
+            {
+                Stat = "dmg-fire",
+                DescriptionPriority = ItemStatCosts["firemindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModFireDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModFireDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-fire"] = dmgFire;
+            
+            var poisDamage = new ItemStatCost
+            {
+                Stat = "dmg-pois",
+                DescriptionPriority = 92,
+                DescriptionFunction = 30,
+                DescriptonStringPositive = Table.GetValue("strModPoisonDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModPoisonDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-pois"] = poisDamage;
+            
+            var dmgMag = new ItemStatCost
+            {
+                Stat = "dmg-mag",
+                DescriptionPriority = ItemStatCosts["magicmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModMagicDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModMagicDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-mag"] = dmgMag;
 
             var dmgNorm = new ItemStatCost
             {
@@ -209,18 +270,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             };
 
             ItemStatCosts["pierce-elem"] = pierceAllElem;
-
-            var poisDamage = new ItemStatCost
-            {
-                Stat = "dmg-pois",
-                DescriptionPriority = 92,
-                DescriptionFunction = 19,
-                DescriptonStringPositive = Table.GetValue("strModPoisonDamage"),
-                DescriptionStringNegative = Table.GetValue("strModPoisonDamage"),
-                DescriptionValue = 3
-            };
-
-            ItemStatCosts["dmg-pois"] = poisDamage;
 
             var fireSkillStat = new ItemStatCost
             {
@@ -570,24 +619,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 valueString = lstValue.Replace("%+d%", '+' + perLvlCalc).Replace("%+d", '+' + perLvlCalc).Replace("%d%", perLvlCalc).Replace("%d", perLvlCalc) + " (Per Character Level)";
                             }
 
-                            // Handle weapon poison damage here because I can't get it to work properly anywhere else and ChatGPT can't either. :D
-                            else if (lstValue.Contains("Poison Damage over") && value.HasValue && value2.HasValue && parameter != null) {
-
-                                int len = int.Parse(parameter);
-                                int minPoison = (int)Math.Ceiling(value.Value * len / 256.0);
-                                int maxPoison = (int)Math.Ceiling(value2.Value * len / 256.0);
-                                int seconds = len / 25;
-
-                                if (minPoison == maxPoison) 
-                                {
-                                    valueString = $"Adds {minPoison} Poison Damage over {seconds} Seconds";
-                                }
-                                else 
-                                {
-                                    valueString = $"Adds {minPoison}-{maxPoison} Poison Damage over {seconds} Seconds";
-                                }
-                            }
-
                             else 
                             {
                                 valueString = lstValue.Replace("%d%", valueString).Replace("%+d%", '+'+valueString).Replace("%d", valueString).Replace("%+d", '+'+valueString);
@@ -609,7 +640,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
 
                         case 24:
-                            valueString = $"Level {value2} {Skill.GetSkill(parameter).Name} ({value} Charges)";
+                            valueString = lstValue.Replace("%d/%d", $"{value}").Replace("%d", $"{value2}").Replace("%s", Skill.GetSkill(parameter).Name);
+                            
                             break;
 
                         case 27:
@@ -657,11 +689,25 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = lstValue.Replace("%i", valueString);
                             break;
 
-                        case 30: // Custom for elemental damage
-                            valueString = lstValue.Replace("%d", valueString).Replace("%s", parameter);
-                            break;
+                        case 30: // Custom for poison damage
+                            int lenFrames = Utility.ToNullableInt(parameter) ?? 0;
+                            int minPois = value.HasValue ? (int)Math.Ceiling(value.Value  * lenFrames / 256.0) : 0;
+                            int maxPois = value2.HasValue ? (int)Math.Ceiling(value2.Value * lenFrames / 256.0) : 0;
+                            double seconds = lenFrames / 25.0;
 
-                        case 31: // Custom for normal damage spread
+                           if (minPois == maxPois)
+                            {
+                                valueString = $"{minPois}";
+                            }
+                            else
+                            {
+                                valueString = $"{minPois}-{maxPois}";
+                            }
+                            
+                            valueString = lstValue.Replace("%d-%d", valueString).Replace("%d", $"{seconds}");
+                            break;                    
+                        
+                        case 31: // Custom for damage spread
                             valueString = lstValue.Replace("%d-%d", valueString);
                             break;
 
@@ -746,6 +792,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 case "item_nonclassskill":
                     valueString = "PASS THROUGH, I DID, LUL";
                     break;
+                
             }
 
             // Remove duplicate symbols in case it happens

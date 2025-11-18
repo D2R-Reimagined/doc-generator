@@ -21,15 +21,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             public int ItemReqBefore { get; set; }
         }
 
-        private static readonly List<Entry> _entries = new List<Entry>();
+        private static readonly List<Entry> Entries = new List<Entry>();
         // Track unique records to avoid duplication across multiple passes/runs
-        private static readonly HashSet<string> _entryKeys = new HashSet<string>(StringComparer.Ordinal);
+        private static readonly HashSet<string> EntryKeys = new HashSet<string>(StringComparer.Ordinal);
 
         // Clears accumulated entries and de-dup keys; call at the start of a run
         public static void Clear()
         {
-            _entries.Clear();
-            _entryKeys.Clear();
+            Entries.Clear();
+            EntryKeys.Clear();
         }
 
         public static void Record(string itemType, string itemName, string propertyName, int propertyReqLevel, int itemReqBefore)
@@ -40,14 +40,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             }
 
             var key = string.Concat(itemType, "|", itemName, "|", propertyName, "|", propertyReqLevel.ToString(), "|", itemReqBefore.ToString());
-            if (_entryKeys.Contains(key))
+            if (EntryKeys.Contains(key))
             {
                 return; // already recorded
             }
 
-            _entryKeys.Add(key);
+            EntryKeys.Add(key);
 
-            _entries.Add(new Entry
+            Entries.Add(new Entry
             {
                 ItemType = itemType,
                 ItemName = itemName,
@@ -61,7 +61,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         {
             try
             {
-                if (!Enabled || _entries.Count == 0)
+                if (!Enabled || Entries.Count == 0)
                 {
                     return;
                 }
@@ -77,7 +77,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 using (var sw = new StreamWriter(reportPath, false, new System.Text.UTF8Encoding(false)))
                 {
                     sw.WriteLine("ItemType\tItemName\tPropertyName\tPropertyReqLevel\tItemReqBefore");
-                    foreach (var e in _entries)
+                    foreach (var e in Entries)
                     {
                         // Skip Runeword entries in the file output (case-insensitive)
                         if (e.ItemType != null && e.ItemType.Equals("Runeword", StringComparison.OrdinalIgnoreCase))
@@ -99,8 +99,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         }
         
         // compute levelreq skill and oskill impact on item required level 
-        public static int ComputeAdjustedRequiredLevel(string itemType, string itemName, int baseReqLevel, IEnumerable<ItemProperty> properties)
+        // equipmentBaseReqLevel: base required level coming from Armor/Weapons tables for the underlying base item
+        public static int ComputeAdjustedRequiredLevel(string itemType, string itemName, int baseReqLevel, IEnumerable<ItemProperty> properties, int? equipmentBaseReqLevel = null)
         {
+            // First, ensure required level is not below the base equipment's required level
+            var originalReq = baseReqLevel;
+            if (equipmentBaseReqLevel.HasValue && equipmentBaseReqLevel.Value > baseReqLevel)
+            {
+                // Record discrepancy caused by base equipment requirement exceeding the item's initial required level
+                Record(itemType, itemName, "Base Equipment Required Level", equipmentBaseReqLevel.Value, originalReq);
+                baseReqLevel = equipmentBaseReqLevel.Value;
+            }
+
             if (properties == null)
             {
                 return baseReqLevel;

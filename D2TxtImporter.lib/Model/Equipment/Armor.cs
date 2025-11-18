@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using Newtonsoft.Json;
+using D2TxtImporter.lib.Model.Types;
 
 namespace D2TxtImporter.lib.Model.Equipment
 {
@@ -26,6 +27,10 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int? Block { get; set; }
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
+
+        // Aggregated Automagic group properties attached at export time
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public List<AutoMagicExportProperty> Properties { get; set; }
 
         public static void Import(string excelFolder)
         {
@@ -78,6 +83,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 var armor = new Armor
                 {
                     Code = row["code"],
+                    BaseRequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : (row.ContainsKey("lvl req") ? row["lvl req"] : null)),
                     MinAc = minAc.Value,
                     MaxAc = maxAc.Value,
                     RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
@@ -90,9 +96,9 @@ namespace D2TxtImporter.lib.Model.Equipment
                     MinDamage = Utility.ToNullableInt(row["mindam"]),
                     MaxDamage = Utility.ToNullableInt(row["maxdam"]),
                     ItemLevel = itemLevel.Value,
-                    NormCode = ResolveItemTypeName(row.ContainsKey("normcode") ? row["normcode"] : null),
-                    UberCode = ResolveItemTypeName(row.ContainsKey("ubercode") ? row["ubercode"] : null),
-                    UltraCode = ResolveItemTypeName(row.ContainsKey("ultracode") ? row["ultracode"] : null),
+                    NormCode = row.ContainsKey("normcode") ? row["normcode"] : null,
+                    UberCode = row.ContainsKey("ubercode") ? row["ubercode"] : null,
+                    UltraCode = row.ContainsKey("ultracode") ? row["ultracode"] : null,
                     GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
                     AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
@@ -137,6 +143,7 @@ namespace D2TxtImporter.lib.Model.Equipment
             {
                 EquipmentType = EquipmentType,
                 Code = Code,
+                BaseRequiredLevel = BaseRequiredLevel,
                 RequiredStrength = RequiredStrength,
                 RequiredDexterity = RequiredDexterity,
                 StrBonus = StrBonus,

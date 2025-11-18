@@ -17,10 +17,8 @@ namespace D2TxtImporter.lib
         private string _excelPath;
         private string _tablePath;
 
-        // Export toggles (default to true)
         public bool ExportJson { get; set; } = true;
         public bool ExportWeb { get; set; } = true;
-        // JSON formatting toggle (pretty print) — default ON
         public bool PrettyPrintJson { get; set; } = true;
 
         public List<Unique> Uniques { get; set; }
@@ -63,7 +61,6 @@ namespace D2TxtImporter.lib
                 Skill.Import(_excelPath);
                 CharStat.Import(_excelPath);
                 MonStat.Import(_excelPath);
-                // Now load affixes which depend on the above
                 MagicPrefix.Import(_excelPath);
                 MagicSuffix.Import(_excelPath);
                 AutoMagic.Import(_excelPath);

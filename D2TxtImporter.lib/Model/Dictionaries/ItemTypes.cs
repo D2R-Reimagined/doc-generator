@@ -35,6 +35,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         [JsonIgnore]
         public static Dictionary<string, ItemType> ItemTypes;
 
+        private static readonly Dictionary<string, string> Normalizations =
+            new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "medium charm", "Large Charm" },
+                { "armor", "Body Armor" },
+                { "large charm", "Grand Charm" },
+                { "merc equip", "Helm" }
+            };
+
         public static void Import(string excelFolder)
         {
             ItemTypes = new Dictionary<string, ItemType>();
@@ -66,22 +75,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             var value = index.Trim();
 
-            if (value.Equals("medium charm", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Large Charm";
-            }
-
-            if (value.Equals("large charm", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Grand Charm";
-            }
-
-            if (value.Equals("merc equip", StringComparison.OrdinalIgnoreCase))
-            {
-                return "Helm";
-            }
-
-            return value;
+            return Normalizations.TryGetValue(value, out var mapped) ? mapped : value;
         }
 
         public override string ToString()

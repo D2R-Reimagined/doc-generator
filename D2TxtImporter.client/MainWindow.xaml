@@ -61,7 +61,7 @@
         <GroupBox Grid.Row="3" Header="Exports">
             <StackPanel Margin="10" Orientation="Vertical">
                 <CheckBox IsChecked="{Binding ExportJson}">Export JSONs</CheckBox>
-                <CheckBox Margin="20,0,0,0" IsChecked="{Binding PrettyPrintJson}">VSC JSON Indents</CheckBox>
+                <CheckBox Margin="20,0,0,0" IsChecked="{Binding PrettyPrintJson}" IsEnabled="{Binding ExportJson}">VSC JSON Indents</CheckBox>
                 <CheckBox Margin="0,10,0,0" IsChecked="{Binding ExportWeb}">Export Web - Legacy</CheckBox>
             </StackPanel>
         </GroupBox>

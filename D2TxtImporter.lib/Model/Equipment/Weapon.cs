@@ -3,8 +3,8 @@ using System.Collections.Generic;
 
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
-using D2TxtImporter.lib.Model.Types;
 using Newtonsoft.Json;
+using D2TxtImporter.lib.Model.Types;
 
 namespace D2TxtImporter.lib.Model.Equipment
 {
@@ -14,6 +14,10 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int Speed { get; set; }
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
+
+        // Aggregated Automagic group properties attached at export time
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public List<AutoMagicExportProperty> Properties { get; set; }
 
         [JsonIgnore]
         public static Dictionary<string, Weapon> Weapons;
@@ -95,6 +99,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 {
                     DamageTypes = damageTypes,
                     Code = row["code"],
+                    BaseRequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : (row.ContainsKey("lvl req") ? row["lvl req"] : null)),
                     EquipmentType = EquipmentType.Weapon,
                     RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
                     RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? int.Parse(row["reqdex"]) : 0,
@@ -104,9 +109,9 @@ namespace D2TxtImporter.lib.Model.Equipment
                     ItemLevel = itemLevel.Value,
                     Type = ItemType.ItemTypes[row["type"]],
                     Speed = Utility.ToNullableInt(row.ContainsKey("speed") ? row["speed"] : "0") ?? 0,
-                    NormCode = ResolveItemTypeName(row.ContainsKey("normcode") ? row["normcode"] : null),
-                    UberCode = ResolveItemTypeName(row.ContainsKey("ubercode") ? row["ubercode"] : null),
-                    UltraCode = ResolveItemTypeName(row.ContainsKey("ultracode") ? row["ultracode"] : null),
+                    NormCode = row.ContainsKey("normcode") ? row["normcode"] : null,
+                    UberCode = row.ContainsKey("ubercode") ? row["ubercode"] : null,
+                    UltraCode = row.ContainsKey("ultracode") ? row["ultracode"] : null,
                     GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
                     AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
@@ -138,6 +143,7 @@ namespace D2TxtImporter.lib.Model.Equipment
             {
                 EquipmentType = EquipmentType,
                 Code = Code,
+                BaseRequiredLevel = BaseRequiredLevel,
                 RequiredStrength = RequiredStrength,
                 RequiredDexterity = RequiredDexterity,
                 StrBonus = StrBonus,

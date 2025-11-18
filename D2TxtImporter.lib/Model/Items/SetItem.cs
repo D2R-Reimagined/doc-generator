@@ -63,8 +63,7 @@ namespace D2TxtImporter.lib.Model.Items
                     DamageArmorEnhanced = false,
                     AddFunc = addFunc.HasValue ? addFunc.Value : 0
                 };
-
-
+                
                 Equipment.Equipment eq = null;
                 if (Armor.Armors.ContainsKey(setItem.Code))
                 {
@@ -114,8 +113,8 @@ namespace D2TxtImporter.lib.Model.Items
                     ExceptionHandler.LogException(new Exception($"Could not get properties for item '{setItem.Name}' in SetItems.txt", e));
                 }
 
-                // Adjust required level
-                setItem.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("SetItem", setItem.Name, setItem.RequiredLevel, setItem.Properties);
+                // Adjust required level ensuring at least base armor/weapon requirement before item_levelreq and skill/oskill logic
+                setItem.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("SetItem", setItem.Name, setItem.RequiredLevel, setItem.Properties, setItem?.Equipment?.BaseRequiredLevel);
 
                 propList = new List<PropertyInfo>();
                 // Add the set bonus properties

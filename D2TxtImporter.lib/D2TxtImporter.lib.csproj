@@ -63,6 +63,7 @@
     <Compile Include="Model\Types\DamageType.cs" />
     <Compile Include="Model\Items\Item.cs" />
     <Compile Include="Model\Types\ItemProperty.cs" />
+    <Compile Include="Model\Types\AutoMagicExportProperty.cs" />
     <Compile Include="Model\Equipment\Equipment.cs" />
     <Compile Include="Model\Dictionaries\ItemStatCost.cs" />
     <Compile Include="Model\Dictionaries\ItemTypes.cs" />

@@ -5,6 +5,7 @@ using System.Linq;
 using D2TxtImporter.lib.Model.Items;
 using D2TxtImporter.lib.Model.Equipment;
 using D2TxtImporter.lib.Model.Dictionaries;
+using D2TxtImporter.lib.Model.Types;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Exporters
@@ -16,41 +17,60 @@ namespace D2TxtImporter.lib.Exporters
             new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
             {
                 // Equipment common
-                "NormCode",
-                "UberCode",
-                "UltraCode",
-                "GemSockets",
-                "AutoPrefix",
+                "NormCode", "UberCode", "UltraCode", "GemSockets", "AutoPrefix", "BaseRequiredLevel",
 
                 // Armor / Weapon specifics
-                "Block",
-                "StrBonus",
-                "DexBonus",
-                "Speed"
+                "Block", "StrBonus", "DexBonus", "Speed"
             };
 
         // Custom resolver that filters out properties by name (case-insensitive)
         private class ExcludingPropertiesContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
         {
-            private readonly ISet<string> _excluded;
+            private readonly ISet<string> _excludedByName;
+            private readonly System.Collections.Generic.IDictionary<System.Type, ISet<string>> _excludedByDeclaringType;
 
-            public ExcludingPropertiesContractResolver(ISet<string> excluded)
+            public ExcludingPropertiesContractResolver(ISet<string> excludedByName,
+                System.Collections.Generic.IDictionary<System.Type, ISet<string>> excludedByDeclaringType = null)
             {
-                _excluded = excluded ?? new HashSet<string>();
+                _excludedByName = excludedByName ?? new HashSet<string>();
+                _excludedByDeclaringType = excludedByDeclaringType;
             }
 
             protected override IList<Newtonsoft.Json.Serialization.JsonProperty> CreateProperties(System.Type type, MemberSerialization memberSerialization)
             {
                 var props = base.CreateProperties(type, memberSerialization);
-                if (_excluded == null || _excluded.Count == 0)
+                if (( _excludedByName == null || _excludedByName.Count == 0) && (_excludedByDeclaringType == null || _excludedByDeclaringType.Count == 0))
                 {
                     return props;
                 }
 
-                // Filter by property name using case-insensitive set
-                return new List<Newtonsoft.Json.Serialization.JsonProperty>(
-                    Enumerable.Where(props, p => !_excluded.Contains(p.PropertyName))
-                );
+                var list = new List<Newtonsoft.Json.Serialization.JsonProperty>();
+                foreach (var p in props)
+                {
+                    bool exclude = false;
+                    if (_excludedByName != null && _excludedByName.Contains(p.PropertyName))
+                    {
+                        exclude = true;
+                    }
+                    if (!exclude && _excludedByDeclaringType != null && _excludedByDeclaringType.Count > 0)
+                    {
+                        foreach (var kv in _excludedByDeclaringType)
+                        {
+                            var dt = kv.Key;
+                            var names = kv.Value;
+                            if (dt.IsAssignableFrom(p.DeclaringType) && names.Contains(p.PropertyName))
+                            {
+                                exclude = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!exclude)
+                    {
+                        list.Add(p);
+                    }
+                }
+                return list;
             }
         }
 
@@ -79,6 +99,76 @@ namespace D2TxtImporter.lib.Exporters
             return sb.ToString().Replace("\\ufffd", "'");
         }
 
+        // Build aggregated Automagic group map for quick lookup when exporting base items
+        // Each entry in the list represents one individual property encountered within an Automagic group
+        private static Dictionary<int, List<AutoMagicExportProperty>> BuildAutoMagicGroupMap()
+        {
+            var map = new Dictionary<int, List<AutoMagicExportProperty>>();
+            if (AutoMagic.AutoMagics == null || AutoMagic.AutoMagics.Count == 0)
+            {
+                return map;
+            }
+
+            foreach (var am in AutoMagic.AutoMagics.Values)
+            {
+                // Safety: skip invalid groups although import already filtered many
+                if (am.Group <= 0)
+                {
+                    continue;
+                }
+
+                if (am.Properties == null || am.Properties.Count == 0)
+                {
+                    continue;
+                }
+
+                if (!map.TryGetValue(am.Group, out var list))
+                {
+                    list = new List<AutoMagicExportProperty>();
+                    map[am.Group] = list;
+                }
+
+                foreach (var prop in am.Properties)
+                {
+                    if (string.IsNullOrWhiteSpace(prop?.PropertyString))
+                    {
+                        continue;
+                    }
+
+                    list.Add(new AutoMagicExportProperty
+                    {
+                        PropertyString = prop.PropertyString,
+                        // Index will be assigned after sorting
+                        Index = 0,
+                        Level = am.Level,
+                        RequiredLevel = am.RequiredLevel
+                    });
+                }
+            }
+
+            // Sort and assign indices per group
+            foreach (var kv in map)
+            {
+                var list = kv.Value;
+                list.Sort((a, b) =>
+                {
+                    var cmp = a.RequiredLevel.CompareTo(b.RequiredLevel);
+                    if (cmp != 0) return cmp;
+                    // tie-breakers: then by Level, then by PropertyString
+                    cmp = a.Level.CompareTo(b.Level);
+                    if (cmp != 0) return cmp;
+                    return string.Compare(a.PropertyString, b.PropertyString, System.StringComparison.Ordinal);
+                });
+
+                for (int i = 0; i < list.Count; i++)
+                {
+                    list[i].Index = i;
+                }
+            }
+
+            return map;
+        }
+
         public static void ExportJson(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<CubeRecipe> cubeRecipes, List<Set> sets, bool prettyPrint)
         {
             if (!Directory.Exists(outputPath))
@@ -97,8 +187,10 @@ namespace D2TxtImporter.lib.Exporters
             Runewords(Path.Combine(txtOutputDirectory, "runewords.json"), runewords, prettyPrint);
             CubeRecipes(Path.Combine(txtOutputDirectory, "cube_recipes.json"), cubeRecipes, prettyPrint);
             Sets(Path.Combine(txtOutputDirectory, "sets.json"), sets, prettyPrint);
-            Weapons(Path.Combine(txtOutputDirectory, "weapons.json"), prettyPrint);
-            Armors(Path.Combine(txtOutputDirectory, "armors.json"), prettyPrint);
+            // Precompute automagic group map once for both armor and weapons
+            var autoMagicGroupMap = BuildAutoMagicGroupMap();
+            Weapons(Path.Combine(txtOutputDirectory, "weapons.json"), prettyPrint, autoMagicGroupMap);
+            Armors(Path.Combine(txtOutputDirectory, "armors.json"), prettyPrint, autoMagicGroupMap);
             MagicPrefixes(Path.Combine(txtOutputDirectory, "magicprefix.json"), prettyPrint);
             MagicSuffixes(Path.Combine(txtOutputDirectory, "magicsuffix.json"), prettyPrint);
             AutoMagics(Path.Combine(txtOutputDirectory, "automagic.json"), prettyPrint);
@@ -106,10 +198,14 @@ namespace D2TxtImporter.lib.Exporters
 
         private static void Uniques(string destination, List<Unique> uniques, bool prettyPrint)
         {
+            var typedEx = new Dictionary<System.Type, ISet<string>>
+            {
+                { typeof(D2TxtImporter.lib.Model.Equipment.Equipment), new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "Code" } }
+            };
             var settings = new JsonSerializerSettings
             {
                 StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties)
+                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties, typedEx)
             };
             var json = SerializeWithIndent(uniques, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
@@ -131,10 +227,14 @@ namespace D2TxtImporter.lib.Exporters
 
         private static void Sets(string destination, List<Set> sets, bool prettyPrint)
         {
+            var typedEx = new Dictionary<System.Type, ISet<string>>
+            {
+                { typeof(D2TxtImporter.lib.Model.Equipment.Equipment), new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "Code" } }
+            };
             var settings = new JsonSerializerSettings
             {
                 StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties)
+                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties, typedEx)
             };
             var json = SerializeWithIndent(sets, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
@@ -164,17 +264,68 @@ namespace D2TxtImporter.lib.Exporters
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
 
-        private static void Weapons(string destination, bool prettyPrint)
+        private static void Weapons(string destination, bool prettyPrint, Dictionary<int, List<AutoMagicExportProperty>> autoMagicGroupMap)
         {
             var list = (Weapon.Weapons != null ? (IEnumerable<Weapon>)Weapon.Weapons.Values : Enumerable.Empty<Weapon>()).ToList();
+            // Attach aggregated Automagic group properties to each weapon when applicable
+            if (autoMagicGroupMap != null && autoMagicGroupMap.Count > 0)
+            {
+                foreach (var weap in list)
+                {
+                    if (string.IsNullOrWhiteSpace(weap.AutoPrefix))
+                    {
+                        continue;
+                    }
+                    if (int.TryParse(weap.AutoPrefix, out var grp) && autoMagicGroupMap.TryGetValue(grp, out var props) && props != null && props.Count > 0)
+                    {
+                        // Clone list so sorting/index remains per group while each weapon holds its own list instance
+                        weap.Properties = new List<AutoMagicExportProperty>(props.Count);
+                        foreach (var p in props)
+                        {
+                            weap.Properties.Add(new AutoMagicExportProperty
+                            {
+                                PropertyString = p.PropertyString,
+                                Index = p.Index,
+                                Level = p.Level,
+                                RequiredLevel = p.RequiredLevel
+                            });
+                        }
+                    }
+                }
+            }
             var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
             var json = SerializeWithIndent(list, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
 
-        private static void Armors(string destination, bool prettyPrint)
+        private static void Armors(string destination, bool prettyPrint, Dictionary<int, List<AutoMagicExportProperty>> autoMagicGroupMap)
         {
             var list = (Armor.Armors != null ? (IEnumerable<Armor>)Armor.Armors.Values : Enumerable.Empty<Armor>()).ToList();
+            // Attach aggregated Automagic group properties to each armor when applicable
+            if (autoMagicGroupMap != null && autoMagicGroupMap.Count > 0)
+            {
+                foreach (var armor in list)
+                {
+                    if (string.IsNullOrWhiteSpace(armor.AutoPrefix))
+                    {
+                        continue;
+                    }
+                    if (int.TryParse(armor.AutoPrefix, out var grp) && autoMagicGroupMap.TryGetValue(grp, out var props) && props != null && props.Count > 0)
+                    {
+                        armor.Properties = new List<AutoMagicExportProperty>(props.Count);
+                        foreach (var p in props)
+                        {
+                            armor.Properties.Add(new AutoMagicExportProperty
+                            {
+                                PropertyString = p.PropertyString,
+                                Index = p.Index,
+                                Level = p.Level,
+                                RequiredLevel = p.RequiredLevel
+                            });
+                        }
+                    }
+                }
+            }
             var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
             var json = SerializeWithIndent(list, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
