@@ -47,13 +47,9 @@
                 <Grid.RowDefinitions>
                     <RowDefinition Height="auto"/>
                     <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
-                    <RowDefinition Height="auto"/>
                 </Grid.RowDefinitions>
                 <CheckBox Grid.Row="0" IsChecked="{Binding ContinueOnException}">Continue on Exception</CheckBox>
                 <CheckBox Grid.Row="1" IsChecked="{Binding CubeRecipeUseDescription}">Use Cube Recipe Description</CheckBox>
-                <CheckBox Grid.Row="2" IsChecked="{Binding DuplicateKeyReportEnabled}">JSON Key Duplicate Rport</CheckBox>
-                <CheckBox Grid.Row="3" IsChecked="{Binding RequiredLevelReportEnabled}">Required Level Mismatch Report</CheckBox>
             </Grid>
         </GroupBox>
 
@@ -61,8 +57,12 @@
         <GroupBox Grid.Row="3" Header="Exports">
             <StackPanel Margin="10" Orientation="Vertical">
                 <CheckBox IsChecked="{Binding ExportJson}">Export JSONs</CheckBox>
-                <CheckBox Margin="20,0,0,0" IsChecked="{Binding PrettyPrintJson}" IsEnabled="{Binding ExportJson}">VSC JSON Indents</CheckBox>
-                <CheckBox Margin="0,10,0,0" IsChecked="{Binding ExportWeb}">Export Web - Legacy</CheckBox>
+                <CheckBox Margin="16,4,0,0" IsChecked="{Binding PrettyPrintJson}" IsEnabled="{Binding ExportJson}">VSC JSON Indents</CheckBox>
+                <!-- Reports moved here between JSONs and Web (not nested under JSONs) -->
+                <CheckBox Margin="0,6,0,0" IsChecked="{Binding DuplicateKeyReportEnabled}">JSON Key Duplicate Report</CheckBox>
+                <CheckBox Margin="0,6,0,0" IsChecked="{Binding RequiredLevelReportEnabled}">Required Level Mismatch Report</CheckBox>
+                <CheckBox Margin="0,6,0,0" IsChecked="{Binding ExportExcel}">Export Excel (D2RR_Holy_Grail.xlsx)</CheckBox>
+                <CheckBox Margin="0,6,0,0" IsChecked="{Binding ExportWeb}">Export Web - Legacy</CheckBox>
             </StackPanel>
         </GroupBox>
 

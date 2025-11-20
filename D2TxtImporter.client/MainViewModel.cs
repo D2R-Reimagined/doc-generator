@@ -16,6 +16,7 @@ namespace D2TxtImporter.client
         private bool _exportJson = true;
         private bool _exportWeb = true;
         private bool _prettyPrintJson = true;
+        private bool _exportExcel = false;
 
         public lib.Importer Importer
         {
@@ -118,6 +119,16 @@ namespace D2TxtImporter.client
             {
                 _exportWeb = value;
                 OnPropertyChange(nameof(ExportWeb));
+            }
+        }
+
+        public bool ExportExcel
+        {
+            get => _exportExcel;
+            set
+            {
+                _exportExcel = value;
+                OnPropertyChange(nameof(ExportExcel));
             }
         }
 

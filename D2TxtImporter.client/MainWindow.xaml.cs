@@ -28,6 +28,7 @@ namespace D2TxtImporter.client
             _mainViewModel.ExportJson = Properties.Settings.Default.ExportJson;
             _mainViewModel.ExportWeb = Properties.Settings.Default.ExportWeb;
             _mainViewModel.PrettyPrintJson = Properties.Settings.Default.PrettyPrintJson;
+            _mainViewModel.ExportExcel = Properties.Settings.Default.ExportExcel;
         }
 
         private void BrowseExcel(object sender, RoutedEventArgs e)
@@ -94,6 +95,7 @@ namespace D2TxtImporter.client
                 Properties.Settings.Default.ExportJson = _mainViewModel.ExportJson;
                 Properties.Settings.Default.ExportWeb = _mainViewModel.ExportWeb;
                 Properties.Settings.Default.PrettyPrintJson = _mainViewModel.PrettyPrintJson;
+                Properties.Settings.Default.ExportExcel = _mainViewModel.ExportExcel;
                 Properties.Settings.Default.Save();
 
                 // Import data
@@ -101,7 +103,8 @@ namespace D2TxtImporter.client
                 {
                     ExportJson = _mainViewModel.ExportJson,
                     ExportWeb = _mainViewModel.ExportWeb,
-                    PrettyPrintJson = _mainViewModel.PrettyPrintJson
+                    PrettyPrintJson = _mainViewModel.PrettyPrintJson,
+                    ExportExcel = _mainViewModel.ExportExcel
                 };
                 _mainViewModel.Importer.LoadData();
                 _mainViewModel.Importer.ImportModel();

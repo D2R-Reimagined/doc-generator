@@ -20,6 +20,7 @@ namespace D2TxtImporter.lib
         public bool ExportJson { get; set; } = true;
         public bool ExportWeb { get; set; } = true;
         public bool PrettyPrintJson { get; set; } = true;
+        public bool ExportExcel { get; set; } = false;
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
@@ -114,6 +115,11 @@ namespace D2TxtImporter.lib
                 if (ExportWeb)
                 {
                     WebExporter.ExportWeb(_outputPath);
+                }
+
+                if (ExportExcel)
+                {
+                    ExcelExporter.ExportExcel(_outputPath, Uniques, Runewords, Sets);
                 }
             }
             catch (Exception e)
