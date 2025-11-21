@@ -41,7 +41,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 { "medium charm", "Large Charm" },
                 { "armor", "Body Armor" },
                 { "large charm", "Grand Charm" },
-                { "merc equip", "Helm" }
+                { "merc equip", "Helm" },
+                { "hand to hand 2", "Hand to Hand" }
             };
 
         public static void Import(string excelFolder)

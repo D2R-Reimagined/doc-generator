@@ -137,6 +137,7 @@ namespace D2TxtImporter.lib.Exporters
 
                     list.Add(new AutoMagicExportProperty
                     {
+                        Name = am.Name,
                         PropertyString = prop.PropertyString,
                         // Index will be assigned after sorting
                         Index = 0,
@@ -284,6 +285,7 @@ namespace D2TxtImporter.lib.Exporters
                         {
                             weap.Properties.Add(new AutoMagicExportProperty
                             {
+                                Name = p.Name,
                                 PropertyString = p.PropertyString,
                                 Index = p.Index,
                                 Level = p.Level,
@@ -317,6 +319,7 @@ namespace D2TxtImporter.lib.Exporters
                         {
                             armor.Properties.Add(new AutoMagicExportProperty
                             {
+                                Name = p.Name,
                                 PropertyString = p.PropertyString,
                                 Index = p.Index,
                                 Level = p.Level,
