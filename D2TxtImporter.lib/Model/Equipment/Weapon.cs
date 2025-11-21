@@ -19,6 +19,10 @@ namespace D2TxtImporter.lib.Model.Equipment
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<AutoMagicExportProperty> Properties { get; set; }
 
+        // New grouped representation: groups by Name + Level + RequiredLevel across the entire list
+        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        public List<AutoMagicExportPropertyGroup> AutoMagicGroups { get; set; }
+
         [JsonIgnore]
         public static Dictionary<string, Weapon> Weapons;
 
@@ -103,8 +107,8 @@ namespace D2TxtImporter.lib.Model.Equipment
                     EquipmentType = EquipmentType.Weapon,
                     RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
                     RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? int.Parse(row["reqdex"]) : 0,
-                    StrBonus = Utility.ToNullableInt(row.ContainsKey("strbonus") ? row["strbonus"] : "0") ?? 0,
-                    DexBonus = Utility.ToNullableInt(row.ContainsKey("dexbonus") ? row["dexbonus"] : "0") ?? 0,
+                    StrBonus = Utility.ToNullableInt(row.ContainsKey("StrBonus") ? row["StrBonus"] : "0") ?? 0,
+                    DexBonus = Utility.ToNullableInt(row.ContainsKey("DexBonus") ? row["DexBonus"] : "0") ?? 0,
                     Durability = row["nodurability"] == "1" ? 0 : int.Parse(row["durability"]),
                     ItemLevel = itemLevel.Value,
                     Type = ItemType.ItemTypes[row["type"]],

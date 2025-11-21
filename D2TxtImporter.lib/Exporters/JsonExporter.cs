@@ -170,6 +170,56 @@ namespace D2TxtImporter.lib.Exporters
             return map;
         }
 
+        // Group across the entire list by Name + Level + RequiredLevel (not only consecutive)
+        // Preserves the order of first occurrence of each group.
+        private static List<AutoMagicExportPropertyGroup> GroupAutoMagicProperties(IEnumerable<AutoMagicExportProperty> properties)
+        {
+            if (properties == null)
+            {
+                return null;
+            }
+
+            var groups = new List<AutoMagicExportPropertyGroup>();
+            var indexByKey = new Dictionary<string, int>(System.StringComparer.OrdinalIgnoreCase);
+
+            foreach (var p in properties)
+            {
+                if (p == null || string.IsNullOrWhiteSpace(p.Name) || string.IsNullOrWhiteSpace(p.PropertyString))
+                {
+                    continue;
+                }
+
+                var key = $"{p.Name}\u0001{p.Level}\u0001{p.RequiredLevel}"; // use unlikely separator
+                if (!indexByKey.TryGetValue(key, out var idx))
+                {
+                    idx = groups.Count;
+                    indexByKey[key] = idx;
+                    groups.Add(new AutoMagicExportPropertyGroup
+                    {
+                        Name = p.Name,
+                        Level = p.Level,
+                        RequiredLevel = p.RequiredLevel,
+                        PropertyStrings = new List<string> { p.PropertyString }
+                    });
+                }
+                else
+                {
+                    var list = groups[idx].PropertyStrings;
+                    // Avoid duplicate insertion if the same PropertyString appears multiple times
+                    if (list == null)
+                    {
+                        groups[idx].PropertyStrings = new List<string> { p.PropertyString };
+                    }
+                    else if (!list.Contains(p.PropertyString))
+                    {
+                        list.Add(p.PropertyString);
+                    }
+                }
+            }
+
+            return groups.Count > 0 ? groups : null;
+        }
+
         public static void ExportJson(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<CubeRecipe> cubeRecipes, List<Set> sets, bool prettyPrint)
         {
             if (!Directory.Exists(outputPath))
@@ -194,7 +244,6 @@ namespace D2TxtImporter.lib.Exporters
             Armors(Path.Combine(txtOutputDirectory, "armors.json"), prettyPrint, autoMagicGroupMap);
             MagicPrefixes(Path.Combine(txtOutputDirectory, "magicprefix.json"), prettyPrint);
             MagicSuffixes(Path.Combine(txtOutputDirectory, "magicsuffix.json"), prettyPrint);
-            AutoMagics(Path.Combine(txtOutputDirectory, "automagic.json"), prettyPrint);
         }
 
         private static void Uniques(string destination, List<Unique> uniques, bool prettyPrint)
@@ -257,13 +306,8 @@ namespace D2TxtImporter.lib.Exporters
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
 
-        private static void AutoMagics(string destination, bool prettyPrint)
-        {
-            var list = (AutoMagic.AutoMagics != null ? (IEnumerable<AutoMagic>)AutoMagic.AutoMagics.Values : Enumerable.Empty<AutoMagic>()).ToList();
-            var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
-            var json = SerializeWithIndent(list, settings, prettyPrint);
-            File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
-        }
+        // Note: Automagic rows are no longer exported as a standalone file.
+        // Their effects are still applied to Armor and Weapon exports via BuildAutoMagicGroupMap().
 
         private static void Weapons(string destination, bool prettyPrint, Dictionary<int, List<AutoMagicExportProperty>> autoMagicGroupMap)
         {
@@ -279,19 +323,10 @@ namespace D2TxtImporter.lib.Exporters
                     }
                     if (int.TryParse(weap.AutoPrefix, out var grp) && autoMagicGroupMap.TryGetValue(grp, out var props) && props != null && props.Count > 0)
                     {
-                        // Clone list so sorting/index remains per group while each weapon holds its own list instance
-                        weap.Properties = new List<AutoMagicExportProperty>(props.Count);
-                        foreach (var p in props)
-                        {
-                            weap.Properties.Add(new AutoMagicExportProperty
-                            {
-                                Name = p.Name,
-                                PropertyString = p.PropertyString,
-                                Index = p.Index,
-                                Level = p.Level,
-                                RequiredLevel = p.RequiredLevel
-                            });
-                        }
+                        // Build grouped representation across the entire list
+                        weap.AutoMagicGroups = GroupAutoMagicProperties(props);
+                        // Ensure we do not emit the old flat list
+                        weap.Properties = null;
                     }
                 }
             }
@@ -314,18 +349,8 @@ namespace D2TxtImporter.lib.Exporters
                     }
                     if (int.TryParse(armor.AutoPrefix, out var grp) && autoMagicGroupMap.TryGetValue(grp, out var props) && props != null && props.Count > 0)
                     {
-                        armor.Properties = new List<AutoMagicExportProperty>(props.Count);
-                        foreach (var p in props)
-                        {
-                            armor.Properties.Add(new AutoMagicExportProperty
-                            {
-                                Name = p.Name,
-                                PropertyString = p.PropertyString,
-                                Index = p.Index,
-                                Level = p.Level,
-                                RequiredLevel = p.RequiredLevel
-                            });
-                        }
+                        armor.AutoMagicGroups = GroupAutoMagicProperties(props);
+                        armor.Properties = null;
                     }
                 }
             }
