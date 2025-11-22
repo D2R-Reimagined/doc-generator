@@ -16,6 +16,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         [JsonIgnore]
         public int Id { get; set; }
         [JsonIgnore]
+        public int? SaveBits { get; set; }
+        [JsonIgnore]
+        public int? SaveAdd { get; set; }
+        [JsonIgnore]
+        public int? ValShift { get; set; }
+        [JsonIgnore]
+        public int? SaveParam { get; set; }
+        [JsonIgnore]
         public int? Op { get; set; }
         [JsonIgnore]
         public int? OpParam { get; set; }
@@ -25,6 +33,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public int? DescriptionFunction { get; set; }
         [JsonIgnore]
         public int? DescriptionValue { get; set; }
+        [JsonIgnore]
+        public string DescStrPosKey { get; set; }
         [JsonIgnore]
         public string DescriptonStringPositive { get; set; }
         [JsonIgnore]
@@ -54,15 +64,35 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             foreach (var row in table)
             {
+                // Helper to read values with case-insensitive key matching and fallbacks
+                string GetFromRow(params string[] keys)
+                {
+                    foreach (var k in keys)
+                    {
+                        var kv = row.FirstOrDefault(x => string.Equals(x.Key, k, StringComparison.OrdinalIgnoreCase));
+                        if (!string.IsNullOrEmpty(kv.Key))
+                        {
+                            return kv.Value;
+                        }
+                    }
+                    return null;
+                }
+
                 var itemStatCost = new ItemStatCost
                 {
                     Stat = row["Stat"],
                     Id = int.Parse(row["*ID"]),
+                    // Common header variants across D2 versions/mod tool exports
+                    SaveBits = Utility.ToNullableInt(row["Save Bits"]),
+                    SaveAdd = Utility.ToNullableInt(row["Save Add"]),
+                    ValShift = Utility.ToNullableInt(row["ValShift"]) ?? 0,
+                    SaveParam = Utility.ToNullableInt(row["Save Param Bits"]) ?? 0,
                     Op = Utility.ToNullableInt(row["op"]),
                     OpParam = Utility.ToNullableInt(row["op param"]),
                     DescriptionPriority = Utility.ToNullableInt(row["descpriority"]),
                     DescriptionFunction = Utility.ToNullableInt(row["descfunc"]),
                     DescriptionValue = Utility.ToNullableInt(row["descval"]),
+                    DescStrPosKey = row["descstrpos"],
                     DescriptonStringPositive = Table.GetValue(row["descstrpos"]),
                     DescriptionStringNegative = Table.GetValue(row["descstrneg"]),
                     DescriptionString2 = Table.GetValue(row["descstr2"]),

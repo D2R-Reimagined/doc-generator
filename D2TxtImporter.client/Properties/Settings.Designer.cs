@@ -141,5 +141,17 @@ namespace D2TxtImporter.client.Properties {
                 this["ExportExcel"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ItemStatCostExportEnabled {
+            get {
+                return ((bool)(this["ItemStatCostExportEnabled"]));
+            }
+            set {
+                this["ItemStatCostExportEnabled"] = value;
+            }
+        }
     }
 }

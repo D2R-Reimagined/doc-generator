@@ -17,6 +17,9 @@ namespace D2TxtImporter.client
         private bool _exportWeb = true;
         private bool _prettyPrintJson = true;
         private bool _exportExcel = false;
+        private bool _itemStatCostExportEnabled = false;
+        private bool _isBusy = false;
+        private string _statusText = string.Empty;
 
         public lib.Importer Importer
         {
@@ -102,6 +105,40 @@ namespace D2TxtImporter.client
             }
         }
 
+        public bool ItemStatCostExportEnabled
+        {
+            get => _itemStatCostExportEnabled;
+            set
+            {
+                _itemStatCostExportEnabled = value;
+                OnPropertyChange(nameof(ItemStatCostExportEnabled));
+            }
+        }
+
+        public bool IsBusy
+        {
+            get => _isBusy;
+            set
+            {
+                if (_isBusy == value) return;
+                _isBusy = value;
+                OnPropertyChange(nameof(IsBusy));
+                // Also notify ImportEnabled since it's computed and depends on IsBusy
+                OnPropertyChange(nameof(ImportEnabled));
+            }
+        }
+
+        public string StatusText
+        {
+            get => _statusText;
+            set
+            {
+                if (_statusText == value) return;
+                _statusText = value;
+                OnPropertyChange(nameof(StatusText));
+            }
+        }
+
         public bool ExportJson
         {
             get => _exportJson;
@@ -143,7 +180,7 @@ namespace D2TxtImporter.client
         }
 
         public bool ExportEnabled => Importer != null && Importer.CubeRecipes != null && Importer.Runewords != null && Importer.Uniques != null;
-        public bool ImportEnabled => Directory.Exists(ExcelPath) && Directory.Exists(TablePath) && Directory.Exists(OutputPath);
+        public bool ImportEnabled => !IsBusy && Directory.Exists(ExcelPath) && Directory.Exists(TablePath) && Directory.Exists(OutputPath);
 
         public event PropertyChangedEventHandler PropertyChanged;
         public void OnPropertyChange(string propertyName)

@@ -44,6 +44,7 @@
     <Compile Include="Exporters\ExcelExporter.cs" />
     <Compile Include="Exceptions\ExceptionHandler.cs" />
     <Compile Include="Exporters\JsonExporter.cs" />
+    <Compile Include="Exporters\StatsExporter.cs" />
     <Compile Include="Exporters\WebExporter.cs" />
     <Compile Include="Importer.cs" />
     <Compile Include="Model\Dictionaries\AutoMagic.cs" />

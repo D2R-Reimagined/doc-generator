@@ -21,6 +21,8 @@ namespace D2TxtImporter.lib
         public bool ExportWeb { get; set; } = true;
         public bool PrettyPrintJson { get; set; } = true;
         public bool ExportExcel { get; set; } = false;
+        // Toggle for ItemStatCost TSV export
+        public bool ExportItemStatCostReport { get; set; } = false;
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
@@ -111,6 +113,12 @@ namespace D2TxtImporter.lib
 
                 // Write required-level property report if enabled
                 RequiredLevelReport.WriteReport(_outputPath);
+
+                // Export ItemStatCost summary (stat, resolved descstrpos, decoded min..max, param range, per-level)
+                if (ExportItemStatCostReport)
+                {
+                    StatsExporter.ExportItemStatCosts(_outputPath);
+                }
 
                 if (ExportWeb)
                 {
