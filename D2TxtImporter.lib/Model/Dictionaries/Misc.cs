@@ -11,15 +11,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public string Name { get; set; }
         public int ItemLevel { get; set; }
         public int RequiredLevel { get; set; }
-
         [JsonIgnore]
         public string Code { get; set; }
-
         public ItemType Type { get; set; }
-
         [JsonIgnore]
         public string Type2 { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, Misc> MiscItems;
 

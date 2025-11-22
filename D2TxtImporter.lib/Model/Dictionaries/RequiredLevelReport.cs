@@ -24,7 +24,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         private static readonly List<Entry> Entries = new List<Entry>();
         // Track unique records to avoid duplication across multiple passes/runs
         private static readonly HashSet<string> EntryKeys = new HashSet<string>(StringComparer.Ordinal);
-
         // Clears accumulated entries and de-dup keys; call at the start of a run
         public static void Clear()
         {

@@ -9,33 +9,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class AutoMagic
     {
-        // Raw name copied directly from Automagic.txt (not localized, game doesn't read it)
         public string Name { get; set; }
-
         public int Level { get; set; }
         public int MaxLevel { get; set; }
         public int RequiredLevel { get; set; }
         public int Group { get; set; }
-
-        // Optional class restrictions similar to MagicPrefix/Suffix
         public string ClassSpecific { get; set; }
         public string Class { get; set; }
         public int ClassLevelReq { get; set; }
-
-        // Built and ordered properties
         public List<ItemProperty> Properties { get; set; }
-
         public List<string> Types { get; set; }
         public List<string> ETypes { get; set; }
-
         public string PType { get { return "Automagic"; } }
-
         [JsonIgnore]
         public int Index { get; set; }
-
         [JsonIgnore]
         public static Dictionary<int, AutoMagic> AutoMagics;
-
+        
         public static void Import(string excelFolder)
         {
             AutoMagics = new Dictionary<int, AutoMagic>();
@@ -51,9 +41,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     continue;
                 }
 
-                // Skip if group is empty/null, 0, 309, 310, 311, or 312
+                // Skip if group is empty/null or in the skipped groups set
                 var groupVal = Utility.ToNullableInt(row.ContainsKey("group") ? row["group"] : null);
-                if (!groupVal.HasValue || groupVal.Value == 0 || groupVal.Value == 309 || groupVal.Value == 310 || groupVal.Value == 311 || groupVal.Value == 312 || groupVal.Value == 316 || groupVal.Value == 319)
+                if (!groupVal.HasValue || SkippedGroups.Contains(groupVal.Value))
                 {
                     continue;
                 }
@@ -190,6 +180,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             }
             return raw;
         }
+        
+        // Groups to skip when importing AutoMagic entries
+        private static readonly HashSet<int> SkippedGroups = new HashSet<int>
+        {
+            0, 309, 310, 311, 312, 316, 319
+        };
 
         public override string ToString()
         {

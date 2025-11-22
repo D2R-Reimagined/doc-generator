@@ -20,7 +20,6 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int? MaxDamage { get; set; }
         public string DamageString { get; set; }
         public string DamageStringPrefix { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, Armor> Armors;
         public string ArmorString { get; set; }

@@ -9,10 +9,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class MagicPrefix
     {
-        // Original table key for the affix name (e.g., "sounding"). Not exported.
         [JsonIgnore]
         public string NameKey { get; set; }
-        
         public string Name { get { return Table.GetValue(NameKey); } }
         public int Level { get; set; }
         public int MaxLevel { get; set; }
@@ -25,10 +23,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public List<string> Types { get; set; }
         public List<string> ETypes { get; set; }
         public string PType { get { return "Prefix"; } }
-
         [JsonIgnore]
         public int Index { get; set; }
-
         [JsonIgnore]
         public static Dictionary<int, MagicPrefix> MagicPrefixes;
 

@@ -7,23 +7,16 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     public class Skill
     {
         public string Name { get; set; }
-
         [JsonIgnore]
         public int? Id { get; set; }
-
         public string CharClass { get; set; }
-
         [JsonIgnore]
         public string SkillDesc { get; set; }
-
         public int RequiredLevel { get; set; }
-
         [JsonIgnore]
         private static Dictionary<int?, Skill> _idSkillDictionary;
-
         [JsonIgnore]
         private static Dictionary<string, Skill> _nameSkillDictionary;
-
         [JsonIgnore]
         private static Dictionary<string, Skill> _descSkillDictionary;
 

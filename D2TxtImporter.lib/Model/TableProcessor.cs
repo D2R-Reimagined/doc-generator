@@ -66,7 +66,7 @@ namespace D2TxtImporter.lib.Model
             public string Key { get; set; }
             public string Value { get; set; }
             public int Index { get; set; }
-
+            
             public override string ToString()
             {
                 return Key;

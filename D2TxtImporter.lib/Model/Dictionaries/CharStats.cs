@@ -15,10 +15,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public string StrSkillTab2 { get; set; }
         [JsonIgnore]
         public string StrSkillTab3 { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, CharStat> CharStats;
-
         [JsonIgnore]
         public static Dictionary<int, string> SkillTabs;
 

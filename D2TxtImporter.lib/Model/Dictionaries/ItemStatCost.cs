@@ -13,52 +13,36 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     {
         [JsonIgnore]
         public string Stat { get; set; }
-
         [JsonIgnore]
         public int Id { get; set; }
-
         [JsonIgnore]
         public int? Op { get; set; }
-
         [JsonIgnore]
         public int? OpParam { get; set; }
-
         [JsonIgnore]
         public int? DescriptionPriority { get; set; }
-
         [JsonIgnore]
         public int? DescriptionFunction { get; set; }
-
         [JsonIgnore]
         public int? DescriptionValue { get; set; }
-
         [JsonIgnore]
         public string DescriptonStringPositive { get; set; }
-
         [JsonIgnore]
         public string DescriptionStringNegative { get; set; }
-
         [JsonIgnore]
         public string DescriptionString2 { get; set; }
-
         [JsonIgnore]
         public int? GroupDescription { get; set; }
-
         [JsonIgnore]
         public int? GroupDescriptionFunction { get; set; }
-
         [JsonIgnore]
         public int? GroupDescriptionValue { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptonStringPositive { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptionStringNegative { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptionString2 { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, ItemStatCost> ItemStatCosts;
 
@@ -331,8 +315,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             ItemStatCosts["magicskill"] = magicSkillStat;
         }
-
-
+        
         public static void FixBrokenEntries()
         {
             var sockets = ItemStatCosts["item_numsockets"];

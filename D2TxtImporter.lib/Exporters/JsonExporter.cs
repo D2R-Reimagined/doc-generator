@@ -12,17 +12,6 @@ namespace D2TxtImporter.lib.Exporters
 {
     public class JsonExporter
     {
-        // Shared, case-insensitive list of properties to exclude from uniques.json and sets.json
-        private static readonly HashSet<string> ExcludedExportProperties =
-            new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
-            {
-                // Equipment common
-                "NormCode", "UberCode", "UltraCode", "GemSockets", "AutoPrefix", "BaseRequiredLevel",
-
-                // Armor / Weapon specifics
-                "Block", "StrBonus", "DexBonus", "Speed"
-            };
-
         // Custom resolver that filters out properties by name (case-insensitive)
         private class ExcludingPropertiesContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
         {
@@ -306,9 +295,6 @@ namespace D2TxtImporter.lib.Exporters
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
 
-        // Note: Automagic rows are no longer exported as a standalone file.
-        // Their effects are still applied to Armor and Weapon exports via BuildAutoMagicGroupMap().
-
         private static void Weapons(string destination, bool prettyPrint, Dictionary<int, List<AutoMagicExportProperty>> autoMagicGroupMap)
         {
             var list = (Weapon.Weapons != null ? (IEnumerable<Weapon>)Weapon.Weapons.Values : Enumerable.Empty<Weapon>()).ToList();
@@ -358,6 +344,20 @@ namespace D2TxtImporter.lib.Exporters
             var json = SerializeWithIndent(list, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
-
+        
+        // Shared, case-insensitive list of properties to exclude from uniques.json and sets.json
+        private static readonly HashSet<string> ExcludedExportProperties = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+        {
+            "NormCode", 
+            "UberCode",
+            "UltraCode",
+            "GemSockets",
+            "AutoPrefix",
+            "BaseRequiredLevel",
+            "Block",
+            "StrBonus", 
+            "DexBonus",
+            "Speed"
+        };
     }
 }

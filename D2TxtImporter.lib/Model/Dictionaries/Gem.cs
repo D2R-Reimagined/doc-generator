@@ -21,7 +21,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public List<ItemProperty> HelmProperties { get; set; }
         [JsonIgnore]
         public List<ItemProperty> ShieldProperties { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, Gem> Gems;
 
@@ -32,13 +31,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Gems.txt");
 
             foreach (var row in table)
-            {
-                //var numMods = Utility.ToNullableInt(row["nummods"]);
-                //if (!numMods.HasValue)
-                //{
-                //    ExceptionHandler.LogException(new Exception($"Invalid nummods for '{row["name"]}' in Gems.txt"));
-                //}
-
+            { 
                 var gem = new Gem
                 {
                     Index = row["name"],

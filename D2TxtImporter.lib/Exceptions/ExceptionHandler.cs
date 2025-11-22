@@ -10,10 +10,10 @@ namespace D2TxtImporter.lib.Exceptions
     {
         public static bool ContinueOnException { get; set; }
 
-        private readonly static string ExceptionFile =
+        private static readonly string ExceptionFile =
             $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/errorlog.txt";
 
-        private readonly static string DebugFile =
+        private static readonly string DebugFile =
             $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
 
         public static List<string> ExceptionsWritten;

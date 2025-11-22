@@ -11,27 +11,19 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         [JsonIgnore]
         public static Dictionary<string, string> Tables;
-
-        // Toggle to enable/disable duplicate key tracking and report writing
         [JsonIgnore]
         public static bool EnableDuplicateReport = true;
-
-        // Tracks the origin (id, file) for each first-seen key
         [JsonIgnore]
         private static Dictionary<string, OriginInfo> _keyOrigins;
-
-        // Accumulates duplicate key occurrences for later reporting
         [JsonIgnore]
         private static readonly List<DuplicateInfo> Duplicates = new List<DuplicateInfo>();
-
-        // Tracks first-seen file for each numeric ID (JSON import only),
-        // used to log duplicate ID usages alongside key duplicates
         [JsonIgnore]
         private static Dictionary<int, string> _idFirstFiles;
 
         public static void ImportFromTxt(string tableFolder) {
-            // Case-sensitive keys by default; do not trim or normalize casing
+            
             Tables = new Dictionary<string, string>();
+            
             if (EnableDuplicateReport)
             {
                 _keyOrigins = new Dictionary<string, OriginInfo>();
@@ -47,8 +39,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 foreach (var line in lines)
                 {
                     var values = line.Split('\t');
-
-                    // Keep key casing and whitespace as-is (only strip wrapping quotes from format)
                     var key = values[0].Trim('"');
                     var value = values[1].Trim('"');
 
@@ -86,14 +76,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         {
             // Prefer JSON if present, to avoid changing callers.
             var jsonFiles = Directory.GetFiles(tableFolder, "*.json");
+            
             if (jsonFiles.Length > 0)
             {
                 ImportFromJson(tableFolder);
                 return;
             }
 
-            // Case-sensitive keys by default; do not trim or normalize casing
             Tables = new Dictionary<string, string>();
+            
             if (EnableDuplicateReport)
             {
                 _keyOrigins = new Dictionary<string, OriginInfo>();
@@ -118,14 +109,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 {
                     var value = tableEntry.Value;
 
-                    // Strip Diablo color codes like "ÿcX" (always 3 characters: 'ÿ', 'c', code)
                     if (!string.IsNullOrEmpty(value))
                     {
                         value = RemoveColorCodes(value);
                     }
 
-                    // Keep key as-is (no trimming or normalization)
                     var key = tableEntry.Key;
+                    
                     if (string.IsNullOrEmpty(key)) 
                     {
                         continue;
@@ -134,6 +124,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     if (EnableDuplicateReport && Tables.ContainsKey(key))
                     {
                         var currentFile = Path.GetFileName(file);
+                        
                         if (_keyOrigins != null && _keyOrigins.TryGetValue(key, out var prev))
                         {
                             Duplicates.Add(new DuplicateInfo
@@ -148,6 +139,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     }
 
                     Tables[key] = value;
+                    
                     if (EnableDuplicateReport)
                     {
                         _keyOrigins[key] = new OriginInfo { Id = 0, FileName = Path.GetFileName(file) };
@@ -167,12 +159,10 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             int i = 0;
 
             while (i < input.Length) {
-                // Look for 'ÿ', 'c', and a third character and skip it if found
                 if (input[i] == 'ÿ' && i + 2 < input.Length && input[i + 1] == 'c') {
                     i += 3;
                     continue;
                 }
-                // Also remove any '*' characters per requirement
                 if (input[i] == '*') 
                 {
                     i++;
@@ -184,11 +174,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             return result.ToString();
         }
 
-        // Expects each .json file to contain an array of objects with at least:
         // { "Key": "Betsy", "enUS": "Mistress of the Pasture" }
         public static void ImportFromJson(string tableFolder) 
         {
-            // Case-sensitive keys by default; do not trim or normalize casing
             Tables = new Dictionary<string, string>();
             if (EnableDuplicateReport)
             {
@@ -209,7 +197,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             {
                 try {
                     var json = File.ReadAllText(file);
-
                     var entries = JsonConvert.DeserializeObject<List<JsonTableEntry>>(json);
 
                     if (entries == null) 
@@ -225,16 +212,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             continue;
                         }
 
-                        // Use Key for lookup, enUS as the text value.
                         var value = entry.EnUs ?? string.Empty;
 
-                        // S color codes
                         if (!string.IsNullOrEmpty(value))
                         {
                             value = RemoveColorCodes(value);
                         }
-                        // Keep key as-is (no trimming)
+                        
                         var key = entry.Key;
+                        
                         if (string.IsNullOrEmpty(key)) 
                         {
                             continue;
@@ -344,12 +330,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             return null;
         }
 
-        private class JsonTableEntry {
-
+        private class JsonTableEntry 
+        {
             public int Id { get; set; }
             public string Key { get; set; }
             public string EnUs { get; set; }
-
         }
 
         private class OriginInfo

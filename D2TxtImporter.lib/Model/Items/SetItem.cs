@@ -14,22 +14,18 @@ namespace D2TxtImporter.lib.Model.Items
     {
         public string Type { get; set; }
         public string Set { get; set; }
-
         [JsonIgnore]
         public List<ItemProperty> SetProperties { get; set; }
-
         public List<string> SetPropertiesString { get; set; }
-
         [JsonIgnore]
         public static List<SetItem> SetItems { get; set; }
-
         [JsonIgnore]
         public int AddFunc { get; set; }
 
         public static void Import(string excelFolder)
         {
             SetItems = new List<SetItem>();
-
+            
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/SetItems.txt");
 
             foreach (var row in table)
@@ -37,15 +33,14 @@ namespace D2TxtImporter.lib.Model.Items
                 var addFunc = Utility.ToNullableInt(row["add func"]);
                 var name = row["index"];
                 var rarity = Utility.ToNullableInt(row["rarity"]);
-                var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 
+                var itemLevel = Utility.ToNullableInt(row["lvl"]);
                 if (!itemLevel.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find item level for '{name}' in SetItems.txt"));
                 }
 
                 var requiredLevel = Utility.ToNullableInt(row["lvl req"]);
-                
                 if (!requiredLevel.HasValue)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find required level for '{name}' in SetItems.txt"));
@@ -108,6 +103,7 @@ namespace D2TxtImporter.lib.Model.Items
                     var properties = ItemProperty.GetProperties(propList, setItem.ItemLevel).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
                     setItem.Properties = properties;
                 }
+                
                 catch (Exception e)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get properties for item '{setItem.Name}' in SetItems.txt", e));

@@ -114,7 +114,6 @@ namespace D2TxtImporter.lib.Model.Items
 
                 try 
                 {
-
                     var properties = ItemProperty.GetProperties(propList)
                         .OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority)
                         .ToList();
@@ -200,8 +199,7 @@ namespace D2TxtImporter.lib.Model.Items
                 if (runeword.Properties.Count > 0) 
                 {
                     ItemProperty.CleanupDublicates(runeword.Properties);
-
-                    // Adjust required level using consolidated evaluator (explicit + implied skill/oskill) in a single pass
+                    // Adjust required level
                     runeword.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("Runeword", runeword.Name, runeword.RequiredLevel, runeword.Properties);
 
                     result.Add(runeword);

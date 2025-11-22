@@ -119,9 +119,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                     GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
                     AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
-
-                // Populate base damage strings for export so weapons.json doesn't contain nulls
-                // Use simple ranges based on parsed min/max for each damage type
+                
                 foreach (var dt in weapon.DamageTypes)
                 {
                     if (dt.MinDamage == dt.MaxDamage)

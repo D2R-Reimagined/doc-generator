@@ -101,13 +101,12 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
             ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
 
-            // No conditional formatting by request
-
             // Data validation for Found column: allow TRUE/FALSE (booleans)
             var foundValidationRange = ws.Range(2, 1, lastRow, 1);
             var dv = foundValidationRange.CreateDataValidation();
             dv.AllowedValues = XLAllowedValues.List;
             dv.InCellDropdown = true;
+            
             // Robust dropdown source via hidden helper range (handles locales and Excel quirks)
             int listCol = headers.Length + 5;
             ws.Cell(1, listCol).Value = true; ws.Cell(1, listCol).DataType = XLDataType.Boolean;
@@ -115,10 +114,7 @@ namespace D2TxtImporter.lib.Exporters
             ws.Column(listCol).Hide();
             var yesNoRange = ws.Range(1, listCol, 2, listCol);
             dv.List(yesNoRange);
-
-            // No conditional formatting by request
-
-            // No banding or colors by request
+            
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
         }
@@ -190,8 +186,6 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
             ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
 
-            // No conditional formatting by request
-
             // Data validation for Found column: allow TRUE/FALSE
             var foundValidationRange = ws.Range(2, 1, lastRow, 1);
             var dv = foundValidationRange.CreateDataValidation();
@@ -203,12 +197,9 @@ namespace D2TxtImporter.lib.Exporters
             ws.Column(listCol).Hide();
             var yesNoRange = ws.Range(1, listCol, 2, listCol);
             dv.List(yesNoRange);
-
-            // No conditional formatting by request
+            
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
-
-            // No banding or colors by request
 
             // Helper area to compute completed sets
             // We list distinct Set Names in a hidden area and compute if all its items are Found == "Y"
@@ -303,8 +294,6 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
             ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
 
-            // No conditional formatting by request
-
             // Data validation for Found column: allow TRUE/FALSE
             var foundValidationRange = ws.Range(2, 1, lastRow, 1);
             var dv = foundValidationRange.CreateDataValidation();
@@ -316,12 +305,9 @@ namespace D2TxtImporter.lib.Exporters
             ws.Column(listCol).Hide();
             var yesNoRange = ws.Range(1, listCol, 2, listCol);
             dv.List(yesNoRange);
-
-            // No conditional formatting by request
+            
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
-
-            // No banding or colors by request
         }
 
         private static void BuildHomeSheet(IXLWorksheet ws, int totalDistinctSets)
@@ -345,7 +331,6 @@ namespace D2TxtImporter.lib.Exporters
             banner.Style.Font.Bold = true;
             banner.Style.Font.FontSize = 16;
             banner.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-            // No fills or font colors
 
             int rowNum = 4;
             ws.Cell(rowNum, 1).Value = "Category"; ws.Cell(rowNum, 2).Value = "Found"; ws.Cell(rowNum, 3).Value = "Total"; ws.Cell(rowNum, 4).Value = "Notes";
@@ -384,8 +369,6 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(rowNum, 1).Value = "Grand Total"; ws.Cell(rowNum, 1).Style.Font.Bold = true;
             ws.Cell(rowNum, 2).FormulaA1 = "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"Y\")";
             ws.Cell(rowNum, 3).FormulaA1 = "=ROWS(UniquesTable[Found])+ROWS(SetsTable[Found])+ROWS(RunewordsTable[Found])";
-
-            // No conditional formatting on summary
             
             ws.Columns().AdjustToContents();
         }

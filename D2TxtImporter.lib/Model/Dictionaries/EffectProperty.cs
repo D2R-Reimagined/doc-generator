@@ -7,10 +7,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     {
         [JsonIgnore]
         public string Code { get; set; }
-
         [JsonIgnore]
         public string Stat { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, EffectProperty> EffectProperties;
 

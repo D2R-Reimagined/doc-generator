@@ -7,13 +7,10 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     {
         [JsonIgnore]
         public string Id { get; set; }
-
         [JsonIgnore]
         public string Hcldx { get; set; }
-
         [JsonIgnore]
         public string NameStr { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, MonStat> MonStats;
 

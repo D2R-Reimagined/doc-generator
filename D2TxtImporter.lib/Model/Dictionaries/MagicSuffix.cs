@@ -9,11 +9,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class MagicSuffix
     {
-        // Original table key for the affix name (e.g., "sounding"). Not exported.
         [JsonIgnore]
         public string NameKey { get; set; }
-
-        // Resolved, localized name via Tables. Throws (via pre-validation) if the key is missing.
         public string Name { get { return Table.GetValue(NameKey); } }
         public int Level { get; set; }
         public int MaxLevel { get; set; }
@@ -26,10 +23,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public List<string> Types { get; set; }
         public List<string> ETypes { get; set; }
         public string PType { get { return "Suffix"; } }
-
         [JsonIgnore]
         public int Index { get; set; }
-
         [JsonIgnore]
         public static Dictionary<int, MagicSuffix> MagicSuffixes;
 

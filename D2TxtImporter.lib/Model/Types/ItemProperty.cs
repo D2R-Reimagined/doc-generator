@@ -13,32 +13,23 @@ namespace D2TxtImporter.lib.Model.Types
     {
         [JsonIgnore]
         public static ItemProperty CurrentItemProperty { get; set; }
-
         [JsonIgnore]
         public EffectProperty Property { get; set; }
-
         [JsonIgnore]
         public string Parameter { get; set; }
-
         [JsonIgnore]
         public int? Min { get; set; }
-
         [JsonIgnore]
         public int? Max { get; set; }
-
         [JsonIgnore]
         public ItemStatCost ItemStatCost { get; set; }
-
         private string _propertyString;
         public string PropertyString { get => _propertyString + Suffix; private set => _propertyString = value; }
         public int Index { get; set; }
-
         [JsonIgnore]
         public int ItemLevel { get; set; }
-
         [JsonIgnore]
         public string Suffix { get; set; }
-
         [JsonIgnore]
         public string CompareKey => ItemStatCost.Stat + Parameter;
 
@@ -168,7 +159,7 @@ namespace D2TxtImporter.lib.Model.Types
                 max[i] = p?.Max;
             }
 
-            // Index by code (first occurrences are sufficient to mirror previous FindIndex semantics)
+            // Index by code (first occurrences are enough to mirror previous FindIndex semantics)
             var idxByCode = new Dictionary<string, List<int>>(StringComparer.OrdinalIgnoreCase);
             void AddIdx(string k, int i)
             {
