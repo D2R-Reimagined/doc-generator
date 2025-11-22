@@ -121,7 +121,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     var code = row[key];
                     if (ItemType.ItemTypes != null && ItemType.ItemTypes.ContainsKey(code))
                     {
-                        list.Add(ItemType.ItemTypes[code].Name);
+                        list.Add(ItemType.ItemTypes[code].Index);
                     }
                     else
                     {
