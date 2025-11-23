@@ -138,8 +138,8 @@ namespace D2TxtImporter.lib.Exporters
 
         private static string FormatNumber(double value)
         {
-            // Trim trailing zeros but keep up to 6 decimals
-            var s = value.ToString("0.######", CultureInfo.InvariantCulture);
+            // Trim trailing zeros but keep up to 2 decimals
+            var s = value.ToString("0.##", CultureInfo.InvariantCulture);
             return s;
         }
 

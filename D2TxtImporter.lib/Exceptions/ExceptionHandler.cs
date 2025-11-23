@@ -91,9 +91,10 @@ namespace D2TxtImporter.lib.Exceptions
         {
             var resultMessage = "";
 
-            resultMessage += $"Exception loading properties for item: '{Item.CurrentItem.Index}'\n";
+            var itemIndex = Model.Items.Item.CurrentItem != null ? Model.Items.Item.CurrentItem.Index : "<unknown>";
+            resultMessage += $"Exception loading properties for item: '{itemIndex}'\n";
             resultMessage +=
-                $"\tCould not generate properties for property '{ItemProperty.CurrentItemProperty.Property.Code}' with parameter '{ItemProperty.CurrentItemProperty.Parameter}' min '{ItemProperty.CurrentItemProperty.Min}' max '{ItemProperty.CurrentItemProperty.Max}' index '{ItemProperty.CurrentItemProperty.Index}' itemlvl '{ItemProperty.CurrentItemProperty.ItemLevel}'\n";
+                $"\tCould not generate properties for property '{(ItemProperty.CurrentItemProperty != null ? ItemProperty.CurrentItemProperty.Property?.Code : "<unknown>")}' with parameter '{ItemProperty.CurrentItemProperty?.Parameter}' min '{ItemProperty.CurrentItemProperty?.Min}' max '{ItemProperty.CurrentItemProperty?.Max}' index '{ItemProperty.CurrentItemProperty?.Index}' itemlvl '{ItemProperty.CurrentItemProperty?.ItemLevel}'\n";
             resultMessage += $"\t\t{message}";
 
             return new ItemStatCostException(resultMessage);
@@ -110,7 +111,8 @@ namespace D2TxtImporter.lib.Exceptions
         {
             var resultMessage = "";
 
-            resultMessage += $"Exception loading properties for item: '{Item.CurrentItem.Index}'\n";
+            var itemIndex = Model.Items.Item.CurrentItem != null ? Model.Items.Item.CurrentItem.Index : "<unknown>";
+            resultMessage += $"Exception loading properties for item: '{itemIndex}'\n";
             resultMessage += $"\t{message}";
 
             return new ItemPropertyException(resultMessage, e);

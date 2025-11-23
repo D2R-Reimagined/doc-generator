@@ -27,10 +27,40 @@ namespace D2TxtImporter.client
             _mainViewModel.DuplicateKeyReportEnabled = Properties.Settings.Default.DuplicateKeyReportEnabled;
             _mainViewModel.RequiredLevelReportEnabled = Properties.Settings.Default.RequiredLevelReportEnabled;
             _mainViewModel.ItemStatCostExportEnabled = Properties.Settings.Default.ItemStatCostExportEnabled;
+            _mainViewModel.CubeRecipesV2ExportEnabled = Properties.Settings.Default.CubeRecipesV2ExportEnabled;
+            _mainViewModel.EarlyStopSentinelEnabled = Properties.Settings.Default.EarlyStopSentinelEnabled;
+            _mainViewModel.ContinueOnException = Properties.Settings.Default.ContinueOnException;
             _mainViewModel.ExportJson = Properties.Settings.Default.ExportJson;
             _mainViewModel.ExportWeb = Properties.Settings.Default.ExportWeb;
             _mainViewModel.PrettyPrintJson = Properties.Settings.Default.PrettyPrintJson;
             _mainViewModel.ExportExcel = Properties.Settings.Default.ExportExcel;
+
+            // Ensure settings are persisted even if user closes the window without running
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            try
+            {
+                // Persist current view model settings to user settings
+                Properties.Settings.Default.ExcelPath = _mainViewModel.ExcelPath;
+                Properties.Settings.Default.TablePath = _mainViewModel.TablePath;
+                Properties.Settings.Default.OutputPath = _mainViewModel.OutputPath;
+                Properties.Settings.Default.CubeRecipeUseDescription = _mainViewModel.CubeRecipeUseDescription;
+                Properties.Settings.Default.DuplicateKeyReportEnabled = _mainViewModel.DuplicateKeyReportEnabled;
+                Properties.Settings.Default.RequiredLevelReportEnabled = _mainViewModel.RequiredLevelReportEnabled;
+                Properties.Settings.Default.ItemStatCostExportEnabled = _mainViewModel.ItemStatCostExportEnabled;
+                Properties.Settings.Default.CubeRecipesV2ExportEnabled = _mainViewModel.CubeRecipesV2ExportEnabled;
+                Properties.Settings.Default.EarlyStopSentinelEnabled = _mainViewModel.EarlyStopSentinelEnabled;
+                Properties.Settings.Default.ContinueOnException = _mainViewModel.ContinueOnException;
+                Properties.Settings.Default.ExportJson = _mainViewModel.ExportJson;
+                Properties.Settings.Default.ExportWeb = _mainViewModel.ExportWeb;
+                Properties.Settings.Default.PrettyPrintJson = _mainViewModel.PrettyPrintJson;
+                Properties.Settings.Default.ExportExcel = _mainViewModel.ExportExcel;
+                Properties.Settings.Default.Save();
+            }
+            catch { /* ignore save errors during closing */ }
         }
 
         private void BrowseExcel(object sender, RoutedEventArgs e)
@@ -98,6 +128,9 @@ namespace D2TxtImporter.client
                 Properties.Settings.Default.DuplicateKeyReportEnabled = _mainViewModel.DuplicateKeyReportEnabled;
                 Properties.Settings.Default.RequiredLevelReportEnabled = _mainViewModel.RequiredLevelReportEnabled;
                 Properties.Settings.Default.ItemStatCostExportEnabled = _mainViewModel.ItemStatCostExportEnabled;
+                Properties.Settings.Default.CubeRecipesV2ExportEnabled = _mainViewModel.CubeRecipesV2ExportEnabled;
+                Properties.Settings.Default.EarlyStopSentinelEnabled = _mainViewModel.EarlyStopSentinelEnabled;
+                Properties.Settings.Default.ContinueOnException = _mainViewModel.ContinueOnException;
                 Properties.Settings.Default.ExportJson = _mainViewModel.ExportJson;
                 Properties.Settings.Default.ExportWeb = _mainViewModel.ExportWeb;
                 Properties.Settings.Default.PrettyPrintJson = _mainViewModel.PrettyPrintJson;
@@ -111,8 +144,12 @@ namespace D2TxtImporter.client
                     ExportWeb = _mainViewModel.ExportWeb,
                     PrettyPrintJson = _mainViewModel.PrettyPrintJson,
                     ExportExcel = _mainViewModel.ExportExcel,
-                    ExportItemStatCostReport = _mainViewModel.ItemStatCostExportEnabled
+                    ExportItemStatCostReport = _mainViewModel.ItemStatCostExportEnabled,
+                    ExportCubeRecipesV2 = _mainViewModel.CubeRecipesV2ExportEnabled
                 };
+
+                // Apply Cube V2 early-stop sentinel toggle (static flag) before import
+                D2TxtImporter.lib.Model.Items.CubeRecipeV2.EnableEarlyStopSentinel = _mainViewModel.EarlyStopSentinelEnabled;
 
                 // Optionally expose importer to VM for later use
                 _mainViewModel.Importer = importer;
@@ -140,9 +177,38 @@ namespace D2TxtImporter.client
                     MessageBox.Show("Export Successful!");
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // Any exceptions are already logged by Importer paths; we keep UI silent here
+                // Route any exception to our central handler and surface a pop-up
+                try
+                {
+                    D2TxtImporter.lib.Exceptions.ExceptionHandler.WriteException(ex);
+                }
+                catch { /* ignore secondary errors while reporting */ }
+
+                try
+                {
+                    var debugFile = $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
+                    string message = null;
+                    if (File.Exists(debugFile))
+                    {
+                        message = File.ReadAllText(debugFile);
+                    }
+
+                    if (string.IsNullOrWhiteSpace(message))
+                    {
+                        // Fallback to the exception details when no debug log was produced
+                        message = ex.ToString();
+                    }
+
+                    var errorDialog = new ErrorDialog(message);
+                    errorDialog.Show();
+                }
+                catch
+                {
+                    // Last resort: message box so the user still sees something
+                    MessageBox.Show(ex.ToString(), "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
             finally
             {

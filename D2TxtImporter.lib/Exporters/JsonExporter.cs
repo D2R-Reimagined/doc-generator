@@ -12,57 +12,6 @@ namespace D2TxtImporter.lib.Exporters
 {
     public class JsonExporter
     {
-        // Custom resolver that filters out properties by name (case-insensitive)
-        private class ExcludingPropertiesContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
-        {
-            private readonly ISet<string> _excludedByName;
-            private readonly System.Collections.Generic.IDictionary<System.Type, ISet<string>> _excludedByDeclaringType;
-
-            public ExcludingPropertiesContractResolver(ISet<string> excludedByName,
-                System.Collections.Generic.IDictionary<System.Type, ISet<string>> excludedByDeclaringType = null)
-            {
-                _excludedByName = excludedByName ?? new HashSet<string>();
-                _excludedByDeclaringType = excludedByDeclaringType;
-            }
-
-            protected override IList<Newtonsoft.Json.Serialization.JsonProperty> CreateProperties(System.Type type, MemberSerialization memberSerialization)
-            {
-                var props = base.CreateProperties(type, memberSerialization);
-                if (( _excludedByName == null || _excludedByName.Count == 0) && (_excludedByDeclaringType == null || _excludedByDeclaringType.Count == 0))
-                {
-                    return props;
-                }
-
-                var list = new List<Newtonsoft.Json.Serialization.JsonProperty>();
-                foreach (var p in props)
-                {
-                    bool exclude = false;
-                    if (_excludedByName != null && _excludedByName.Contains(p.PropertyName))
-                    {
-                        exclude = true;
-                    }
-                    if (!exclude && _excludedByDeclaringType != null && _excludedByDeclaringType.Count > 0)
-                    {
-                        foreach (var kv in _excludedByDeclaringType)
-                        {
-                            var dt = kv.Key;
-                            var names = kv.Value;
-                            if (dt.IsAssignableFrom(p.DeclaringType) && names.Contains(p.PropertyName))
-                            {
-                                exclude = true;
-                                break;
-                            }
-                        }
-                    }
-                    if (!exclude)
-                    {
-                        list.Add(p);
-                    }
-                }
-                return list;
-            }
-        }
-
         // Helper: serialize with 4-space indentation when prettyPrint is true; otherwise compact.
         private static string SerializeWithIndent(object value, JsonSerializerSettings settings, bool prettyPrint)
         {
@@ -225,7 +174,6 @@ namespace D2TxtImporter.lib.Exporters
 
             Uniques(Path.Combine(txtOutputDirectory, "uniques.json"), uniques, prettyPrint);
             Runewords(Path.Combine(txtOutputDirectory, "runewords.json"), runewords, prettyPrint);
-            CubeRecipes(Path.Combine(txtOutputDirectory, "cube_recipes.json"), cubeRecipes, prettyPrint);
             Sets(Path.Combine(txtOutputDirectory, "sets.json"), sets, prettyPrint);
             // Precompute automagic group map once for both armor and weapons
             var autoMagicGroupMap = BuildAutoMagicGroupMap();
@@ -237,14 +185,9 @@ namespace D2TxtImporter.lib.Exporters
 
         private static void Uniques(string destination, List<Unique> uniques, bool prettyPrint)
         {
-            var typedEx = new Dictionary<System.Type, ISet<string>>
-            {
-                { typeof(D2TxtImporter.lib.Model.Equipment.Equipment), new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "Code" } }
-            };
             var settings = new JsonSerializerSettings
             {
-                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties, typedEx)
+                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
             };
             var json = SerializeWithIndent(uniques, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
@@ -257,23 +200,12 @@ namespace D2TxtImporter.lib.Exporters
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
 
-        private static void CubeRecipes(string destination, List<CubeRecipe> cubeRecipes, bool prettyPrint)
-        {
-            var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
-            var json = SerializeWithIndent(cubeRecipes, settings, prettyPrint);
-            File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
-        }
 
         private static void Sets(string destination, List<Set> sets, bool prettyPrint)
         {
-            var typedEx = new Dictionary<System.Type, ISet<string>>
-            {
-                { typeof(D2TxtImporter.lib.Model.Equipment.Equipment), new HashSet<string>(System.StringComparer.OrdinalIgnoreCase) { "Code" } }
-            };
             var settings = new JsonSerializerSettings
             {
-                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-                ContractResolver = new ExcludingPropertiesContractResolver(ExcludedExportProperties, typedEx)
+                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
             };
             var json = SerializeWithIndent(sets, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
@@ -344,20 +276,6 @@ namespace D2TxtImporter.lib.Exporters
             var json = SerializeWithIndent(list, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
-        
-        // Shared, case-insensitive list of properties to exclude from uniques.json and sets.json
-        private static readonly HashSet<string> ExcludedExportProperties = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
-        {
-            "NormCode", 
-            "UberCode",
-            "UltraCode",
-            "GemSockets",
-            "AutoPrefix",
-            "BaseRequiredLevel",
-            "Block",
-            "StrBonus", 
-            "DexBonus",
-            "Speed"
-        };
+
     }
 }

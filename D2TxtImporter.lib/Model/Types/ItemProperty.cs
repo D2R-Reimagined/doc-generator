@@ -43,12 +43,13 @@ namespace D2TxtImporter.lib.Model.Types
             ItemLevel = itemLevel;
             Suffix = suffix;
 
-            if (!EffectProperty.EffectProperties.ContainsKey(property.ToLower())) 
+            // Look up the property code as-is; dictionary is case-insensitive
+            if (!EffectProperty.EffectProperties.ContainsKey(property)) 
             {
-                throw ItemPropertyException.Create($"Could not find property '{property.ToLower()}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
+                throw ItemPropertyException.Create($"Could not find property '{property}' parameter '{parameter}' min '{min}' max '{max}' index '{index}' itemlvl '{itemLevel}' in Properties.txt");
             }
 
-            Property = EffectProperty.EffectProperties[property.ToLower()];
+            Property = EffectProperty.EffectProperties[property];
 
             var propStat = Property.Stat;
             var propCode = Property.Code;
@@ -143,9 +144,9 @@ namespace D2TxtImporter.lib.Model.Types
             if (properties == null || properties.Count == 0)
                 return result;
 
-            // Normalize once
+            // Normalize once (preserve original casing; index map is case-insensitive)
             int n = properties.Count;
-            var code = new string[n]; // lower-cased and trimmed code
+            var code = new string[n];
             var param = new string[n];
             var min = new int?[n];
             var max = new int?[n];
@@ -153,7 +154,7 @@ namespace D2TxtImporter.lib.Model.Types
             {
                 var p = properties[i];
                 var c = (p?.Property ?? string.Empty).Trim();
-                code[i] = c.ToLowerInvariant();
+                code[i] = c;
                 param[i] = p?.Parameter;
                 min[i] = p?.Min;
                 max[i] = p?.Max;
@@ -193,7 +194,7 @@ namespace D2TxtImporter.lib.Model.Types
             var aggregatesAt = new Dictionary<int, List<ItemProperty>>();
             void AddAgg(int atIndex, ItemProperty ip)
             {
-                if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
+                if (!IgnoredProperties.Contains(ip.Property.Code))
                 {
                     if (!aggregatesAt.TryGetValue(atIndex, out var lst))
                     { lst = new List<ItemProperty>(1); aggregatesAt[atIndex] = lst; }
@@ -295,19 +296,19 @@ namespace D2TxtImporter.lib.Model.Types
                     else
                     {
                         var cLower = code[i];
-                        if (cLower == "dmg-elem")
+                        if (string.Equals(cLower, "dmg-elem", StringComparison.OrdinalIgnoreCase))
                         {
                             foreach (var elem in new[] { "dmg-fire", "dmg-cold", "dmg-ltng" })
                             {
                                 var ip = new ItemProperty(elem, param[i], min[i], max[i], i, itemLevel);
-                                if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
+                                if (!IgnoredProperties.Contains(ip.Property.Code))
                                     result.Add(ip);
                             }
                         }
                         else
                         {
                             var ip = new ItemProperty(p.Property, p.Parameter, p.Min, p.Max, i, itemLevel);
-                            if (!IgnoredProperties.Contains(ip.Property.Code.ToLowerInvariant()))
+                            if (!IgnoredProperties.Contains(ip.Property.Code))
                                 result.Add(ip);
                         }
                     }
@@ -439,7 +440,7 @@ namespace D2TxtImporter.lib.Model.Types
             return merged;
         }
         
-        private static readonly List<string> IgnoredProperties = new List<string> 
+        private static readonly HashSet<string> IgnoredProperties = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         { 
             "state", 
             "bloody", 
@@ -449,7 +450,7 @@ namespace D2TxtImporter.lib.Model.Types
             "ubertorch-property"
         };
         
-        private static readonly HashSet<string> ManualStatCodes = new HashSet<string>(StringComparer.Ordinal)
+        private static readonly HashSet<string> ManualStatCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             "res-all",
             "res-all-max",

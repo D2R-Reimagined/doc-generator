@@ -64,20 +64,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             foreach (var row in table)
             {
-                // Helper to read values with case-insensitive key matching and fallbacks
-                string GetFromRow(params string[] keys)
-                {
-                    foreach (var k in keys)
-                    {
-                        var kv = row.FirstOrDefault(x => string.Equals(x.Key, k, StringComparison.OrdinalIgnoreCase));
-                        if (!string.IsNullOrEmpty(kv.Key))
-                        {
-                            return kv.Value;
-                        }
-                    }
-                    return null;
-                }
-
                 var itemStatCost = new ItemStatCost
                 {
                     Stat = row["Stat"],

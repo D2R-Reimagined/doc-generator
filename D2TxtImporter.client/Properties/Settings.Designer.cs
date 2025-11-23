@@ -153,5 +153,41 @@ namespace D2TxtImporter.client.Properties {
                 this["ItemStatCostExportEnabled"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool CubeRecipesV2ExportEnabled {
+            get {
+                return ((bool)(this["CubeRecipesV2ExportEnabled"]));
+            }
+            set {
+                this["CubeRecipesV2ExportEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool EarlyStopSentinelEnabled {
+            get {
+                return ((bool)(this["EarlyStopSentinelEnabled"]));
+            }
+            set {
+                this["EarlyStopSentinelEnabled"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ContinueOnException {
+            get {
+                return ((bool)(this["ContinueOnException"]));
+            }
+            set {
+                this["ContinueOnException"] = value;
+            }
+        }
     }
 }

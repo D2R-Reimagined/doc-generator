@@ -14,9 +14,9 @@ namespace D2TxtImporter.lib.Exporters
                 throw new Exception("Could not find output directory");
             }
 
-            var exePath = $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}";
-            var webPath = $"{exePath}/Exporters/Web";
-            var jsonPath = $"{outputPath}/json";
+            var exePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
+            var webPath = Path.Combine(exePath, "Exporters", "Web");
+            var jsonPath = Path.Combine(outputPath, "json");
 
             if (!Directory.Exists(webPath))
             {
@@ -28,7 +28,7 @@ namespace D2TxtImporter.lib.Exporters
                 throw new Exception($"Could not find Json directory in '{jsonPath}'");
             }
 
-            var webOutputDirectory = outputPath + "/web";
+            var webOutputDirectory = Path.Combine(outputPath, "web");
 
             if (!Directory.Exists(webOutputDirectory))
             {
@@ -47,10 +47,32 @@ namespace D2TxtImporter.lib.Exporters
                 File.Copy(newPath, newPath.Replace(webPath, webOutputDirectory), true);
             }
 
-            var uniqueJson = File.ReadAllText($"{jsonPath}/uniques.json", Encoding.UTF8);
-            var runewordJson = File.ReadAllText($"{jsonPath}/runewords.json", Encoding.UTF8);
-            var cubeRecipeJson = File.ReadAllText($"{jsonPath}/cube_recipes.json", Encoding.UTF8);
-            var setsJson = File.ReadAllText($"{jsonPath}/sets.json", Encoding.UTF8);
+            // Load JSON payloads. For cube recipes, prefer V2 file and fall back to legacy; if neither exists, use empty array.
+            var uniquesPath = Path.Combine(jsonPath, "uniques.json");
+            var runewordsPath = Path.Combine(jsonPath, "runewords.json");
+            var cubeV2Path = Path.Combine(jsonPath, "cuberecipesv2.json");
+            var cubeLegacyPath = Path.Combine(jsonPath, "cube_recipes.json");
+            var setsPath = Path.Combine(jsonPath, "sets.json");
+
+            var uniqueJson = File.ReadAllText(uniquesPath, Encoding.UTF8);
+            var runewordJson = File.ReadAllText(runewordsPath, Encoding.UTF8);
+
+            string cubeRecipeJson;
+            if (File.Exists(cubeV2Path))
+            {
+                cubeRecipeJson = File.ReadAllText(cubeV2Path, Encoding.UTF8);
+            }
+            else if (File.Exists(cubeLegacyPath))
+            {
+                cubeRecipeJson = File.ReadAllText(cubeLegacyPath, Encoding.UTF8);
+            }
+            else
+            {
+                // Graceful fallback to an empty list when cube recipes are not exported.
+                cubeRecipeJson = "[]";
+            }
+
+            var setsJson = File.ReadAllText(setsPath, Encoding.UTF8);
 
             var jsFile = $"{webOutputDirectory}/d2export.js";
             var js = File.ReadAllText(jsFile, Encoding.UTF8);

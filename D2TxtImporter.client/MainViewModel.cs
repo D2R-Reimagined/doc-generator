@@ -18,6 +18,8 @@ namespace D2TxtImporter.client
         private bool _prettyPrintJson = true;
         private bool _exportExcel = false;
         private bool _itemStatCostExportEnabled = false;
+        private bool _cubeRecipesV2ExportEnabled = false;
+        private bool _earlyStopSentinelEnabled = false;
         private bool _isBusy = false;
         private string _statusText = string.Empty;
 
@@ -112,6 +114,26 @@ namespace D2TxtImporter.client
             {
                 _itemStatCostExportEnabled = value;
                 OnPropertyChange(nameof(ItemStatCostExportEnabled));
+            }
+        }
+
+        public bool CubeRecipesV2ExportEnabled
+        {
+            get => _cubeRecipesV2ExportEnabled;
+            set
+            {
+                _cubeRecipesV2ExportEnabled = value;
+                OnPropertyChange(nameof(CubeRecipesV2ExportEnabled));
+            }
+        }
+
+        public bool EarlyStopSentinelEnabled
+        {
+            get => _earlyStopSentinelEnabled;
+            set
+            {
+                _earlyStopSentinelEnabled = value;
+                OnPropertyChange(nameof(EarlyStopSentinelEnabled));
             }
         }
 

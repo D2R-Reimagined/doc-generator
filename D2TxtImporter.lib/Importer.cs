@@ -23,10 +23,13 @@ namespace D2TxtImporter.lib
         public bool ExportExcel { get; set; } = false;
         // Toggle for ItemStatCost TSV export
         public bool ExportItemStatCostReport { get; set; } = false;
+        // Toggle for Cube Recipes V2 export
+        public bool ExportCubeRecipesV2 { get; set; } = false;
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
         public List<CubeRecipe> CubeRecipes { get; set; }
+        public List<Model.Items.CubeRecipeV2> CubeRecipesV2 { get; set; }
         public List<Set> Sets { get; set; }
 
         public Importer(string excelPath, string tablePath, string outputDir)
@@ -76,7 +79,11 @@ namespace D2TxtImporter.lib
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
-                throw; // Re-throw so callers receive the exception (e.g., missing key)
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    // Re-throw so callers receive the exception (e.g., missing key)
+                    throw;
+                }
             }
         }
 
@@ -90,11 +97,17 @@ namespace D2TxtImporter.lib
                 Runewords = Runeword.Import(_excelPath);
                 CubeRecipes = CubeRecipe.Import(_excelPath);
                 Sets = Set.Import(_excelPath);
+
+                // New Cube Recipes V2 (validated & structured)
+                CubeRecipesV2 = Model.Items.CubeRecipeV2.Import(_excelPath, Uniques, Model.Items.SetItem.SetItems);
             }
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
-                throw; // propagate
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    throw; // propagate
+                }
             }
         }
 
@@ -108,8 +121,11 @@ namespace D2TxtImporter.lib
                     JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets, PrettyPrintJson);
                 }
 
-                // Write duplicate table key report next to JSON exports directory
-                Table.WriteDuplicateReport(_outputPath);
+                // Write duplicate table key report next to JSON exports directory (guarded by toggle)
+                if (Table.EnableDuplicateReport)
+                {
+                    Table.WriteDuplicateReport(_outputPath);
+                }
 
                 // Write required-level property report if enabled
                 RequiredLevelReport.WriteReport(_outputPath);
@@ -118,6 +134,12 @@ namespace D2TxtImporter.lib
                 if (ExportItemStatCostReport)
                 {
                     StatsExporter.ExportItemStatCosts(_outputPath);
+                }
+
+                // Export Cube Recipes V2 if enabled
+                if (ExportCubeRecipesV2 && CubeRecipesV2 != null)
+                {
+                    CubeRecipesExporter.ExportV2(_outputPath, CubeRecipesV2, PrettyPrintJson);
                 }
 
                 if (ExportWeb)
@@ -133,7 +155,10 @@ namespace D2TxtImporter.lib
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
-                throw; // propagate
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    throw; // propagate
+                }
             }
         }
 

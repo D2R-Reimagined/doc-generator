@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="Exporters\ExcelExporter.cs" />
     <Compile Include="Exceptions\ExceptionHandler.cs" />
+    <Compile Include="Exporters\CubeRecipesExporter.cs" />
     <Compile Include="Exporters\JsonExporter.cs" />
     <Compile Include="Exporters\StatsExporter.cs" />
     <Compile Include="Exporters\WebExporter.cs" />
@@ -54,6 +55,8 @@
     <Compile Include="Model\Dictionaries\MonStat.cs" />
     <Compile Include="Model\Dictionaries\Gem.cs" />
     <Compile Include="Model\Dictionaries\RequiredLevelReport.cs" />
+    <Compile Include="Model\Items\CubeQualifiers.cs" />
+    <Compile Include="Model\Items\CubeRecipeV2.cs" />
     <Compile Include="Model\Items\Set.cs" />
     <Compile Include="Model\Items\SetItem.cs" />
     <Compile Include="Model\TableProcessor.cs" />
