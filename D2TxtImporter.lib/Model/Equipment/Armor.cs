@@ -22,6 +22,9 @@ namespace D2TxtImporter.lib.Model.Equipment
         public string DamageStringPrefix { get; set; }
         [JsonIgnore]
         public static Dictionary<string, Armor> Armors;
+        // Preserve import order (Armor.txt order)
+        [JsonIgnore]
+        public static List<Armor> ArmorOrder;
         public string ArmorString { get; set; }
         public int? Block { get; set; }
         public int StrBonus { get; set; }
@@ -38,6 +41,7 @@ namespace D2TxtImporter.lib.Model.Equipment
         public static void Import(string excelFolder)
         {
             Armors = new Dictionary<string, Armor>();
+            ArmorOrder = new List<Armor>();
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Armor.txt");
 
@@ -137,6 +141,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 }
 
                 Armors[armor.Code] = armor;
+                ArmorOrder.Add(armor);
             }
         }
 

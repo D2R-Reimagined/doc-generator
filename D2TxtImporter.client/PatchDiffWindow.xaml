@@ -1,0 +1,66 @@
+<Window x:Class="D2TxtImporter.client.PatchDiffWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Patch Diff" Height="600" Width="900">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Old JSON Directory -->
+        <Grid Grid.Row="0" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" VerticalAlignment="Center">Old JSON Export</Label>
+            <TextBox Grid.Column="1" Name="OldJsonText" Margin="4,0"/>
+            <Button Grid.Column="2" Click="BrowseOldJson">Browse</Button>
+        </Grid>
+
+        <!-- New JSON Directory -->
+        <Grid Grid.Row="1" Margin="0,0,0,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" VerticalAlignment="Center">New JSON Export</Label>
+            <TextBox Grid.Column="1" Name="NewJsonText" Margin="4,0"/>
+            <Button Grid.Column="2" Click="BrowseNewJson">Browse</Button>
+        </Grid>
+
+        <!-- Optional Patch file -->
+        <Grid Grid.Row="2" Margin="0,0,0,10">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="140"/>
+                <ColumnDefinition />
+                <ColumnDefinition Width="90"/>
+            </Grid.ColumnDefinitions>
+            <Label Grid.Column="0" VerticalAlignment="Center">.diff file (optional)</Label>
+            <TextBox Grid.Column="1" Name="PatchFileText" Margin="4,0"/>
+            <Button Grid.Column="2" Click="BrowsePatch">Browse</Button>
+        </Grid>
+
+        <DockPanel Grid.Row="3">
+            <StackPanel Orientation="Horizontal" DockPanel.Dock="Top" Margin="0,0,0,6">
+                <CheckBox Name="IncludeUnmentionedCheck" VerticalAlignment="Center" IsChecked="True" ToolTip="Include entities not mentioned in the patch. Auto-enabled when no .diff is provided.">
+                    Include Unmentioned
+                </CheckBox>
+                <Button Margin="10,0,0,0" Padding="10 0 10 0" Click="RunDiff">Run Comparison</Button>
+                <Button Margin="6,0,0,0" Padding="10 0 10 0" Click="SaveMarkdown" IsEnabled="False" Name="SaveButton">Save Markdown File</Button>
+                <TextBlock Margin="12,0,0,0" VerticalAlignment="Center" Name="StatusText"/>
+            </StackPanel>
+            <TextBox Name="OutputText" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" FontFamily="Consolas" TextWrapping="NoWrap" IsReadOnly="True"/>
+        </DockPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Width="80" Margin="0,6,0,0" IsCancel="True">Close</Button>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -42,6 +42,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Exporters\ExcelExporter.cs" />
+    <Compile Include="Diff\DiffFromPatchService.cs" />
+    <Compile Include="Diff\JsonModelLoader.cs" />
+    <Compile Include="Diff\SemanticDiffService.cs" />
+    <Compile Include="Diff\MarkdownPatchNotesExporter.cs" />
     <Compile Include="Exceptions\ExceptionHandler.cs" />
     <Compile Include="Exporters\CubeRecipesExporter.cs" />
     <Compile Include="Exporters\JsonExporter.cs" />

@@ -189,5 +189,53 @@ namespace D2TxtImporter.client.Properties {
                 this["ContinueOnException"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ExportSetsByBase {
+            get {
+                return ((bool)(this["ExportSetsByBase"]));
+            }
+            set {
+                this["ExportSetsByBase"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PatchOldJsonPath {
+            get {
+                return ((string)(this["PatchOldJsonPath"]));
+            }
+            set {
+                this["PatchOldJsonPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PatchNewJsonPath {
+            get {
+                return ((string)(this["PatchNewJsonPath"]));
+            }
+            set {
+                this["PatchNewJsonPath"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string PatchDiffFilePath {
+            get {
+                return ((string)(this["PatchDiffFilePath"]));
+            }
+            set {
+                this["PatchDiffFilePath"] = value;
+            }
+        }
     }
 }

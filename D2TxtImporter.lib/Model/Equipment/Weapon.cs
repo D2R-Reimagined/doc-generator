@@ -25,10 +25,14 @@ namespace D2TxtImporter.lib.Model.Equipment
 
         [JsonIgnore]
         public static Dictionary<string, Weapon> Weapons;
+        // Preserve import order (Weapons.txt order)
+        [JsonIgnore]
+        public static List<Weapon> WeaponOrder;
 
         public static void Import(string excelFolder)
         {
             Weapons = new Dictionary<string, Weapon>();
+            WeaponOrder = new List<Weapon>();
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Weapons.txt");
 
@@ -133,6 +137,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 }
 
                 Weapons[weapon.Code] = weapon;
+                WeaponOrder.Add(weapon);
             }
         }
 

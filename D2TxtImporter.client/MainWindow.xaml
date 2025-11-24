@@ -68,6 +68,7 @@
                         <CheckBox Margin="0,0,0,0" IsChecked="{Binding ExportJson}" ToolTip="Master switch for JSON files (uniques, sets, runewords, weapons, armors, magic affixes).">Export JSONs</CheckBox>
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding PrettyPrintJson}" IsEnabled="{Binding ExportJson}" ToolTip="Indents all JSON exports, including Cube Recipes V2.">VSC Indents</CheckBox>
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding DuplicateKeyReportEnabled}" IsEnabled="{Binding ExportJson}" ToolTip="Writes 'jason key duplicates.txt' under json/. Scans translation keys in tbl/json (independent of which JSON files you export).">Report Key Dupes (TSV)</CheckBox>
+                        <CheckBox Margin="16,2,0,0" IsChecked="{Binding ExportSetsByBase}" IsEnabled="{Binding ExportJson}" ToolTip="Writes sets_by_base.json grouping set items under each base armor/weapon.">Sets grouped by base (sets_by_base.json)</CheckBox>
 
                         <CheckBox Margin="0,10,0,0" IsChecked="{Binding CubeRecipesV2ExportEnabled}" ToolTip="Enable export of cuberecipesv2.json">Cube Recipes V2</CheckBox>
                         <CheckBox Margin="16,2,0,0"
@@ -101,14 +102,17 @@
                 <ColumnDefinition />
             </Grid.ColumnDefinitions>
 
-            <Button Grid.Column="0" Padding="10 0 10 0" Margin="10 0 10 0" Click="LoadData" IsEnabled="{Binding ImportEnabled, UpdateSourceTrigger=PropertyChanged}">Import and Export</Button>
+            <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                <Button Padding="10 0 10 0" Margin="10 0 10 0" Click="LoadData" IsEnabled="{Binding ImportEnabled, UpdateSourceTrigger=PropertyChanged}">Import and Export</Button>
+            </StackPanel>
             <!-- <Button Grid.Column="1" Margin="2 0 0 0" Click="ExportData" IsEnabled="{Binding ExportEnabled, UpdateSourceTrigger=PropertyChanged}">Export</Button> -->
-            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="10,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Right">
                 <ProgressBar Width="150" Height="14" IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
                 <TextBlock Margin="8,0,0,0" VerticalAlignment="Center"
                            Text="{Binding StatusText}"
                            Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+                <Button Padding="10 0 10 0" Margin="10 0 10 0" Click="OpenPatchDiff">Patch Diff...</Button>
             </StackPanel>
         </Grid>
     </Grid>

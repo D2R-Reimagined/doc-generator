@@ -34,6 +34,7 @@ namespace D2TxtImporter.client
             _mainViewModel.ExportWeb = Properties.Settings.Default.ExportWeb;
             _mainViewModel.PrettyPrintJson = Properties.Settings.Default.PrettyPrintJson;
             _mainViewModel.ExportExcel = Properties.Settings.Default.ExportExcel;
+            _mainViewModel.ExportSetsByBase = Properties.Settings.Default.ExportSetsByBase;
 
             // Ensure settings are persisted even if user closes the window without running
             this.Closing += MainWindow_Closing;
@@ -58,6 +59,7 @@ namespace D2TxtImporter.client
                 Properties.Settings.Default.ExportWeb = _mainViewModel.ExportWeb;
                 Properties.Settings.Default.PrettyPrintJson = _mainViewModel.PrettyPrintJson;
                 Properties.Settings.Default.ExportExcel = _mainViewModel.ExportExcel;
+                Properties.Settings.Default.ExportSetsByBase = _mainViewModel.ExportSetsByBase;
                 Properties.Settings.Default.Save();
             }
             catch { /* ignore save errors during closing */ }
@@ -145,7 +147,8 @@ namespace D2TxtImporter.client
                     PrettyPrintJson = _mainViewModel.PrettyPrintJson,
                     ExportExcel = _mainViewModel.ExportExcel,
                     ExportItemStatCostReport = _mainViewModel.ItemStatCostExportEnabled,
-                    ExportCubeRecipesV2 = _mainViewModel.CubeRecipesV2ExportEnabled
+                    ExportCubeRecipesV2 = _mainViewModel.CubeRecipesV2ExportEnabled,
+                    ExportSetsByBase = _mainViewModel.ExportSetsByBase
                 };
 
                 // Apply Cube V2 early-stop sentinel toggle (static flag) before import
@@ -174,7 +177,29 @@ namespace D2TxtImporter.client
                 }
                 else
                 {
-                    MessageBox.Show("Export Successful!");
+                    // Ensure the success message appears in front of other windows
+                    try
+                    {
+                        if (!this.IsActive)
+                        {
+                            this.Activate();
+                        }
+
+                        // Briefly set Topmost to bring the window to the foreground without leaving it always-on-top
+                        var wasTopmost = this.Topmost;
+                        this.Topmost = true;
+                        this.Topmost = wasTopmost;
+                    }
+                    catch
+                    {
+                        // Non-fatal: if bringing to front fails, still show the message box
+                    }
+
+                    MessageBox.Show(this,
+                        "Export Successful!",
+                        "Export Complete",
+                        MessageBoxButton.OK,
+                        MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -214,6 +239,21 @@ namespace D2TxtImporter.client
             {
                 _mainViewModel.StatusText = string.Empty;
                 _mainViewModel.IsBusy = false;
+            }
+        }
+
+        private void OpenPatchDiff(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var wnd = new PatchDiffWindow();
+                wnd.Owner = this;
+                wnd.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+                wnd.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(this, ex.Message, "Failed to open Patch Diff", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 

@@ -367,14 +367,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     return; // Nothing to write
                 }
 
-                var jsonDir = Path.Combine(outputRootPath, "json");
-                if (!Directory.Exists(jsonDir))
+                var extrasDir = Path.Combine(outputRootPath, "extras");
+                if (!Directory.Exists(extrasDir))
                 {
-                    Directory.CreateDirectory(jsonDir);
+                    Directory.CreateDirectory(extrasDir);
                 }
 
                 // Write as a simple .txt file with tab-separated values and no BOM to avoid odd characters in some spreadsheet programs
-                var reportPath = Path.Combine(jsonDir, "jason key duplicates.txt");
+                var reportPath = Path.Combine(extrasDir, "jason key duplicates.txt");
 
                 using (var sw = new StreamWriter(reportPath, false, new System.Text.UTF8Encoding(false)))
                 {

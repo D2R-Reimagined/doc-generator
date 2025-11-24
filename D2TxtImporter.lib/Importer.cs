@@ -25,6 +25,8 @@ namespace D2TxtImporter.lib
         public bool ExportItemStatCostReport { get; set; } = false;
         // Toggle for Cube Recipes V2 export
         public bool ExportCubeRecipesV2 { get; set; } = false;
+        // Toggle for optional Sets grouped-by-base JSON export
+        public bool ExportSetsByBase { get; set; } = false;
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
@@ -115,41 +117,57 @@ namespace D2TxtImporter.lib
         {
             try
             {
-                //TxtExporter.ExportTxt(_outputPath, Uniques, Runewords, CubeRecipes, Sets); // Out of date
+                // Compute output root (caller controls exact path)
+                var docsDir = _outputPath;
+                if (!Directory.Exists(docsDir))
+                {
+                    Directory.CreateDirectory(docsDir);
+                }
+
+                // Do not create any subfolders here; individual exporters will
+                // create their target directories on-demand so that unused
+                // folders (e.g., item-jsons, web, extras) are not created.
+
+                //TxtExporter.ExportTxt(docsDir, Uniques, Runewords, CubeRecipes, Sets); // Out of date
                 if (ExportJson)
                 {
-                    JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets, PrettyPrintJson);
+                    JsonExporter.ExportJson(docsDir, Uniques, Runewords, CubeRecipes, Sets, PrettyPrintJson);
+                    // Optional: write grouped-by-base sets file when enabled
+                    if (ExportSetsByBase)
+                    {
+                        JsonExporter.ExportSetsByBase(docsDir, Sets, PrettyPrintJson);
+                    }
                 }
 
                 // Write duplicate table key report next to JSON exports directory (guarded by toggle)
                 if (Table.EnableDuplicateReport)
                 {
-                    Table.WriteDuplicateReport(_outputPath);
+                    Table.WriteDuplicateReport(docsDir);
                 }
 
                 // Write required-level property report if enabled
-                RequiredLevelReport.WriteReport(_outputPath);
+                RequiredLevelReport.WriteReport(docsDir);
 
                 // Export ItemStatCost summary (stat, resolved descstrpos, decoded min..max, param range, per-level)
                 if (ExportItemStatCostReport)
                 {
-                    StatsExporter.ExportItemStatCosts(_outputPath);
+                    StatsExporter.ExportItemStatCosts(docsDir);
                 }
 
                 // Export Cube Recipes V2 if enabled
                 if (ExportCubeRecipesV2 && CubeRecipesV2 != null)
                 {
-                    CubeRecipesExporter.ExportV2(_outputPath, CubeRecipesV2, PrettyPrintJson);
+                    CubeRecipesExporter.ExportV2(docsDir, CubeRecipesV2, PrettyPrintJson);
                 }
 
                 if (ExportWeb)
                 {
-                    WebExporter.ExportWeb(_outputPath);
+                    WebExporter.ExportWeb(docsDir);
                 }
 
                 if (ExportExcel)
                 {
-                    ExcelExporter.ExportExcel(_outputPath, Uniques, Runewords, Sets);
+                    ExcelExporter.ExportExcel(docsDir, Uniques, Runewords, Sets);
                 }
             }
             catch (Exception e)

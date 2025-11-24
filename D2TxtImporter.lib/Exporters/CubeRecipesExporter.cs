@@ -14,7 +14,8 @@ namespace D2TxtImporter.lib.Exporters
             {
                 if (recipes == null || recipes.Count == 0) return;
 
-                var jsonDir = Path.Combine(outputDir, "json");
+                // Write CubeRecipes V2 JSON into Docs\\item-jsons
+                var jsonDir = Path.Combine(outputDir, "item-jsons");
                 if (!Directory.Exists(jsonDir)) Directory.CreateDirectory(jsonDir);
 
                 // Use a clear, versioned filename for the V2 export (agreed naming)

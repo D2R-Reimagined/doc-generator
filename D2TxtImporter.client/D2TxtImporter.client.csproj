@@ -88,8 +88,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="PatchDiffWindow.xaml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="PatchDiffWindow.xaml.cs" />
     <Compile Include="Properties\AssemblyInfo.cs">
       <SubType>Code</SubType>
     </Compile>

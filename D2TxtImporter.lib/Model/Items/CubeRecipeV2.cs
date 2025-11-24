@@ -614,7 +614,7 @@ namespace D2TxtImporter.lib.Model.Items
                     }
 
                     // 28) outputs contain useitem and mod contains "upgrade" → Item Enchantment Recipe
-                    if (OutputEqualsUseItem() && AnyOutputPropertyContains("upgrade"))
+                    if (OutputEqualsUseItem() && AnyOutputPropertyContains("upgrade") || AnyOutputPropertyContains("enchant"))
                     {
                         AddNote("Item Enchantment Recipe", added);
                     }

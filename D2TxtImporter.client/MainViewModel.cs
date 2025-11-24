@@ -17,6 +17,7 @@ namespace D2TxtImporter.client
         private bool _exportWeb = true;
         private bool _prettyPrintJson = true;
         private bool _exportExcel = false;
+        private bool _exportSetsByBase = false;
         private bool _itemStatCostExportEnabled = false;
         private bool _cubeRecipesV2ExportEnabled = false;
         private bool _earlyStopSentinelEnabled = false;
@@ -198,6 +199,16 @@ namespace D2TxtImporter.client
             {
                 _prettyPrintJson = value;
                 OnPropertyChange(nameof(PrettyPrintJson));
+            }
+        }
+
+        public bool ExportSetsByBase
+        {
+            get => _exportSetsByBase;
+            set
+            {
+                _exportSetsByBase = value;
+                OnPropertyChange(nameof(ExportSetsByBase));
             }
         }
 

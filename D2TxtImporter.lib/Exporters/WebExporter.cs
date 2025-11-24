@@ -16,7 +16,8 @@ namespace D2TxtImporter.lib.Exporters
 
             var exePath = Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location);
             var webPath = Path.Combine(exePath, "Exporters", "Web");
-            var jsonPath = Path.Combine(outputPath, "json");
+            // JSON payloads are expected under Docs\\item-jsons relative to the chosen output directory
+            var jsonPath = Path.Combine(outputPath, "item-jsons");
 
             if (!Directory.Exists(webPath))
             {
@@ -28,6 +29,7 @@ namespace D2TxtImporter.lib.Exporters
                 throw new Exception($"Could not find Json directory in '{jsonPath}'");
             }
 
+            // Emit web site under Docs\\web
             var webOutputDirectory = Path.Combine(outputPath, "web");
 
             if (!Directory.Exists(webOutputDirectory))

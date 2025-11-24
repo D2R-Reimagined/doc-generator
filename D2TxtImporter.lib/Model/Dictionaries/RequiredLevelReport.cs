@@ -65,13 +65,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     return;
                 }
 
-                var jsonDir = Path.Combine(outputRootPath, "json");
-                if (!Directory.Exists(jsonDir))
+                // Write under Docs\\extras
+                var extrasDir = Path.Combine(outputRootPath, "extras");
+                if (!Directory.Exists(extrasDir))
                 {
-                    Directory.CreateDirectory(jsonDir);
+                    Directory.CreateDirectory(extrasDir);
                 }
 
-                var reportPath = Path.Combine(jsonDir, "required level properties.txt");
+                var reportPath = Path.Combine(extrasDir, "required level properties.txt");
 
                 using (var sw = new StreamWriter(reportPath, false, new System.Text.UTF8Encoding(false)))
                 {

@@ -4,7 +4,6 @@ using System.IO;
 using System.Linq;
 using ClosedXML.Excel;
 using D2TxtImporter.lib.Model.Dictionaries;
-using D2TxtImporter.lib.Model.Equipment;
 using D2TxtImporter.lib.Model.Items;
 
 namespace D2TxtImporter.lib.Exporters
@@ -26,6 +25,13 @@ namespace D2TxtImporter.lib.Exporters
                 Directory.CreateDirectory(outputPath);
             }
 
+            // Ensure Docs\\extras exists (we receive Docs as outputPath from Importer)
+            var extrasDir = Path.Combine(outputPath, "extras");
+            if (!Directory.Exists(extrasDir))
+            {
+                Directory.CreateDirectory(extrasDir);
+            }
+
             var wb = new XLWorkbook();
 
             // Sheets
@@ -36,18 +42,15 @@ namespace D2TxtImporter.lib.Exporters
 
             // Build Uniques sheet
             BuildUniquesSheet(wsUniques, uniques);
-
             // Build Sets sheet
             var setNames = BuildSetsSheet(wsSets, sets);
-
             // Build Runewords sheet
             BuildRunewordsSheet(wsRunewords, runewords);
-
             // Build Home (summary only)
             BuildHomeSheet(home, setNames.Count);
 
-            // Save
-            var path = Path.Combine(outputPath, "D2RR_Holy_Grail.xlsx");
+            // Save into extras
+            var path = Path.Combine(extrasDir, "D2RR_Holy_Grail.xlsx");
             wb.SaveAs(path);
         }
 
@@ -65,7 +68,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(u => u.Name)
                 .Select(u => new
                 {
-                    Found = false,
+                    // Default to 'n' per request (accept y/Y n/N or TRUE/FALSE typed by user)
+                    Found = "n",
                     u.Name,
                     Base = u?.Equipment?.Name,
                     BaseType = u?.Equipment?.Type?.Name,
@@ -77,7 +81,6 @@ namespace D2TxtImporter.lib.Exporters
             foreach (var row in rows)
             {
                 ws.Cell(rowIndex, 1).Value = row.Found;
-                ws.Cell(rowIndex, 1).DataType = XLDataType.Boolean;
                 ws.Cell(rowIndex, 2).Value = row.Name;
                 ws.Cell(rowIndex, 3).Value = row.Base;
                 ws.Cell(rowIndex, 4).Value = row.BaseType;
@@ -90,31 +93,31 @@ namespace D2TxtImporter.lib.Exporters
             var tblRange = ws.Range(1, 1, lastRow, headers.Length);
             var table = tblRange.CreateTable("UniquesTable");
             table.ShowAutoFilter = true;
-            table.Theme = XLTableTheme.None;
+            // Apply requested table theme: Light 21 for Uniques
+            table.Theme = XLTableTheme.TableStyleLight21;
             // Move totals to header area instead of table totals row
             table.ShowTotalsRow = false;
-            var foundColRange = table.DataRange.Column(1); // Found column data only
+
+            // Header styling: black background, white text (only table header to avoid interfering with extra header cells)
+            headerRange.Style.Fill.BackgroundColor = XLColor.Black;
+            headerRange.Style.Font.FontColor = XLColor.White;
 
             // Header sticky total on the right (immediately after headers)
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
+            // Count any of: boolean TRUE, text "TRUE"/"true", "Y"/"y"
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"true\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Style the Total Found label and count as black background with white text
+            ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
+            ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
+            var uniquesTotalCountCell = ws.Cell(1, totalHeaderCol + 1);
+            uniquesTotalCountCell.Style.Fill.BackgroundColor = XLColor.Black;
+            uniquesTotalCountCell.Style.Font.FontColor = XLColor.White;
 
-            // Data validation for Found column: allow TRUE/FALSE (booleans)
-            var foundValidationRange = ws.Range(2, 1, lastRow, 1);
-            var dv = foundValidationRange.CreateDataValidation();
-            dv.AllowedValues = XLAllowedValues.List;
-            dv.InCellDropdown = true;
-            
-            // Robust dropdown source via hidden helper range (handles locales and Excel quirks)
-            int listCol = headers.Length + 5;
-            ws.Cell(1, listCol).Value = true; ws.Cell(1, listCol).DataType = XLDataType.Boolean;
-            ws.Cell(2, listCol).Value = false; ws.Cell(2, listCol).DataType = XLDataType.Boolean;
-            ws.Column(listCol).Hide();
-            var yesNoRange = ws.Range(1, listCol, 2, listCol);
-            dv.List(yesNoRange);
-            
+            // Per request: no dropdown/data validation for Found column
+
+            // No conditional formatting / banding by request
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
         }
@@ -147,7 +150,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(x => x.Item?.Name)
                 .Select(x => new
                 {
-                    Found = false,
+                    // Default to 'n' per request
+                    Found = "n",
                     ItemName = x.Item?.Name,
                     Base = x.Item?.Equipment?.Name,
                     BaseType = x.Item?.Equipment?.Type?.Name,
@@ -161,7 +165,6 @@ namespace D2TxtImporter.lib.Exporters
             foreach (var row in rows)
             {
                 ws.Cell(rowIndex, 1).Value = row.Found;
-                ws.Cell(rowIndex, 1).DataType = XLDataType.Boolean;
                 ws.Cell(rowIndex, 2).Value = row.ItemName;
                 ws.Cell(rowIndex, 3).Value = row.Base;
                 ws.Cell(rowIndex, 4).Value = row.BaseType;
@@ -176,56 +179,54 @@ namespace D2TxtImporter.lib.Exporters
             var tblRange = ws.Range(1, 1, lastRow, headers.Length);
             var table = tblRange.CreateTable("SetsTable");
             table.ShowAutoFilter = true;
-            table.Theme = XLTableTheme.None;
+            // Apply requested table theme: Light 18 for Sets
+            table.Theme = XLTableTheme.TableStyleLight18;
             table.ShowTotalsRow = false;
-            var foundColRange = table.DataRange.Column(1);
+
+            // Header styling: black background, white text for table header range
+            headerRange.Style.Fill.BackgroundColor = XLColor.Black;
+            headerRange.Style.Font.FontColor = XLColor.White;
 
             // Header sticky total on the right (immediately after headers)
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
+            // Count any of: TRUE, "TRUE"/"true", "Y"/"y"
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"true\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Style the Total Found label and count as black background with white text
+            ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
+            ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
+            var setsTotalCountCell = ws.Cell(1, totalHeaderCol + 1);
+            setsTotalCountCell.Style.Fill.BackgroundColor = XLColor.Black;
+            setsTotalCountCell.Style.Font.FontColor = XLColor.White;
 
-            // Data validation for Found column: allow TRUE/FALSE
-            var foundValidationRange = ws.Range(2, 1, lastRow, 1);
-            var dv = foundValidationRange.CreateDataValidation();
-            dv.AllowedValues = XLAllowedValues.List;
-            dv.InCellDropdown = true;
-            int listCol = headers.Length + 5;
-            ws.Cell(1, listCol).Value = true; ws.Cell(1, listCol).DataType = XLDataType.Boolean;
-            ws.Cell(2, listCol).Value = false; ws.Cell(2, listCol).DataType = XLDataType.Boolean;
-            ws.Column(listCol).Hide();
-            var yesNoRange = ws.Range(1, listCol, 2, listCol);
-            dv.List(yesNoRange);
-            
+            // Per request: no dropdown/data validation for Found column
+
+            // No conditional formatting by request
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
 
             // Helper area to compute completed sets
-            // We list distinct Set Names in a hidden area and compute if all its items are Found == "Y"
+            // We list distinct Set Names in a hidden area and compute if all its items are found
             var distinctSets = items.Select(x => x.SetName).Distinct().OrderBy(x => x).ToList();
-
             int helperColStart = headers.Length + 3; // leave some gap
             int helperRowStart = 1;
             ws.Cell(helperRowStart, helperColStart).Value = "Helper_SetName";
             ws.Cell(helperRowStart, helperColStart + 1).Value = "Helper_Completed";
             ws.Range(helperRowStart, helperColStart, helperRowStart, helperColStart + 1).Style.Font.Bold = true;
-
             for (int i = 0; i < distinctSets.Count; i++)
             {
                 var row = helperRowStart + 1 + i;
                 var setNameCell = ws.Cell(row, helperColStart);
                 setNameCell.Value = distinctSets[i];
                 var completedCell = ws.Cell(row, helperColStart + 1);
-                // Completed if there are zero rows for the set where Found is neither TRUE nor "Y"
-                // =IF(COUNTIFS(SetsTable[Set Name], L2, SetsTable[Found], "<>TRUE", SetsTable[Found], "<>\"Y\"")=0,1,0)
-                completedCell.FormulaA1 = $"=IF(COUNTIFS(SetsTable[Set Name],{setNameCell.Address.ToStringRelative()},SetsTable[Found],\"<>TRUE\",SetsTable[Found],\"<>\"\"Y\"\"\")=0,1,0)";
+                // Completed if there are zero rows for the set where Found is neither TRUE, "TRUE"/"true", nor "Y"/"y"
+                // =IF(COUNTIFS(SetsTable[Set Name], L2, SetsTable[Found], "<>TRUE", SetsTable[Found], "<>"TRUE"", SetsTable[Found], "<>"true"", SetsTable[Found], "<>"Y"", SetsTable[Found], "<>"y"")=0,1,0)
+                completedCell.FormulaA1 = $"=IF(COUNTIFS(SetsTable[Set Name],{setNameCell.Address.ToStringRelative()},SetsTable[Found],\"<>TRUE\",SetsTable[Found],\"<>\"\"TRUE\"\"\",SetsTable[Found],\"<>\"\"true\"\"\",SetsTable[Found],\"<>\"\"Y\"\"\",SetsTable[Found],\"<>\"\"y\"\"\")=0,1,0)";
             }
-
             // Hide helper columns
             ws.Column(helperColStart).Hide();
             ws.Column(helperColStart + 1).Hide();
-
             // Name the completed flags range so Home can sum it robustly
             if (distinctSets.Count > 0)
             {
@@ -249,7 +250,6 @@ namespace D2TxtImporter.lib.Exporters
                 if (rw?.Runes == null) return null;
                 return string.Join(" + ", rw.Runes.Select(r => r?.Name));
             }
-
             string JoinTypes(Runeword rw)
             {
                 if (rw?.Types == null) return null;
@@ -261,7 +261,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(rw => rw.Name)
                 .Select(rw => new
                 {
-                    Found = false,
+                    // Default to 'n' per request
+                    Found = "n",
                     rw.Name,
                     RequiredLevel = rw.RequiredLevel,
                     Runes = JoinRunes(rw),
@@ -272,7 +273,6 @@ namespace D2TxtImporter.lib.Exporters
             foreach (var row in rows)
             {
                 ws.Cell(rowNum, 1).Value = row.Found;
-                ws.Cell(rowNum, 1).DataType = XLDataType.Boolean;
                 ws.Cell(rowNum, 2).Value = row.Name;
                 ws.Cell(rowNum, 3).Value = row.RequiredLevel;
                 ws.Cell(rowNum, 4).Value = row.Runes;
@@ -284,92 +284,179 @@ namespace D2TxtImporter.lib.Exporters
             var tblRange = ws.Range(1, 1, lastRow, headers.Length);
             var table = tblRange.CreateTable("RunewordsTable");
             table.ShowAutoFilter = true;
-            table.Theme = XLTableTheme.None;
+            // Apply requested table theme: Light 20 for Runewords
+            table.Theme = XLTableTheme.TableStyleLight20;
             table.ShowTotalsRow = false;
-            var foundColRange = table.DataRange.Column(1);
+
+            // Header styling: black background, white text for table header range
+            headerRange.Style.Fill.BackgroundColor = XLColor.Black;
+            headerRange.Style.Font.FontColor = XLColor.White;
 
             // Header sticky total on the right (immediately after headers)
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"Y\")";
+            // Count any of: TRUE, "TRUE", "Y", "y"
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Style the Total Found label and count as black background with white text
+            ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
+            ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
+            var runewordsTotalCountCell = ws.Cell(1, totalHeaderCol + 1);
+            runewordsTotalCountCell.Style.Fill.BackgroundColor = XLColor.Black;
+            runewordsTotalCountCell.Style.Font.FontColor = XLColor.White;
 
-            // Data validation for Found column: allow TRUE/FALSE
-            var foundValidationRange = ws.Range(2, 1, lastRow, 1);
-            var dv = foundValidationRange.CreateDataValidation();
-            dv.AllowedValues = XLAllowedValues.List;
-            dv.InCellDropdown = true;
-            int listCol = headers.Length + 5;
-            ws.Cell(1, listCol).Value = true; ws.Cell(1, listCol).DataType = XLDataType.Boolean;
-            ws.Cell(2, listCol).Value = false; ws.Cell(2, listCol).DataType = XLDataType.Boolean;
-            ws.Column(listCol).Hide();
-            var yesNoRange = ws.Range(1, listCol, 2, listCol);
-            dv.List(yesNoRange);
-            
+            // Per request: no dropdown/data validation for Found column
+
+            // No conditional formatting by request
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
+            // No banding or colors by request
         }
 
         private static void BuildHomeSheet(IXLWorksheet ws, int totalDistinctSets)
         {
-            // Determine span for header rows: use 4 columns so banner spans summary table width
-            int summaryCols = 4;
+            // Leave row 1 and column A empty as spacers
+            // Content starts at row 2, column B
+            int colStart = 2; // Column B
+            int summaryCols = 4; // B..E
 
-            // Links row using HYPERLINK formulas
-            ws.Cell(2, 1).FormulaA1 = "=HYPERLINK(\"https://www.d2r-reimagined.com/\",\"Web\")";
-            ws.Cell(2, 2).FormulaA1 = "=HYPERLINK(\"https://wiki.d2r-reimagined.com/\",\"Wiki\")";
-            ws.Cell(2, 3).FormulaA1 = "=HYPERLINK(\"https://www.nexusmods.com/diablo2resurrected/mods/503\",\"Nexus\")";
-            ws.Cell(2, 4).FormulaA1 = "=HYPERLINK(\"https://discord.gg/4QENnUfqPd\",\"Discord\")";
-            var linksRow = ws.Range(2, 1, 2, summaryCols);
-            // Center link cells only (no colors)
-            linksRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
-
-            // Merge banner across summary columns and center
-            var banner = ws.Range(1, 1, 1, summaryCols);
+            // Top banner merged across columns B..E (row 2)
+            var banner = ws.Range(2, colStart, 2, colStart + summaryCols - 1);
             banner.Merge();
             banner.Value = "D2R Reimagined Holy Grail Checklist";
             banner.Style.Font.Bold = true;
             banner.Style.Font.FontSize = 16;
             banner.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            // Banner formatting: black background with white text
+            banner.Style.Fill.BackgroundColor = XLColor.Black;
+            banner.Style.Font.FontColor = XLColor.White;
 
-            int rowNum = 4;
-            ws.Cell(rowNum, 1).Value = "Category"; ws.Cell(rowNum, 2).Value = "Found"; ws.Cell(rowNum, 3).Value = "Total"; ws.Cell(rowNum, 4).Value = "Notes";
-            var header = ws.Range(rowNum, 1, rowNum, 4);
-            header.Style.Font.Bold = true;
+            // Links row using HYPERLINK formulas on row 3 (B..E)
+            ws.Cell(3, colStart + 0).FormulaA1 = "=HYPERLINK(\"https://www.d2r-reimagined.com/\",\"Web\")";
+            ws.Cell(3, colStart + 1).FormulaA1 = "=HYPERLINK(\"https://wiki.d2r-reimagined.com/\",\"Wiki\")";
+            ws.Cell(3, colStart + 2).FormulaA1 = "=HYPERLINK(\"https://www.nexusmods.com/diablo2resurrected/mods/503\",\"Nexus\")";
+            ws.Cell(3, colStart + 3).FormulaA1 = "=HYPERLINK(\"https://discord.gg/4QENnUfqPd\",\"Discord\")";
+            var linksRow = ws.Range(3, colStart, 3, colStart + summaryCols - 1);
+            linksRow.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+            linksRow.Style.Font.Bold = true;
+
+            // Summary header at row 5 (B..E)
+            int rowNum = 5;
+            int colCategory = colStart + 0; // B
+            int colFound = colStart + 1;    // C
+            int colTotal = colStart + 2;    // D
+            int colNotes = colStart + 3;    // E
+
+            ws.Cell(rowNum, colCategory).Value = "Category";
+            ws.Cell(rowNum, colFound).Value = "Found";
+            ws.Cell(rowNum, colTotal).Value = "Total";
+            ws.Cell(rowNum, colNotes).Value = "Notes";
+            var headerRow = ws.Range(rowNum, colStart, rowNum, colStart + summaryCols - 1);
+            headerRow.Style.Font.Bold = true;
+            headerRow.Style.Fill.BackgroundColor = XLColor.Black;
+            headerRow.Style.Font.FontColor = XLColor.White;
             rowNum++;
 
-            // Uniques
-            ws.Cell(rowNum, 1).Value = "Uniques";
-            ws.Cell(rowNum, 2).FormulaA1 = "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"Y\")";
-            ws.Cell(rowNum, 3).FormulaA1 = "=ROWS(UniquesTable[Found])";
+            // Define associated background colors for categories
+            var uniquesBg = XLColor.FromArgb(221, 235, 247);   // light blue
+            var setsBg = XLColor.FromArgb(226, 239, 218);      // light green
+            var compSetsBg = XLColor.FromArgb(198, 224, 180);  // green tint
+            var runewordsBg = XLColor.FromArgb(255, 229, 204); // light orange
+            // Previous design used light red for totals; per latest request, totals should be purple numeric
+
+            // Helper local function to format a category row
+            void FormatCategoryRow(int r, string label, string foundFormula, string totalFormulaOrValue, string notes, XLColor bodyBg, bool totalIsFormula)
+            {
+                ws.Cell(r, colCategory).Value = label;
+                ws.Cell(r, colCategory).Style.Font.Bold = true;
+                // Category column cell black/white
+                ws.Cell(r, colCategory).Style.Fill.BackgroundColor = XLColor.Black;
+                ws.Cell(r, colCategory).Style.Font.FontColor = XLColor.White;
+
+                if (!string.IsNullOrEmpty(foundFormula))
+                    ws.Cell(r, colFound).FormulaA1 = foundFormula;
+                // Total column should be numeric and purple text
+                if (totalIsFormula)
+                {
+                    ws.Cell(r, colTotal).FormulaA1 = totalFormulaOrValue;
+                }
+                else
+                {
+                    // Ensure numeric when a constant was provided (e.g., totalDistinctSets)
+                    if (int.TryParse(totalFormulaOrValue, out var parsed))
+                        ws.Cell(r, colTotal).Value = parsed;
+                    else
+                        ws.Cell(r, colTotal).Value = totalFormulaOrValue;
+                }
+                if (!string.IsNullOrEmpty(notes))
+                    ws.Cell(r, colNotes).Value = notes;
+
+                // Background color for remainder populated cells
+                ws.Range(r, colFound, r, colNotes).Style.Fill.BackgroundColor = bodyBg;
+                // Style Total column: number format and purple text
+                ws.Cell(r, colTotal).Style.NumberFormat.Format = "0";
+                ws.Cell(r, colTotal).Style.Font.FontColor = XLColor.Purple;
+                ws.Cell(r, colFound).Style.Font.Bold = true;
+                ws.Cell(r, colTotal).Style.Font.Bold = true;
+            }
+
+            // Uniques summary
+            FormatCategoryRow(
+                rowNum++,
+                "Uniques",
+                "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"TRUE\")+COUNTIF(UniquesTable[Found],\"true\")+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(UniquesTable[Found],\"y\")",
+                "=ROWS(UniquesTable[Found])",
+                null,
+                uniquesBg,
+                true);
+
+            // Sets summary
+            FormatCategoryRow(
+                rowNum++,
+                "Set Items",
+                "=COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"TRUE\")+COUNTIF(SetsTable[Found],\"true\")+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(SetsTable[Found],\"y\")",
+                "=ROWS(SetsTable[Found])",
+                null,
+                setsBg,
+                true);
+
+            // Completed Sets summary (uses named range from Sets sheet)
+            FormatCategoryRow(
+                rowNum++,
+                "Completed Sets",
+                "=SUM(CompletedSetsFlags)",
+                totalDistinctSets.ToString(),
+                "Distinct set names",
+                compSetsBg,
+                false);
+
+            // Runewords summary
+            FormatCategoryRow(
+                rowNum++,
+                "Runewords",
+                "=COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"TRUE\")+COUNTIF(RunewordsTable[Found],\"true\")+COUNTIF(RunewordsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],\"y\")",
+                "=ROWS(RunewordsTable[Found])",
+                null,
+                runewordsBg,
+                true);
+
+            // Spacer row
             rowNum++;
 
-            // Set Items
-            ws.Cell(rowNum, 1).Value = "Set Items";
-            ws.Cell(rowNum, 2).FormulaA1 = "=COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"Y\")";
-            ws.Cell(rowNum, 3).FormulaA1 = "=ROWS(SetsTable[Found])";
-            rowNum++;
+            // Grand Total row
+            ws.Cell(rowNum, colCategory).Value = "Grand Total";
+            ws.Cell(rowNum, colCategory).Style.Font.Bold = true;
+            ws.Cell(rowNum, colCategory).Style.Fill.BackgroundColor = XLColor.Black;
+            ws.Cell(rowNum, colCategory).Style.Font.FontColor = XLColor.White;
+            ws.Cell(rowNum, colFound).FormulaA1 = "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"TRUE\")+COUNTIF(UniquesTable[Found],\"true\")+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(UniquesTable[Found],\"y\")+COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"TRUE\")+COUNTIF(SetsTable[Found],\"true\")+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(SetsTable[Found],\"y\")+COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"TRUE\")+COUNTIF(RunewordsTable[Found],\"true\")+COUNTIF(RunewordsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],\"y\")";
+            ws.Cell(rowNum, colTotal).FormulaA1 = "=ROWS(UniquesTable[Found])+ROWS(SetsTable[Found])+ROWS(RunewordsTable[Found])";
+            ws.Range(rowNum, colFound, rowNum, colNotes).Style.Fill.BackgroundColor = XLColor.FromArgb(242, 242, 242); // light gray backdrop
+            // Style Total (grand) as numeric and purple text
+            ws.Cell(rowNum, colTotal).Style.NumberFormat.Format = "0";
+            ws.Cell(rowNum, colTotal).Style.Font.FontColor = XLColor.Purple;
+            ws.Cell(rowNum, colFound).Style.Font.Bold = true;
+            ws.Cell(rowNum, colTotal).Style.Font.Bold = true;
 
-            // Completed Sets
-            ws.Cell(rowNum, 1).Value = "Completed Sets";
-            // Sum of helper completed flags using a named range created on Sets sheet
-            ws.Cell(rowNum, 2).FormulaA1 = "=SUM(CompletedSetsFlags)";
-            ws.Cell(rowNum, 3).Value = totalDistinctSets; // total sets
-            ws.Cell(rowNum, 4).Value = "Counts sets with all items marked Y";
-            rowNum++;
-
-            // Runewords
-            ws.Cell(rowNum, 1).Value = "Runewords";
-            ws.Cell(rowNum, 2).FormulaA1 = "=COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"Y\")";
-            ws.Cell(rowNum, 3).FormulaA1 = "=ROWS(RunewordsTable[Found])";
-            rowNum++;
-
-            // Totals row (Grand Total)
-            rowNum++;
-            ws.Cell(rowNum, 1).Value = "Grand Total"; ws.Cell(rowNum, 1).Style.Font.Bold = true;
-            ws.Cell(rowNum, 2).FormulaA1 = "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"Y\")";
-            ws.Cell(rowNum, 3).FormulaA1 = "=ROWS(UniquesTable[Found])+ROWS(SetsTable[Found])+ROWS(RunewordsTable[Found])";
-            
             ws.Columns().AdjustToContents();
         }
     }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Solution-wide safety: ensure any running D2TxtImporter.console process is stopped before resolving references -->
+  <Target Name="KillRunningD2Console" BeforeTargets="ResolveReferences" Condition=" '$(Configuration)' == 'Debug' ">
+    <Message Text="Checking for running D2TxtImporter.console to avoid file locks..." Importance="low" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$p=Get-Process -Name 'D2TxtImporter.console' -ErrorAction SilentlyContinue; if($p){Write-Host 'Stopping D2TxtImporter.console...'; $p | Stop-Process -Force}&quot;" IgnoreExitCode="true" />
+  </Target>
+</Project>

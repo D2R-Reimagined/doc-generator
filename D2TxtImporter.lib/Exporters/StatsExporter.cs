@@ -16,14 +16,14 @@ namespace D2TxtImporter.lib.Exporters
                 return; // nothing to write
             }
 
-            // Ensure output matches the path convention used by RequiredLevelReport and duplicate report
-            var jsonDir = Path.Combine(outputDir, "json");
-            if (!Directory.Exists(jsonDir))
+            // Write under Docs\\extras to align with unified output scheme
+            var extrasDir = Path.Combine(outputDir, "extras");
+            if (!Directory.Exists(extrasDir))
             {
-                Directory.CreateDirectory(jsonDir);
+                Directory.CreateDirectory(extrasDir);
             }
 
-            var path = Path.Combine(jsonDir, "item stat ranges.txt");
+            var path = Path.Combine(extrasDir, "item stat ranges.txt");
 
             // Write UTF-8 without BOM to match other reports
             using (var w = new StreamWriter(path, false, new System.Text.UTF8Encoding(false)))
