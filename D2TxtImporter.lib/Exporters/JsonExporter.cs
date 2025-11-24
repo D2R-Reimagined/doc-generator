@@ -12,6 +12,37 @@ namespace D2TxtImporter.lib.Exporters
 {
     public class JsonExporter
     {
+        // Custom contract resolver used when exporting Uniques/Sets to filter
+        // out duplicated base equipment fields that are already exported in
+        // dedicated armors/weapons JSON files.
+        private sealed class EquipmentFilterContractResolver : Newtonsoft.Json.Serialization.DefaultContractResolver
+        {
+            private static readonly System.Collections.Generic.HashSet<string> ExcludedEquipmentFields = new System.Collections.Generic.HashSet<string>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                // Base item identity/tiers and automagic hooks
+                "NormCode", "UberCode", "UltraCode", "AutoPrefix",
+                // Structural fields not needed on embedded equipment inside uniques/sets
+                "GemSockets", "ItemLevel", "BaseRequiredLevel", "Code", "Type",
+                // Derived class-only fields (present on Weapon/Armor)
+                "StrBonus", "DexBonus"
+            };
+
+            protected override System.Collections.Generic.IList<Newtonsoft.Json.Serialization.JsonProperty> CreateProperties(System.Type type, Newtonsoft.Json.MemberSerialization memberSerialization)
+            {
+                var props = base.CreateProperties(type, memberSerialization);
+
+                // Only filter when serializing equipment (base or derived types)
+                if (typeof(D2TxtImporter.lib.Model.Equipment.Equipment).IsAssignableFrom(type))
+                {
+                    props = props
+                        .Where(p => !ExcludedEquipmentFields.Contains(p.PropertyName))
+                        .ToList();
+                }
+
+                return props;
+            }
+        }
+
         // Helper: serialize with 4-space indentation when prettyPrint is true; otherwise compact.
         private static string SerializeWithIndent(object value, JsonSerializerSettings settings, bool prettyPrint)
         {
@@ -187,7 +218,8 @@ namespace D2TxtImporter.lib.Exporters
         {
             var settings = new JsonSerializerSettings
             {
-                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
+                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
+                ContractResolver = new EquipmentFilterContractResolver()
             };
             var json = SerializeWithIndent(uniques, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
@@ -205,7 +237,8 @@ namespace D2TxtImporter.lib.Exporters
         {
             var settings = new JsonSerializerSettings
             {
-                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii
+                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
+                ContractResolver = new EquipmentFilterContractResolver()
             };
             var json = SerializeWithIndent(sets, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);

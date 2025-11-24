@@ -6,16 +6,9 @@ using System.Linq;
 namespace D2TxtImporter.lib.Model.Items
 {
     /// <summary>
-    /// Loads and validates Cube recipe qualifier tokens.
-    ///
-    /// Primary source is a hardcoded list based on the game’s canonical
-    /// qualifiers. These are stable and mutually exclusive between Inputs and
-    /// Outputs, except where the game intentionally reuses a code.
-    ///
-    /// As a convenience, if a local file "Cube Related/cubeinout.txt" is
-    /// available near the binaries, we will parse it to enrich friendly
-    /// descriptions but we will not rely on it for the token set. This avoids
-    /// path sensitivity while keeping nice display names.
+    /// Loads qualifier token maps and friendly names for Cube recipes.
+    /// Uses a hardcoded, canonical token set. Optionally enriches friendly
+    /// names from a nearby TSV if present. Keeps a single cached instance.
     /// </summary>
     internal static class CubeQualifiers
     {
@@ -25,6 +18,8 @@ namespace D2TxtImporter.lib.Model.Items
             public ISet<string> OutputTokens { get; set; }
             public Dictionary<string, string> InputDisplay { get; set; }
             public Dictionary<string, string> OutputDisplay { get; set; }
+            // Merged friendly names to avoid double lookups during parse
+            public Dictionary<string, string> CombinedDisplay { get; set; }
         }
 
         private static Maps _cached;
@@ -38,10 +33,11 @@ namespace D2TxtImporter.lib.Model.Items
                 InputTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
                 OutputTokens = new HashSet<string>(StringComparer.OrdinalIgnoreCase),
                 InputDisplay = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
-                OutputDisplay = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+                OutputDisplay = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase),
+                CombinedDisplay = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
             };
 
-            // 1) Build canonical, hardcoded token sets (mutually exclusive)
+            // Canonical token sets
             var inputTokens = new[]
             {
                 "qty=#",
@@ -77,7 +73,7 @@ namespace D2TxtImporter.lib.Model.Items
                 maps.OutputTokens.Add(t);
             }
 
-            // Seed friendly names (stable)
+            // Seed friendly names
             void Seed(Dictionary<string, string> dict, string token, string display)
             {
                 if (!dict.ContainsKey(token)) dict[token] = display;
@@ -130,14 +126,14 @@ namespace D2TxtImporter.lib.Model.Items
             Seed(maps.OutputDisplay, "mod", "Keep Modifiers");
             Seed(maps.OutputDisplay, "uns", "Unsocket (Destroy Socketed)");
             Seed(maps.OutputDisplay, "rem", "Remove Socketed (Return)");
-            Seed(maps.OutputDisplay, "reg", "Regenerate Unique (with usetype)");
+            Seed(maps.OutputDisplay, "reg", "Regenerate Unique (Reroll if Base Upgraded)");
             Seed(maps.OutputDisplay, "exc", "Exceptional Item");
             Seed(maps.OutputDisplay, "eli", "Elite Item");
             Seed(maps.OutputDisplay, "rep", "Repair Item");
             Seed(maps.OutputDisplay, "rch", "Recharge Charges");
             Seed(maps.OutputDisplay, "lvl=#", "Set Level (#)");
 
-            // 2) Optionally enrich friendly strings from a nearby TSV if present
+            // Enrich friendly strings from a nearby TSV if present (optional)
             try
             {
                 var path = TryLocateReferenceFile();
@@ -173,6 +169,17 @@ namespace D2TxtImporter.lib.Model.Items
             }
             catch { /* ignore enrichment failures */ }
 
+            // Build merged display once to avoid repeated dual lookups elsewhere
+            foreach (var kv in maps.InputDisplay)
+            {
+                maps.CombinedDisplay[kv.Key] = kv.Value;
+            }
+            foreach (var kv in maps.OutputDisplay)
+            {
+                if (!maps.CombinedDisplay.ContainsKey(kv.Key))
+                    maps.CombinedDisplay[kv.Key] = kv.Value;
+            }
+
             _cached = maps;
             return _cached;
         }
@@ -183,17 +190,17 @@ namespace D2TxtImporter.lib.Model.Items
             {
                 var candidates = new List<string>();
 
-                // 1) Executing assembly directory (DLL copied next to EXE)
+                // Executing assembly directory (DLL copied next to EXE)
                 var asmDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
                 if (!string.IsNullOrEmpty(asmDir))
                 {
                     candidates.Add(Path.Combine(asmDir, "Cube Related", "cubeinout.txt"));
                 }
 
-                // 2) App base directory (WPF/console)
+                // App base directory (WPF/console)
                 candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cube Related", "cubeinout.txt"));
 
-                // 3) Probe the repository layout from client/bin/Debug back to root
+                // Probe repository layout from client/bin/Debug back to root
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
                 var up1 = Directory.GetParent(baseDir)?.FullName;            // .../D2TxtImporter.client/bin
                 var up2 = Directory.GetParent(up1 ?? baseDir)?.FullName;     // .../D2TxtImporter.client
@@ -212,7 +219,7 @@ namespace D2TxtImporter.lib.Model.Items
         private static string ToFriendly(string token)
         {
             if (string.IsNullOrEmpty(token)) return string.Empty;
-            // humanize a few common shorthands
+            // Humanize a few common shorthands
             switch (token)
             {
                 case "noe": return "Not Ethereal";
