@@ -882,6 +882,20 @@ namespace D2TxtImporter.lib.Model.Items
 
             var parsed = ParseIngredient(raw, qmaps, isInput:false);
 
+            // Helper: detect if any input is the Gem Bag (by code or name)
+            bool InputsContainGemBag()
+            {
+                if (inputs == null) return false;
+                foreach (var i in inputs)
+                {
+                    var main = NormalizeToken(i?.RawToken);
+                    if (string.Equals(main, "bag", StringComparison.OrdinalIgnoreCase)) return true;
+                    var name = i?.Name ?? string.Empty;
+                    if (name.IndexOf("Gem Bag", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                }
+                return false;
+            }
+
             // Special output keywords
             if (string.Equals(parsed.MainToken, "usetype", StringComparison.OrdinalIgnoreCase))
             {
@@ -896,11 +910,22 @@ namespace D2TxtImporter.lib.Model.Items
                 var _ = ResolveTypeFromInput(first); // ensure resolvable for validation side-effects
                 ValidateQualifiers(parsed.QualifiersRaw, qmaps.OutputTokens, "output", rowIndex, raw);
 
+                // Special-case override: if any input is Gem Bag, rename output accordingly
+                var specialName = InputsContainGemBag() ? "Return Gem Bag, Update Gem Credits" : "Return Base Type";
+                // Also remove the ',mod' (Keep Modifiers) qualifier for Gem Bag recipes to avoid extra display text
+                var qualsList = parsed.QualifiersFriendly.ToList();
+                if (InputsContainGemBag())
+                {
+                    qualsList = qualsList
+                        .Where(q => !string.Equals(q, "Keep Modifiers", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
+
                 return new CubeOutputV2
                 {
-                    Name = "Return Base Type",
+                    Name = specialName,
                     Quantity = parsed.Quantity,
-                    Qualifiers = parsed.QualifiersFriendly.ToList(),
+                    Qualifiers = qualsList,
                     OutputChance = chance,
                     Properties = new List<CubePropertyV2>()
                 };
@@ -916,11 +941,21 @@ namespace D2TxtImporter.lib.Model.Items
                 // Validate as before, but use fixed display string per request
                 var itemName = first.Name; // ensure available; not used for display anymore
                 ValidateQualifiers(parsed.QualifiersRaw, qmaps.OutputTokens, "output", rowIndex, raw);
+                // Special-case override: if any input is Gem Bag, rename output accordingly
+                var specialName2 = InputsContainGemBag() ? "Return Gem Bag, Update Gem Credits" : "Return Updated Item";
+                // Also remove the ',mod' (Keep Modifiers) qualifier for Gem Bag recipes to avoid extra display text
+                var qualsList2 = parsed.QualifiersFriendly.ToList();
+                if (InputsContainGemBag())
+                {
+                    qualsList2 = qualsList2
+                        .Where(q => !string.Equals(q, "Keep Modifiers", StringComparison.OrdinalIgnoreCase))
+                        .ToList();
+                }
                 return new CubeOutputV2
                 {
-                    Name = "Return Updated Item",
+                    Name = specialName2,
                     Quantity = parsed.Quantity,
-                    Qualifiers = parsed.QualifiersFriendly.ToList(),
+                    Qualifiers = qualsList2,
                     OutputChance = chance,
                     Properties = new List<CubePropertyV2>()
                 };

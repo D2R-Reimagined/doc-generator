@@ -175,7 +175,7 @@ namespace D2TxtImporter.client
             var sfd = new Microsoft.Win32.SaveFileDialog
             {
                 Filter = "Markdown (*.md)|*.md|Text files (*.txt)|*.txt|All files (*.*)|*.*",
-                FileName = "PatchNotes.md"
+                FileName = "JSON_Old_New_Diffs.md"
             };
             if (sfd.ShowDialog(this) == true)
             {
