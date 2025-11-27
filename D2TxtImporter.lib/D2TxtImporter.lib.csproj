@@ -65,7 +65,6 @@
     <Compile Include="Model\Items\SetItem.cs" />
     <Compile Include="Model\TableProcessor.cs" />
     <Compile Include="Model\Equipment\Armor.cs" />
-    <Compile Include="Model\Items\CupeRecipe.cs" />
     <Compile Include="Model\Types\DamageType.cs" />
     <Compile Include="Model\Items\Item.cs" />
     <Compile Include="Model\Types\ItemProperty.cs" />

@@ -30,7 +30,6 @@ namespace D2TxtImporter.lib
 
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
-        public List<CubeRecipe> CubeRecipes { get; set; }
         public List<Model.Items.CubeRecipeV2> CubeRecipesV2 { get; set; }
         public List<Set> Sets { get; set; }
 
@@ -97,7 +96,6 @@ namespace D2TxtImporter.lib
                 RequiredLevelReport.Clear();
                 Uniques = Unique.Import(_excelPath);
                 Runewords = Runeword.Import(_excelPath);
-                CubeRecipes = CubeRecipe.Import(_excelPath);
                 Sets = Set.Import(_excelPath);
 
                 // New Cube Recipes V2 (validated & structured)
@@ -128,10 +126,10 @@ namespace D2TxtImporter.lib
                 // create their target directories on-demand so that unused
                 // folders (e.g., item-jsons, web, extras) are not created.
 
-                //TxtExporter.ExportTxt(docsDir, Uniques, Runewords, CubeRecipes, Sets); // Out of date
+                //TxtExporter.ExportTxt(docsDir, Uniques, Runewords, Sets); // Out of date
                 if (ExportJson)
                 {
-                    JsonExporter.ExportJson(docsDir, Uniques, Runewords, CubeRecipes, Sets, PrettyPrintJson);
+                    JsonExporter.ExportJson(docsDir, Uniques, Runewords, Sets, PrettyPrintJson);
                     // Optional: write grouped-by-base sets file when enabled
                     if (ExportSetsByBase)
                     {

@@ -19,7 +19,7 @@ namespace D2TxtImporter.lib.Exporters
                 if (!Directory.Exists(jsonDir)) Directory.CreateDirectory(jsonDir);
 
                 // Use a clear, versioned filename for the V2 export (agreed naming)
-                var path = Path.Combine(jsonDir, "cuberecipesv2.json");
+                var path = Path.Combine(jsonDir, "cube_recipes_v2.json");
 
                 var settings = new JsonSerializerSettings
                 {

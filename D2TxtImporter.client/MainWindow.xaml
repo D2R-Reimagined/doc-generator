@@ -70,7 +70,7 @@
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding DuplicateKeyReportEnabled}" IsEnabled="{Binding ExportJson}" ToolTip="Writes 'jason key duplicates.txt' under json/. Scans translation keys in tbl/json (independent of which JSON files you export).">Report Key Dupes (TSV)</CheckBox>
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding ExportSetsByBase}" IsEnabled="{Binding ExportJson}" ToolTip="Writes sets_by_base.json grouping set items under each base armor/weapon.">Sets grouped by base (sets_by_base.json)</CheckBox>
 
-                        <CheckBox Margin="0,10,0,0" IsChecked="{Binding CubeRecipesV2ExportEnabled}" ToolTip="Enable export of cuberecipesv2.json">Cube Recipes V2</CheckBox>
+                        <CheckBox Margin="0,10,0,0" IsChecked="{Binding CubeRecipesV2ExportEnabled}" ToolTip="Enable export of cube_recipes_v2.json">Cube Recipes V2</CheckBox>
                         <CheckBox Margin="16,2,0,0"
                                   IsChecked="{Binding EarlyStopSentinelEnabled}" IsEnabled="{Binding CubeRecipesV2ExportEnabled}"
                                   ToolTip="When enabled, stop at the grabber recipes which are the last useful recipe before the stacking recipes.">
@@ -78,7 +78,7 @@
                         </CheckBox>
                         <CheckBox Margin="16,2,0,0"
                                   IsChecked="{Binding CubeRecipeUseDescription}" IsEnabled="{Binding CubeRecipesV2ExportEnabled}"
-                                  ToolTip="Include the raw cubeMain.txt 'description' field in cuberecipesv2.json for each recipe">
+                                  ToolTip="Include the raw cubeMain.txt 'description' field in cube_recipes_v2.json for each recipe">
                             Include cubemain.txt Description
                         </CheckBox>
                     </StackPanel>

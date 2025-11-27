@@ -98,9 +98,9 @@ namespace D2TxtImporter.lib.Diff
                 OldArmors = LoadArmors(Path.Combine(oldJsonDir, "armors.json")).ToDictionarySafe(a => a.Code),
                 NewArmors = LoadArmors(Path.Combine(newJsonDir, "armors.json")).ToDictionarySafe(a => a.Code),
 
-                // Cube
-                OldCubes = LoadCubes(Path.Combine(oldJsonDir, "cuberecipesv2.json")).ToDictionarySafe(c => c.Key),
-                NewCubes = LoadCubes(Path.Combine(newJsonDir, "cuberecipesv2.json")).ToDictionarySafe(c => c.Key),
+                // Cube (only new filename)
+                OldCubes = LoadCubes(Path.Combine(oldJsonDir, "cube_recipes_v2.json")).ToDictionarySafe(c => c.Key),
+                NewCubes = LoadCubes(Path.Combine(newJsonDir, "cube_recipes_v2.json")).ToDictionarySafe(c => c.Key),
             };
 
             models.OldSetItemToSet = BuildSetItemMap(models.OldSets);

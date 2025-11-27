@@ -68,11 +68,11 @@ namespace D2TxtImporter.client
         {
             get
             {
-                return CubeRecipe.UseDescription;
+                return CubeRecipeV2.UseDescription;
             }
             set
             {
-                CubeRecipe.UseDescription = value;
+                CubeRecipeV2.UseDescription = value;
             }
         }
 
@@ -212,7 +212,7 @@ namespace D2TxtImporter.client
             }
         }
 
-        public bool ExportEnabled => Importer != null && Importer.CubeRecipes != null && Importer.Runewords != null && Importer.Uniques != null;
+        public bool ExportEnabled => Importer != null && Importer.Runewords != null && Importer.Uniques != null && Importer.Sets != null;
         public bool ImportEnabled => !IsBusy && Directory.Exists(ExcelPath) && Directory.Exists(TablePath) && Directory.Exists(OutputPath);
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -9,7 +9,7 @@ namespace D2TxtImporter.lib.Exporters
 {
     public class TxtExporter
     {
-        public static void ExportTxt(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<CubeRecipe> cubeRecipes, List<Set> sets)
+        public static void ExportTxt(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<Set> sets)
         {
             if (!Directory.Exists(outputPath))
             {
@@ -25,7 +25,6 @@ namespace D2TxtImporter.lib.Exporters
 
             Uniques(txtOutputDirectory + "/uniques.txt", uniques);
             Runewords(txtOutputDirectory + "/runewords.txt", runewords);
-            CubeRecipes(txtOutputDirectory + "/cube_recipes.txt", cubeRecipes);
         }
 
         private static void Uniques(string destination, List<Unique> uniques)
@@ -143,17 +142,6 @@ namespace D2TxtImporter.lib.Exporters
             File.WriteAllText(destination, sb.ToString());
         }
 
-        private static void CubeRecipes(string destination, List<CubeRecipe> cubeRecipes)
-        {
-            StringBuilder sb = new StringBuilder();
-
-
-            foreach (var recipe in cubeRecipes)
-            {
-                sb.AppendLine(recipe.CubeRecipeDescription);
-            }
-
-            File.WriteAllText(destination, sb.ToString());
-        }
+        // Legacy CubeRecipes.txt export removed: use CubeRecipeV2 JSON instead
     }
 }

@@ -189,7 +189,7 @@ namespace D2TxtImporter.lib.Exporters
             return groups.Count > 0 ? groups : null;
         }
 
-        public static void ExportJson(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<CubeRecipe> cubeRecipes, List<Set> sets, bool prettyPrint)
+        public static void ExportJson(string outputPath, List<Unique> uniques, List<Runeword> runewords, List<Set> sets, bool prettyPrint)
         {
             if (!Directory.Exists(outputPath))
             {

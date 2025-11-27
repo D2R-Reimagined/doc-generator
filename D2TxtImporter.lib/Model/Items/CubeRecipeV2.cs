@@ -11,6 +11,8 @@ namespace D2TxtImporter.lib.Model.Items
 {
     public sealed class CubeRecipeV2
     {
+        // Toggle: include the raw cubemain.txt description field in exports
+        public static bool UseDescription { get; set; }
         public int Index { get; set; } // Exported row index (editor uses -1 offset)
         public string Description { get; set; } // Only when UseDescription = true
         public int? Op { get; set; }
@@ -96,7 +98,7 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     // Apply -1 offset to match editor expectations
                     Index = rowIndex - 1,
-                    Description = CubeRecipe.UseDescription ? Get(row, "description") : null,
+                    Description = CubeRecipeV2.UseDescription ? Get(row, "description") : null,
                     Op = op,
                     Param = par,
                     Value = val,

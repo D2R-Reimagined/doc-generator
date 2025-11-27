@@ -49,11 +49,10 @@ namespace D2TxtImporter.lib.Exporters
                 File.Copy(newPath, newPath.Replace(webPath, webOutputDirectory), true);
             }
 
-            // Load JSON payloads. For cube recipes, prefer V2 file and fall back to legacy; if neither exists, use empty array.
+            // Load JSON payloads. For cube recipes, only use V2 file; if missing, use empty array.
             var uniquesPath = Path.Combine(jsonPath, "uniques.json");
             var runewordsPath = Path.Combine(jsonPath, "runewords.json");
-            var cubeV2Path = Path.Combine(jsonPath, "cuberecipesv2.json");
-            var cubeLegacyPath = Path.Combine(jsonPath, "cube_recipes.json");
+            var cubeV2Path = Path.Combine(jsonPath, "cube_recipes_v2.json");
             var setsPath = Path.Combine(jsonPath, "sets.json");
 
             var uniqueJson = File.ReadAllText(uniquesPath, Encoding.UTF8);
@@ -63,10 +62,6 @@ namespace D2TxtImporter.lib.Exporters
             if (File.Exists(cubeV2Path))
             {
                 cubeRecipeJson = File.ReadAllText(cubeV2Path, Encoding.UTF8);
-            }
-            else if (File.Exists(cubeLegacyPath))
-            {
-                cubeRecipeJson = File.ReadAllText(cubeLegacyPath, Encoding.UTF8);
             }
             else
             {
