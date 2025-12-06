@@ -68,7 +68,7 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(u => u.Name)
                 .Select(u => new
                 {
-                    // Default to 'n' per request (accept y/Y n/N or TRUE/FALSE typed by user)
+                    // Default to 'n' (accept y/Y n/N or TRUE/FALSE typed by user)
                     Found = "n",
                     u.Name,
                     Base = u?.Equipment?.Name,
@@ -93,7 +93,7 @@ namespace D2TxtImporter.lib.Exporters
             var tblRange = ws.Range(1, 1, lastRow, headers.Length);
             var table = tblRange.CreateTable("UniquesTable");
             table.ShowAutoFilter = true;
-            // Apply requested table theme: Light 21 for Uniques
+            // Apply table theme: Light 21 for Uniques
             table.Theme = XLTableTheme.TableStyleLight21;
             // Move totals to header area instead of table totals row
             table.ShowTotalsRow = false;
@@ -115,9 +115,9 @@ namespace D2TxtImporter.lib.Exporters
             uniquesTotalCountCell.Style.Fill.BackgroundColor = XLColor.Black;
             uniquesTotalCountCell.Style.Font.FontColor = XLColor.White;
 
-            // Per request: no dropdown/data validation for Found column
+            // No dropdown/data validation for Found column
 
-            // No conditional formatting / banding by request
+            // No conditional formatting or banding
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
         }
@@ -150,7 +150,7 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(x => x.Item?.Name)
                 .Select(x => new
                 {
-                    // Default to 'n' per request
+                    // Default to 'n'
                     Found = "n",
                     ItemName = x.Item?.Name,
                     Base = x.Item?.Equipment?.Name,
@@ -179,7 +179,7 @@ namespace D2TxtImporter.lib.Exporters
             var tblRange = ws.Range(1, 1, lastRow, headers.Length);
             var table = tblRange.CreateTable("SetsTable");
             table.ShowAutoFilter = true;
-            // Apply requested table theme: Light 18 for Sets
+            // Apply table theme: Light 18 for Sets
             table.Theme = XLTableTheme.TableStyleLight18;
             table.ShowTotalsRow = false;
 
@@ -200,9 +200,9 @@ namespace D2TxtImporter.lib.Exporters
             setsTotalCountCell.Style.Fill.BackgroundColor = XLColor.Black;
             setsTotalCountCell.Style.Font.FontColor = XLColor.White;
 
-            // Per request: no dropdown/data validation for Found column
+            // No dropdown/data validation for Found column
 
-            // No conditional formatting by request
+            // No conditional formatting
             ws.SheetView.FreezeRows(1);
             ws.Columns().AdjustToContents();
 
@@ -261,7 +261,7 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(rw => rw.Name)
                 .Select(rw => new
                 {
-                    // Default to 'n' per request
+                    // Default to 'n'
                     Found = "n",
                     rw.Name,
                     RequiredLevel = rw.RequiredLevel,

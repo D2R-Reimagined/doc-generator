@@ -42,6 +42,48 @@ namespace D2TxtImporter.lib.Diff
             return sb.ToString();
         }
 
+        // Helper: render base code as "{BaseName} [Tier]" using lookup maps.
+        // If the BaseName already contains a trailing tier marker (e.g., "Cap [N]"),
+        // do NOT append another one to avoid duplicates like "[E] [E]".
+        private static string BaseWithTier(SemanticDiffResult diff, string baseCode)
+        {
+            if (string.IsNullOrWhiteSpace(baseCode)) return "?";
+            string name;
+            if (!diff.BaseCodeToName.TryGetValue(baseCode, out name) || string.IsNullOrWhiteSpace(name))
+            {
+                name = baseCode;
+            }
+            // Detect if name already ends with a tier suffix like " [N]", " [X]", or " [E]".
+            bool HasTierSuffix(string s)
+            {
+                if (string.IsNullOrWhiteSpace(s)) return false;
+                var t = s.Trim();
+                if (t.Length < 4) return false;
+                if (t[t.Length - 1] != ']' || t[t.Length - 4] != ' ' || t[t.Length - 3] != '[') return false;
+                var c = char.ToUpperInvariant(t[t.Length - 2]);
+                return c == 'N' || c == 'X' || c == 'E';
+            }
+
+            if (HasTierSuffix(name))
+            {
+                return name;
+            }
+
+            if (diff.BaseCodeToTier.TryGetValue(baseCode, out var tier) && !string.IsNullOrWhiteSpace(tier))
+            {
+                tier = tier.Trim().ToUpperInvariant();
+                return $"{name} [{tier}]";
+            }
+            return name;
+        }
+
+        // Helper: write an H4 header with a guaranteed blank line before it.
+        private static void WriteH4Header(StringBuilder sb, string text)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"#### {text}");
+        }
+
         private static void RenderBaseItems(StringBuilder sb, SemanticDiffResult diff)
         {
             sb.AppendLine("## Base Items");
@@ -216,20 +258,27 @@ namespace D2TxtImporter.lib.Diff
                     sb.AppendLine();
                     foreach (var u in g.OrderBy(x => x.Name))
                     {
-                        var baseName = (!string.IsNullOrWhiteSpace(u.BaseCode) && diff.BaseCodeToName.TryGetValue(u.BaseCode, out var nm)) ? nm : u.BaseCode;
-                        sb.AppendLine($"- {u.Name} ({baseName})");
-                        var baseParts = new System.Collections.Generic.List<string>();
-                        AppendFieldCurrent(baseParts, "Enabled", u.EnabledAfter);
-                        AppendFieldCurrent(baseParts, "Item Level", u.ItemLevelAfter);
-                        AppendFieldCurrent(baseParts, "Required Level", u.ReqLevelAfter);
-                        AppendFieldCurrent(baseParts, "Rarity", u.RarityAfter);
-                        if (baseParts.Count > 0) sb.AppendLine("  - Base: " + string.Join(", ", baseParts));
+                        // Header: H4 with spacing
+                        WriteH4Header(sb, u.Name);
+                        // Base line
+                        var baseDisp = BaseWithTier(diff, u.BaseCode);
+                        if (!string.IsNullOrWhiteSpace(baseDisp))
+                            sb.AppendLine($"- Base Item: {baseDisp}");
+                        // Individual lines (omit Enabled)
+                        var baseLines = new System.Collections.Generic.List<string>();
+                        AppendFieldCurrent(baseLines, "Item Level", u.ItemLevelAfter);
+                        AppendFieldCurrent(baseLines, "Required Level", u.ReqLevelAfter);
+                        AppendFieldCurrent(baseLines, "Rarity", u.RarityAfter);
+                        foreach (var line in baseLines)
+                        {
+                            sb.AppendLine($"- {line}");
+                        }
                         if (u.PropertiesAdded.Any())
                         {
-                            sb.AppendLine("  - Properties:");
+                            sb.AppendLine("- Properties:");
                             foreach (var p in u.PropertiesAdded)
                             {
-                                sb.AppendLine($"    - {p}");
+                                sb.AppendLine($"  - {p}");
                             }
                         }
                     }
@@ -278,53 +327,69 @@ namespace D2TxtImporter.lib.Diff
                     sb.AppendLine();
                     foreach (var u in g.OrderBy(x => x.Name))
                     {
-                        var baseName = (!string.IsNullOrWhiteSpace(u.BaseCode) && diff.BaseCodeToName.TryGetValue(u.BaseCode, out var nm)) ? nm : u.BaseCode;
-                        sb.AppendLine($"- {u.Name} ({baseName})");
-                        // Show base item change when the underlying base code changes (e.g., swb -> 6sw)
+                        // Header: H4 with spacing
+                        WriteH4Header(sb, u.Name);
+                        // Base item line; include (was ...) when base changed
                         var beforeCode = u.BaseCodeBefore;
                         var afterCode = u.BaseCodeAfter;
-                        var beforeName = (!string.IsNullOrWhiteSpace(beforeCode) && diff.BaseCodeToName.TryGetValue(beforeCode, out var bnm)) ? bnm : beforeCode;
-                        var afterName = (!string.IsNullOrWhiteSpace(afterCode) && diff.BaseCodeToName.TryGetValue(afterCode, out var anm)) ? anm : afterCode;
-                        if (!string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                        var beforeDisp = BaseWithTier(diff, beforeCode);
+                        var afterDisp = BaseWithTier(diff, afterCode);
+                        var codesEqual = string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+                        if (!codesEqual)
                         {
-                            var bDisp = !string.IsNullOrWhiteSpace(beforeName) ? beforeName : "?";
-                            var aDisp = !string.IsNullOrWhiteSpace(afterName) ? afterName : "?";
-                            var bCodeDisp = !string.IsNullOrWhiteSpace(beforeCode) ? beforeCode : "?";
-                            var aCodeDisp = !string.IsNullOrWhiteSpace(afterCode) ? afterCode : "?";
-                            sb.AppendLine($"  - Base Item: {aDisp} [{aCodeDisp}] (was {bDisp} [{bCodeDisp}])");
+                            if (!string.IsNullOrWhiteSpace(afterDisp))
+                            {
+                                var line = $"- Base Item: {afterDisp}";
+                                if (!string.IsNullOrWhiteSpace(beforeDisp)) line += $" (was {beforeDisp})";
+                                sb.AppendLine(line);
+                            }
                         }
-                        var baseParts = new System.Collections.Generic.List<string>();
-                        AppendFieldChange(baseParts, "Enabled", u.EnabledBefore, u.EnabledAfter);
-                        AppendFieldChange(baseParts, "Item Level", u.ItemLevelBefore, u.ItemLevelAfter);
-                        AppendFieldChange(baseParts, "Required Level", u.ReqLevelBefore, u.ReqLevelAfter);
-                        AppendFieldChange(baseParts, "Rarity", u.RarityBefore, u.RarityAfter);
-                        if (baseParts.Count > 0)
+                        else
                         {
-                            sb.AppendLine("  - Base: " + string.Join(", ", baseParts));
+                            if (!string.IsNullOrWhiteSpace(afterDisp)) sb.AppendLine($"- Base Item: {afterDisp}");
                         }
+                        // Individual base fields on their own lines (omit Enabled)
+                        var baseLines = new System.Collections.Generic.List<string>();
+                        AppendFieldChange(baseLines, "Item Level", u.ItemLevelBefore, u.ItemLevelAfter);
+                        AppendFieldChange(baseLines, "Required Level", u.ReqLevelBefore, u.ReqLevelAfter);
+                        AppendFieldChange(baseLines, "Rarity", u.RarityBefore, u.RarityAfter);
+                        foreach (var line in baseLines)
+                        {
+                            sb.AppendLine($"- {line}");
+                        }
+                        // Properties grouped by Changed / Added / Removed
                         var uChanged = u.PropertiesChanged != null
                             ? u.PropertiesChanged
                                 .Where(p => p != null && !AreTextsEquivalent(p.Before, p.After))
                                 .ToList()
                             : null;
-                        if (u.PropertiesAdded.Any() || u.PropertiesRemoved.Any() || (uChanged != null && uChanged.Any()))
+                        if ((uChanged != null && uChanged.Any()) || u.PropertiesAdded.Any() || u.PropertiesRemoved.Any())
                         {
-                            sb.AppendLine("  - Properties:");
-                            if (uChanged != null)
+                            sb.AppendLine("- Properties:");
+                            if (uChanged != null && uChanged.Any())
                             {
+                                sb.AppendLine("  - Changed:");
                                 foreach (var p in uChanged)
                                 {
                                     if (p == null) continue;
-                                    sb.AppendLine($"    - Changed: {p.After} (was {NumericOnly(p.Before)})");
+                                    sb.AppendLine($"    - {p.After} (was {NumericOnly(p.Before)})");
                                 }
                             }
-                            foreach (var p in u.PropertiesAdded)
+                            if (u.PropertiesAdded.Any())
                             {
-                                sb.AppendLine($"    - Added: {p}");
+                                sb.AppendLine("  - Added:");
+                                foreach (var p in u.PropertiesAdded)
+                                {
+                                    sb.AppendLine($"    - {p}");
+                                }
                             }
-                            foreach (var p in u.PropertiesRemoved)
+                            if (u.PropertiesRemoved.Any())
                             {
-                                sb.AppendLine($"    - Removed: {p}");
+                                sb.AppendLine("  - Removed:");
+                                foreach (var p in u.PropertiesRemoved)
+                                {
+                                    sb.AppendLine($"    - {p}");
+                                }
                             }
                         }
                     }
@@ -356,7 +421,8 @@ namespace D2TxtImporter.lib.Diff
                     if (baseParts.Count > 0) sb.AppendLine("- Base: " + string.Join(", ", baseParts));
                     if (s.PartialAdded.Any())
                     {
-                        sb.AppendLine("- Partial Set Bonuses:");
+                        // H4 header to match item name treatment
+                        WriteH4Header(sb, "Partial Set Bonuses");
                         foreach (var p in s.PartialAdded)
                         {
                             sb.AppendLine($"  - {p}");
@@ -364,7 +430,8 @@ namespace D2TxtImporter.lib.Diff
                     }
                     if (s.FullAdded.Any())
                     {
-                        sb.AppendLine("- Full Set Bonuses:");
+                        // H4 header to match item name treatment
+                        WriteH4Header(sb, "Full Set Bonuses");
                         foreach (var p in s.FullAdded)
                         {
                             sb.AppendLine($"  - {p}");
@@ -372,31 +439,38 @@ namespace D2TxtImporter.lib.Diff
                     }
                     if (s.ItemsAdded.Any())
                     {
-                        sb.AppendLine("- Items:");
+                        sb.AppendLine("Items:");
                         foreach (var i in s.ItemsAdded.OrderBy(x => x.Name))
                         {
-                            var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                            sb.AppendLine($"  - {i.Name} ({baseName})");
+                            // Item header: H4 with spacing
+                            WriteH4Header(sb, i.Name);
+                            // Base item line
+                            var baseDisp = BaseWithTier(diff, i.BaseCode);
+                            if (!string.IsNullOrWhiteSpace(baseDisp))
+                                sb.AppendLine($"- Base Item: {baseDisp}");
+                            // Individual fields (omit Enabled)
                             var partsI = new System.Collections.Generic.List<string>();
-                            AppendFieldCurrent(partsI, "Enabled", i.EnabledAfter);
                             AppendFieldCurrent(partsI, "Item Level", i.ItemLevelAfter);
                             AppendFieldCurrent(partsI, "Required Level", i.ReqLevelAfter);
                             AppendFieldCurrent(partsI, "Rarity", i.RarityAfter);
-                            if (partsI.Count > 0) sb.AppendLine("    - Base: " + string.Join(", ", partsI));
+                            foreach (var line in partsI)
+                            {
+                                sb.AppendLine($"- {line}");
+                            }
                             if (i.PropertiesAdded.Any())
                             {
-                                sb.AppendLine("    - Properties:");
+                                sb.AppendLine("- Properties:");
                                 foreach (var p in i.PropertiesAdded)
                                 {
-                                    sb.AppendLine($"      - {p}");
+                                    sb.AppendLine($"  - {p}");
                                 }
                             }
                             if (i.SetPropsAdded.Any())
                             {
-                                sb.AppendLine("    - Set Bonuses:");
+                                sb.AppendLine("- Set Bonuses:");
                                 foreach (var p in i.SetPropsAdded)
                                 {
-                                    sb.AppendLine($"      - {p}");
+                                    sb.AppendLine($"  - {p}");
                                 }
                             }
                         }
@@ -436,7 +510,8 @@ namespace D2TxtImporter.lib.Diff
                         : null;
                     if (s.PartialAdded.Any() || s.PartialRemoved.Any() || (sPartialChanged != null && sPartialChanged.Any()))
                     {
-                        sb.AppendLine("- Partial Set Bonuses:");
+                        // H4 header to match item name treatment
+                        WriteH4Header(sb, "Partial Set Bonuses");
                         if (sPartialChanged != null)
                         {
                             foreach (var p in sPartialChanged)
@@ -461,7 +536,8 @@ namespace D2TxtImporter.lib.Diff
                         : null;
                     if (s.FullAdded.Any() || s.FullRemoved.Any() || (sFullChanged != null && sFullChanged.Any()))
                     {
-                        sb.AppendLine("- Full Set Bonuses:");
+                        // H4 header to match item name treatment
+                        WriteH4Header(sb, "Full Set Bonuses");
                         if (sFullChanged != null)
                         {
                             foreach (var p in sFullChanged)
@@ -497,34 +573,40 @@ namespace D2TxtImporter.lib.Diff
 
                         if (s.ItemsAdded.Any())
                         {
-                            sb.AppendLine("- Items Added:");
+                            sb.AppendLine("Items Added:");
                             var ga = s.ItemsAdded.GroupBy(i => ItemType(i)).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
                             foreach (var g in ga)
                             {
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
-                                    var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} ({baseName})");
+                                    // Header: H4 with spacing
+                                    WriteH4Header(sb, i.Name);
+                                    // Base item line
+                                    var baseDisp = BaseWithTier(diff, i.BaseCode);
+                                    if (!string.IsNullOrWhiteSpace(baseDisp)) sb.AppendLine($"- Base Item: {baseDisp}");
+                                    // Individual fields (omit Enabled)
                                     var partsI = new System.Collections.Generic.List<string>();
-                                    AppendFieldCurrent(partsI, "Enabled", i.EnabledAfter);
                                     AppendFieldCurrent(partsI, "Item Level", i.ItemLevelAfter);
                                     AppendFieldCurrent(partsI, "Required Level", i.ReqLevelAfter);
                                     AppendFieldCurrent(partsI, "Rarity", i.RarityAfter);
-                                    if (partsI.Count > 0) sb.AppendLine("    - Base: " + string.Join(", ", partsI));
+                                    foreach (var line in partsI)
+                                    {
+                                        sb.AppendLine($"- {line}");
+                                    }
                                     if (i.PropertiesAdded.Any())
                                     {
-                                        sb.AppendLine("    - Properties:");
+                                        sb.AppendLine("- Properties:");
                                         foreach (var p in i.PropertiesAdded)
                                         {
-                                            sb.AppendLine($"      - {p}");
+                                            sb.AppendLine($"  - {p}");
                                         }
                                     }
                                     if (i.SetPropsAdded.Any())
                                     {
-                                        sb.AppendLine("    - Set Bonuses:");
+                                        sb.AppendLine("- Set Bonuses:");
                                         foreach (var p in i.SetPropsAdded)
                                         {
-                                            sb.AppendLine($"      - {p}");
+                                            sb.AppendLine($"  - {p}");
                                         }
                                     }
                                 }
@@ -538,8 +620,15 @@ namespace D2TxtImporter.lib.Diff
                             {
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
-                                    var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} ({baseName})");
+                                    var baseDisp = BaseWithTier(diff, i.BaseCode);
+                                    if (string.IsNullOrWhiteSpace(baseDisp))
+                                    {
+                                        sb.AppendLine($"  - {i.Name}");
+                                    }
+                                    else
+                                    {
+                                        sb.AppendLine($"  - {i.Name} ({baseDisp})");
+                                    }
                                     var partsI = new System.Collections.Generic.List<string>();
                                     AppendFieldCurrent(partsI, "Enabled", i.EnabledBefore);
                                     AppendFieldCurrent(partsI, "Item Level", i.ItemLevelBefore);
@@ -567,81 +656,109 @@ namespace D2TxtImporter.lib.Diff
                         }
                         if (s.ItemsModified.Any())
                         {
-                            sb.AppendLine("- Items Modified:");
                             var gm = s.ItemsModified.GroupBy(i => ItemType(i)).OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase);
                             foreach (var g in gm)
                             {
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
-                                    var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} ({baseName})");
-                                    // Show base item change for set pieces when the underlying base code changes
+                                    // Header: H4 with spacing
+                                    WriteH4Header(sb, i.Name);
+                                    // Base item line for set pieces; include (was ...) when base changed
                                     var beforeCode = i.BaseCodeBefore;
                                     var afterCode = i.BaseCodeAfter;
-                                    var beforeName = (!string.IsNullOrWhiteSpace(beforeCode) && diff.BaseCodeToName.TryGetValue(beforeCode, out var bnm)) ? bnm : beforeCode;
-                                    var afterName = (!string.IsNullOrWhiteSpace(afterCode) && diff.BaseCodeToName.TryGetValue(afterCode, out var anm)) ? anm : afterCode;
-                                    if (!string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                                    var beforeDisp = BaseWithTier(diff, beforeCode);
+                                    var afterDisp = BaseWithTier(diff, afterCode);
+                                    var codesEqual = string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase);
+                                    if (!codesEqual)
                                     {
-                                        var bDisp = !string.IsNullOrWhiteSpace(beforeName) ? beforeName : "?";
-                                        var aDisp = !string.IsNullOrWhiteSpace(afterName) ? afterName : "?";
-                                        var bCodeDisp = !string.IsNullOrWhiteSpace(beforeCode) ? beforeCode : "?";
-                                        var aCodeDisp = !string.IsNullOrWhiteSpace(afterCode) ? afterCode : "?";
-                                        sb.AppendLine($"    - Base Item: {aDisp} [{aCodeDisp}] (was {bDisp} [{bCodeDisp}])");
+                                        if (!string.IsNullOrWhiteSpace(afterDisp))
+                                        {
+                                            var line = $"- Base Item: {afterDisp}";
+                                            if (!string.IsNullOrWhiteSpace(beforeDisp)) line += $" (was {beforeDisp})";
+                                            sb.AppendLine(line);
+                                        }
                                     }
+                                    else
+                                    {
+                                        if (!string.IsNullOrWhiteSpace(afterDisp)) sb.AppendLine($"- Base Item: {afterDisp}");
+                                    }
+                                    // Base fields (omit Enabled)
                                     var parts = new System.Collections.Generic.List<string>();
-                                    AppendFieldChange(parts, "Enabled", i.EnabledBefore, i.EnabledAfter);
                                     AppendFieldChange(parts, "Item Level", i.ItemLevelBefore, i.ItemLevelAfter);
                                     AppendFieldChange(parts, "Required Level", i.ReqLevelBefore, i.ReqLevelAfter);
                                     AppendFieldChange(parts, "Rarity", i.RarityBefore, i.RarityAfter);
-                                    if (parts.Count > 0) sb.AppendLine("    - Base: " + string.Join(", ", parts));
+                                    foreach (var line in parts)
+                                    {
+                                        sb.AppendLine($"- {line}");
+                                    }
+                                    // Properties grouping
                                     var iChanged = i.PropertiesChanged != null
                                         ? i.PropertiesChanged
                                             .Where(p => p != null && !AreTextsEquivalent(p.Before, p.After))
                                             .ToList()
                                         : null;
-                                    if (i.PropertiesAdded.Any() || i.PropertiesRemoved.Any() || (iChanged != null && iChanged.Any()))
+                                    if ((iChanged != null && iChanged.Any()) || i.PropertiesAdded.Any() || i.PropertiesRemoved.Any())
                                     {
-                                        sb.AppendLine("    - Properties:");
-                                        if (iChanged != null)
+                                        sb.AppendLine("- Properties:");
+                                        if (iChanged != null && iChanged.Any())
                                         {
+                                            sb.AppendLine("  - Changed:");
                                             foreach (var p in iChanged)
                                             {
                                                 if (p == null) continue; // safety
-                                                sb.AppendLine($"      - Changed: {p.After} (was {NumericOnly(p.Before)})");
+                                                sb.AppendLine($"    - {p.After} (was {NumericOnly(p.Before)})");
                                             }
                                         }
-                                        foreach (var p in i.PropertiesAdded)
+                                        if (i.PropertiesAdded.Any())
                                         {
-                                            sb.AppendLine($"      - Added: {p}");
+                                            sb.AppendLine("  - Added:");
+                                            foreach (var p in i.PropertiesAdded)
+                                            {
+                                                sb.AppendLine($"    - {p}");
+                                            }
                                         }
-                                        foreach (var p in i.PropertiesRemoved)
+                                        if (i.PropertiesRemoved.Any())
                                         {
-                                            sb.AppendLine($"      - Removed: {p}");
+                                            sb.AppendLine("  - Removed:");
+                                            foreach (var p in i.PropertiesRemoved)
+                                            {
+                                                sb.AppendLine($"    - {p}");
+                                            }
                                         }
                                     }
+                                    // Set bonuses grouping
                                     var iSetChanged = i.SetPropsChanged != null
                                         ? i.SetPropsChanged
                                             .Where(p => p != null && !AreTextsEquivalent(p.Before, p.After))
                                             .ToList()
                                         : null;
-                                    if (i.SetPropsAdded.Any() || i.SetPropsRemoved.Any() || (iSetChanged != null && iSetChanged.Any()))
+                                    if ((iSetChanged != null && iSetChanged.Any()) || i.SetPropsAdded.Any() || i.SetPropsRemoved.Any())
                                     {
-                                        sb.AppendLine("    - Set Bonuses:");
-                                        if (iSetChanged != null)
+                                        sb.AppendLine("- Set Bonuses:");
+                                        if (iSetChanged != null && iSetChanged.Any())
                                         {
+                                            sb.AppendLine("  - Changed:");
                                             foreach (var p in iSetChanged)
                                             {
                                                 if (p == null) continue; // safety
-                                                sb.AppendLine($"      - Changed: {p.After} (was {NumericOnly(p.Before)})");
+                                                sb.AppendLine($"    - {p.After} (was {NumericOnly(p.Before)})");
                                             }
                                         }
-                                        foreach (var p in i.SetPropsAdded)
+                                        if (i.SetPropsAdded.Any())
                                         {
-                                            sb.AppendLine($"      - Added: {p}");
+                                            sb.AppendLine("  - Added:");
+                                            foreach (var p in i.SetPropsAdded)
+                                            {
+                                                sb.AppendLine($"    - {p}");
+                                            }
                                         }
-                                        foreach (var p in i.SetPropsRemoved)
+                                        if (i.SetPropsRemoved.Any())
                                         {
-                                            sb.AppendLine($"      - Removed: {p}");
+                                            sb.AppendLine("  - Removed:");
+                                            foreach (var p in i.SetPropsRemoved)
+                                            {
+                                                sb.AppendLine($"    - {p}");
+                                            }
                                         }
                                     }
                                 }
@@ -677,18 +794,22 @@ namespace D2TxtImporter.lib.Diff
                 foreach (var r in diff.Runewords.Added.OrderBy(x => x.Name))
                 {
                     if (paired.Contains(NormalizeRunewordName(r.Name))) continue;
-                    sb.AppendLine($"- {r.Name}");
+                    // Header: H4 with spacing
+                    WriteH4Header(sb, r.Name);
+                    // Individual lines (omit Enabled)
                     var parts = new System.Collections.Generic.List<string>();
-                    AppendFieldCurrent(parts, "Enabled", r.EnabledAfter);
                     AppendFieldCurrent(parts, "Item Level", r.ItemLevelAfter);
                     AppendFieldCurrent(parts, "Required Level", r.ReqLevelAfter);
-                    if (parts.Count > 0) sb.AppendLine("  - Base: " + string.Join(", ", parts));
+                    foreach (var line in parts)
+                    {
+                        sb.AppendLine($"- {line}");
+                    }
                     if (r.PropertiesAdded.Any())
                     {
-                        sb.AppendLine("  - Properties:");
+                        sb.AppendLine("- Properties:");
                         foreach (var p in r.PropertiesAdded)
                         {
-                            sb.AppendLine($"    - {p}");
+                            sb.AppendLine($"  - {p}");
                         }
                     }
                 }
@@ -709,35 +830,49 @@ namespace D2TxtImporter.lib.Diff
                 sb.AppendLine("### Modified");
                 foreach (var r in diff.Runewords.Modified.OrderBy(x => x.Name))
                 {
-                    sb.AppendLine($"- {r.Name}");
-                    var parts = new System.Collections.Generic.List<string>();
-                    AppendFieldChange(parts, "Enabled", r.EnabledBefore, r.EnabledAfter);
-                    AppendFieldChange(parts, "Item Level", r.ItemLevelBefore, r.ItemLevelAfter);
-                    AppendFieldChange(parts, "Required Level", r.ReqLevelBefore, r.ReqLevelAfter);
-                    if (parts.Count > 0) sb.AppendLine("  - Base: " + string.Join(", ", parts));
+                    // Header: H4 with spacing
+                    WriteH4Header(sb, r.Name);
+                    // Individual lines for levels (omit Enabled)
+                    var levelLines = new System.Collections.Generic.List<string>();
+                    AppendFieldChange(levelLines, "Item Level", r.ItemLevelBefore, r.ItemLevelAfter);
+                    AppendFieldChange(levelLines, "Required Level", r.ReqLevelBefore, r.ReqLevelAfter);
+                    foreach (var line in levelLines)
+                    {
+                        sb.AppendLine($"- {line}");
+                    }
+                    // Properties grouped
                     var rChanged = r.PropertiesChanged != null
                         ? r.PropertiesChanged
                             .Where(p => p != null && !AreTextsEquivalent(p.Before, p.After))
                             .ToList()
                         : null;
-                    if (r.PropertiesAdded.Any() || r.PropertiesRemoved.Any() || (rChanged != null && rChanged.Any()))
+                    if ((rChanged != null && rChanged.Any()) || r.PropertiesAdded.Any() || r.PropertiesRemoved.Any())
                     {
-                        sb.AppendLine("  - Properties:");
-                        if (rChanged != null)
+                        sb.AppendLine("- Properties:");
+                        if (rChanged != null && rChanged.Any())
                         {
+                            sb.AppendLine("  - Changed:");
                             foreach (var p in rChanged)
                             {
                                 if (p == null) continue;
-                                sb.AppendLine($"    - Changed: {p.After} (was {NumericOnly(p.Before)})");
+                                sb.AppendLine($"    - {p.After} (was {NumericOnly(p.Before)})");
                             }
                         }
-                        foreach (var p in r.PropertiesAdded)
+                        if (r.PropertiesAdded.Any())
                         {
-                            sb.AppendLine($"    - Added: {p}");
+                            sb.AppendLine("  - Added:");
+                            foreach (var p in r.PropertiesAdded)
+                            {
+                                sb.AppendLine($"    - {p}");
+                            }
                         }
-                        foreach (var p in r.PropertiesRemoved)
+                        if (r.PropertiesRemoved.Any())
                         {
-                            sb.AppendLine($"    - Removed: {p}");
+                            sb.AppendLine("  - Removed:");
+                            foreach (var p in r.PropertiesRemoved)
+                            {
+                                sb.AppendLine($"    - {p}");
+                            }
                         }
                     }
                 }
@@ -746,6 +881,8 @@ namespace D2TxtImporter.lib.Diff
             sb.AppendLine("</details>");
             sb.AppendLine();
         }
+
+        // Suppression of base codes is no longer required; friendly names are resolved in SemanticDiffService.
 
         private static void AppendFieldChange(System.Collections.Generic.List<string> list, string label, bool? before, bool? after)
         {
@@ -820,6 +957,10 @@ namespace D2TxtImporter.lib.Diff
         {
             if (string.IsNullOrWhiteSpace(s)) return string.Empty;
             var t = s.Trim();
+            // Treat '&' and 'and' as equivalent and collapse spaces
+            t = t.Replace("&", "and");
+            t = System.Text.RegularExpressions.Regex.Replace(t, @"\s+", " ");
+            // Drop trailing numbers like "Name 2"
             t = System.Text.RegularExpressions.Regex.Replace(t, @"\s*\d+$", string.Empty);
             return t.Trim();
         }

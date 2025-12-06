@@ -122,11 +122,8 @@ namespace D2TxtImporter.lib
                     Directory.CreateDirectory(docsDir);
                 }
 
-                // Do not create any subfolders here; individual exporters will
-                // create their target directories on-demand so that unused
-                // folders (e.g., item-jsons, web, extras) are not created.
+                // Subfolders are created on-demand by individual exporters to avoid unused directories.
 
-                //TxtExporter.ExportTxt(docsDir, Uniques, Runewords, Sets); // Out of date
                 if (ExportJson)
                 {
                     JsonExporter.ExportJson(docsDir, Uniques, Runewords, Sets, PrettyPrintJson);

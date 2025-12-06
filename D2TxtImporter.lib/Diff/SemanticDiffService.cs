@@ -6,6 +6,15 @@ namespace D2TxtImporter.lib.Diff
 {
     public static class SemanticDiffService
     {
+        // Normalize keys: trim, '&' -> 'and', collapse spaces (runewords additionally drop trailing numbers elsewhere)
+        private static string NormalizeKeyCommon(string s)
+        {
+            if (string.IsNullOrWhiteSpace(s)) return string.Empty;
+            var t = s.Trim();
+            t = t.Replace("&", "and");
+            t = System.Text.RegularExpressions.Regex.Replace(t, @"\s+", " ");
+            return t.Trim();
+        }
         public static SemanticDiffResult Compute(JsonModelLoader.Models models, DiffFromPatchService.Targets targets, bool includeUnmentioned)
         {
             var result = new SemanticDiffResult();
@@ -14,7 +23,7 @@ namespace D2TxtImporter.lib.Diff
             string UniqueKey(JsonModelLoader.UniqueSimple u)
             {
                 if (u == null) return string.Empty;
-                return u.Index ?? string.Empty;
+                return NormalizeKeyCommon(u.Index);
             }
             Dictionary<string, JsonModelLoader.UniqueSimple> MapU(Dictionary<string, JsonModelLoader.UniqueSimple> src)
             {
@@ -32,7 +41,7 @@ namespace D2TxtImporter.lib.Diff
             }
             var oldUniquesByKey = MapU(models.OldUniques);
             var newUniquesByKey = MapU(models.NewUniques);
-            var uniqueKeys = new HashSet<string>(targets?.UniqueKeys ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            var uniqueKeys = new HashSet<string>((targets?.UniqueKeys ?? Enumerable.Empty<string>()).Select(NormalizeKeyCommon), StringComparer.OrdinalIgnoreCase);
             if (includeUnmentioned)
             {
                 foreach (var k in EnumerateChangedKeys(oldUniquesByKey, newUniquesByKey, AreUniqueDifferent))
@@ -43,35 +52,78 @@ namespace D2TxtImporter.lib.Diff
             result.Uniques = BuildUniqueChanges(uniqueKeys, oldUniquesByKey, newUniquesByKey);
 
             // Sets (track by set Index). Also include set item keys by mapping to parent set
-            var setKeys = new HashSet<string>(targets?.SetKeys ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            var setKeys = new HashSet<string>((targets?.SetKeys ?? Enumerable.Empty<string>()).Select(NormalizeKeyCommon), StringComparer.OrdinalIgnoreCase);
+            // Build normalized maps for sets and set item -> parent set
+            Dictionary<string, JsonModelLoader.SetSimple> MapS(Dictionary<string, JsonModelLoader.SetSimple> src)
+            {
+                var dst = new Dictionary<string, JsonModelLoader.SetSimple>(StringComparer.OrdinalIgnoreCase);
+                if (src != null)
+                {
+                    foreach (var s in src.Values)
+                    {
+                        var k = NormalizeKeyCommon(s?.Index);
+                        if (string.IsNullOrWhiteSpace(k)) k = s?.Index ?? string.Empty;
+                        if (!dst.ContainsKey(k)) dst[k] = s;
+                    }
+                }
+                return dst;
+            }
+            var oldSetsByKey = MapS(models.OldSets);
+            var newSetsByKey = MapS(models.NewSets);
+            Dictionary<string, string> BuildSetItemToSetNorm(Dictionary<string, JsonModelLoader.SetSimple> map)
+            {
+                var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var s in map?.Values ?? Enumerable.Empty<JsonModelLoader.SetSimple>())
+                {
+                    var parent = NormalizeKeyCommon(s?.Index);
+                    foreach (var it in s?.SetItems ?? new List<JsonModelLoader.SetItemSimple>())
+                    {
+                        var key = NormalizeKeyCommon(it?.Index);
+                        if (string.IsNullOrWhiteSpace(key)) continue;
+                        if (!d.ContainsKey(key)) d[key] = parent;
+                    }
+                }
+                return d;
+            }
+            var oldSetItemToSetNorm = BuildSetItemToSetNorm(oldSetsByKey);
+            var newSetItemToSetNorm = BuildSetItemToSetNorm(newSetsByKey);
             // Some keys might be set item indices; map to set indices using both old and new maps
             foreach (var k in targets?.SetKeys ?? Enumerable.Empty<string>())
             {
+                // Try raw maps
                 if (models.OldSetItemToSet != null)
                 {
                     string parent;
-                    if (models.OldSetItemToSet.TryGetValue(k, out parent)) setKeys.Add(parent);
+                    if (models.OldSetItemToSet.TryGetValue(k, out parent)) setKeys.Add(NormalizeKeyCommon(parent));
                 }
                 if (models.NewSetItemToSet != null)
                 {
                     string parent;
-                    if (models.NewSetItemToSet.TryGetValue(k, out parent)) setKeys.Add(parent);
+                    if (models.NewSetItemToSet.TryGetValue(k, out parent)) setKeys.Add(NormalizeKeyCommon(parent));
                 }
+                // Try normalized maps
+                var nk = NormalizeKeyCommon(k);
+                if (oldSetItemToSetNorm.TryGetValue(nk, out var parentOld)) setKeys.Add(parentOld);
+                if (newSetItemToSetNorm.TryGetValue(nk, out var parentNew)) setKeys.Add(parentNew);
             }
             if (includeUnmentioned)
             {
-                foreach (var k in EnumerateChangedKeys(models.OldSets, models.NewSets, AreSetDifferent))
+                foreach (var k in EnumerateChangedKeys(oldSetsByKey, newSetsByKey, AreSetDifferent))
                 {
                     setKeys.Add(k);
                 }
             }
-            result.Sets = BuildSetChanges(setKeys, models.OldSets, models.NewSets);
+            result.Sets = BuildSetChanges(setKeys, oldSetsByKey, newSetsByKey);
 
-            // Runewords (pair by normalized name to ignore trailing numbers like "Name 2")
+            // Runewords (pair by normalized name): ignore trailing numbers; treat '&' and 'and' as equivalent; collapse spaces
             string NormalizeRunewordName(string s)
             {
                 if (string.IsNullOrWhiteSpace(s)) return string.Empty;
                 var t = s.Trim();
+                // Textual equivalence: '&' -> 'and', collapse spaces
+                t = t.Replace("&", "and");
+                t = System.Text.RegularExpressions.Regex.Replace(t, @"\s+", " ");
+                // Drop trailing number suffixes (e.g., "Name 2")
                 t = System.Text.RegularExpressions.Regex.Replace(t, @"\s*\d+$", string.Empty);
                 return t.Trim();
             }
@@ -113,15 +165,31 @@ namespace D2TxtImporter.lib.Diff
             result.BaseItems = BaseAndCubeDiffBuilders.BuildBaseChanges(baseCodes, models);
 
             // Cube Recipes by description or index key
-            var cubeKeys = new HashSet<string>(targets?.CubeKeys ?? Enumerable.Empty<string>(), StringComparer.OrdinalIgnoreCase);
+            var cubeKeys = new HashSet<string>((targets?.CubeKeys ?? Enumerable.Empty<string>()).Select(NormalizeKeyCommon), StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, JsonModelLoader.CubeRecipeSimple> MapC(Dictionary<string, JsonModelLoader.CubeRecipeSimple> src)
+            {
+                var dst = new Dictionary<string, JsonModelLoader.CubeRecipeSimple>(StringComparer.OrdinalIgnoreCase);
+                if (src != null)
+                {
+                    foreach (var c in src.Values)
+                    {
+                        var k = NormalizeKeyCommon(c?.Key);
+                        if (string.IsNullOrWhiteSpace(k)) k = c?.Key ?? string.Empty;
+                        if (!dst.ContainsKey(k)) dst[k] = c;
+                    }
+                }
+                return dst;
+            }
+            var oldCubesByKey = MapC(models.OldCubes);
+            var newCubesByKey = MapC(models.NewCubes);
             if (includeUnmentioned)
             {
-                foreach (var k in EnumerateChangedKeys(models.OldCubes, models.NewCubes, (a,b) => BaseAndCubeDiffBuilders.AreCubeDifferent(a,b)))
+                foreach (var k in EnumerateChangedKeys(oldCubesByKey, newCubesByKey, (a,b) => BaseAndCubeDiffBuilders.AreCubeDifferent(a,b)))
                 {
                     cubeKeys.Add(k);
                 }
             }
-            result.CubeRecipes = BaseAndCubeDiffBuilders.BuildCubeChanges(cubeKeys, models.OldCubes, models.NewCubes);
+            result.CubeRecipes = BaseAndCubeDiffBuilders.BuildCubeChanges(cubeKeys, oldCubesByKey, newCubesByKey);
 
             // Populate base code maps for exporter grouping
             // Weapons
@@ -132,12 +200,20 @@ namespace D2TxtImporter.lib.Diff
                 if (string.IsNullOrWhiteSpace(code)) continue;
                 if (!result.BaseCodeToName.ContainsKey(code)) result.BaseCodeToName[code] = w?.Name ?? string.Empty;
                 if (!result.BaseCodeToCategory.ContainsKey(code)) result.BaseCodeToCategory[code] = "Weapon";
+                // Tier mapping: default Code=N, UberCode=X, UltraCode=E (prefer higher tiers)
+                SetTier(result, code, "N");
+                if (!string.IsNullOrWhiteSpace(w?.UberCode)) SetTier(result, w.UberCode, "X");
+                if (!string.IsNullOrWhiteSpace(w?.UltraCode)) SetTier(result, w.UltraCode, "E");
             }
             foreach (var kv in models.OldWeapons ?? new Dictionary<string, JsonModelLoader.WeaponSimple>())
             {
                 var code = kv.Key;
+                var w = kv.Value;
                 if (!result.BaseCodeToName.ContainsKey(code)) result.BaseCodeToName[code] = kv.Value?.Name ?? string.Empty;
                 if (!result.BaseCodeToCategory.ContainsKey(code)) result.BaseCodeToCategory[code] = "Weapon";
+                SetTier(result, code, "N");
+                if (!string.IsNullOrWhiteSpace(w?.UberCode)) SetTier(result, w.UberCode, "X");
+                if (!string.IsNullOrWhiteSpace(w?.UltraCode)) SetTier(result, w.UltraCode, "E");
             }
             // Armors
             foreach (var kv in models.NewArmors ?? new Dictionary<string, JsonModelLoader.ArmorSimple>())
@@ -147,15 +223,63 @@ namespace D2TxtImporter.lib.Diff
                 if (string.IsNullOrWhiteSpace(code)) continue;
                 if (!result.BaseCodeToName.ContainsKey(code)) result.BaseCodeToName[code] = a?.Name ?? string.Empty;
                 if (!result.BaseCodeToCategory.ContainsKey(code)) result.BaseCodeToCategory[code] = "Armor";
+                SetTier(result, code, "N");
+                if (!string.IsNullOrWhiteSpace(a?.UberCode)) SetTier(result, a.UberCode, "X");
+                if (!string.IsNullOrWhiteSpace(a?.UltraCode)) SetTier(result, a.UltraCode, "E");
             }
             foreach (var kv in models.OldArmors ?? new Dictionary<string, JsonModelLoader.ArmorSimple>())
             {
                 var code = kv.Key;
+                var a = kv.Value;
                 if (!result.BaseCodeToName.ContainsKey(code)) result.BaseCodeToName[code] = kv.Value?.Name ?? string.Empty;
                 if (!result.BaseCodeToCategory.ContainsKey(code)) result.BaseCodeToCategory[code] = "Armor";
+                SetTier(result, code, "N");
+                if (!string.IsNullOrWhiteSpace(a?.UberCode)) SetTier(result, a.UberCode, "X");
+                if (!string.IsNullOrWhiteSpace(a?.UltraCode)) SetTier(result, a.UltraCode, "E");
+            }
+
+            // Misc base-type codes used by Uniques/Sets (e.g., rings, amulets, charms, jewels)
+            // These do not appear in weapons/armors JSONs, so seed friendly names here to improve rendering
+            var miscBaseMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                { "amu", "Amulet" },
+                { "rin", "Ring" },
+                { "cm1", "Small Charm" },
+                { "cm2", "Large Charm" },
+                { "cm3", "Grand Charm" },
+                { "jew", "Jewel" }
+            };
+            foreach (var kv in miscBaseMap)
+            {
+                if (!result.BaseCodeToName.ContainsKey(kv.Key)) result.BaseCodeToName[kv.Key] = kv.Value;
+                if (!result.BaseCodeToCategory.ContainsKey(kv.Key)) result.BaseCodeToCategory[kv.Key] = "Misc";
             }
 
             return result;
+        }
+
+        private static void SetTier(SemanticDiffResult res, string code, string tier)
+        {
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(tier)) return;
+            int Rank(string t)
+            {
+                switch ((t ?? string.Empty).ToUpperInvariant())
+                {
+                    case "E": return 3; // Elite
+                    case "X": return 2; // Exceptional
+                    case "N": return 1; // Normal
+                    default: return 0;
+                }
+            }
+            if (!res.BaseCodeToTier.TryGetValue(code, out var existing))
+            {
+                res.BaseCodeToTier[code] = tier;
+                return;
+            }
+            if (Rank(tier) > Rank(existing))
+            {
+                res.BaseCodeToTier[code] = tier;
+            }
         }
 
         private static IEnumerable<string> EnumerateChangedKeys<T>(Dictionary<string, T> oldMap, Dictionary<string, T> newMap, Func<T, T, bool> hasChanged)
@@ -320,12 +444,12 @@ namespace D2TxtImporter.lib.Diff
             if (!SetEquals(ToSet(a?.PartialProperties), ToSet(b?.PartialProperties))) return true;
             if (!SetEquals(ToSet(a?.FullProperties), ToSet(b?.FullProperties))) return true;
             // Compare set items by index
-            var aItems = new HashSet<string>((a?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).Select(x => x.Index), StringComparer.OrdinalIgnoreCase);
-            var bItems = new HashSet<string>((b?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).Select(x => x.Index), StringComparer.OrdinalIgnoreCase);
+            var aItems = new HashSet<string>((a?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).Select(x => NormalizeKeyCommon(x.Index)), StringComparer.OrdinalIgnoreCase);
+            var bItems = new HashSet<string>((b?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).Select(x => NormalizeKeyCommon(x.Index)), StringComparer.OrdinalIgnoreCase);
             if (!aItems.SetEquals(bItems)) return true;
             // Deep compare items
-            var mapA = (a?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).ToDictionary(x => x.Index, x => x, StringComparer.OrdinalIgnoreCase);
-            var mapB = (b?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).ToDictionary(x => x.Index, x => x, StringComparer.OrdinalIgnoreCase);
+            var mapA = (a?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).ToDictionary(x => NormalizeKeyCommon(x.Index), x => x, StringComparer.OrdinalIgnoreCase);
+            var mapB = (b?.SetItems ?? new List<JsonModelLoader.SetItemSimple>()).ToDictionary(x => NormalizeKeyCommon(x.Index), x => x, StringComparer.OrdinalIgnoreCase);
             foreach (var k in aItems.Union(bItems))
             {
                 mapA.TryGetValue(k, out var ai);
@@ -535,6 +659,7 @@ namespace D2TxtImporter.lib.Diff
         // Lookup maps to assist rendering/grouping in Markdown exporter
         public System.Collections.Generic.Dictionary<string, string> BaseCodeToName { get; set; } = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         public System.Collections.Generic.Dictionary<string, string> BaseCodeToCategory { get; set; } = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        public System.Collections.Generic.Dictionary<string, string> BaseCodeToTier { get; set; } = new System.Collections.Generic.Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
     }
 
     public sealed class Changes<T> where T : IName

@@ -113,6 +113,8 @@ namespace D2TxtImporter.lib.Diff
         {
             public string Code { get; set; }
             public string Name { get; set; }
+            public string UberCode { get; set; }
+            public string UltraCode { get; set; }
             public int? BaseRequiredLevel { get; set; }
             public int RequiredStrength { get; set; }
             public int RequiredDexterity { get; set; }
@@ -142,6 +144,8 @@ namespace D2TxtImporter.lib.Diff
         {
             public string Code { get; set; }
             public string Name { get; set; }
+            public string UberCode { get; set; }
+            public string UltraCode { get; set; }
             public int? BaseRequiredLevel { get; set; }
             public int RequiredStrength { get; set; }
             public int RequiredDexterity { get; set; }
@@ -299,6 +303,8 @@ namespace D2TxtImporter.lib.Diff
                 {
                     Code = t.Value<string>("Code"),
                     Name = t.Value<string>("Name"),
+                    UberCode = t.Value<string>("UberCode"),
+                    UltraCode = t.Value<string>("UltraCode"),
                     BaseRequiredLevel = t.Value<int?>("BaseRequiredLevel"),
                     RequiredStrength = t.Value<int?>("RequiredStrength") ?? 0,
                     RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
@@ -357,6 +363,8 @@ namespace D2TxtImporter.lib.Diff
                 {
                     Code = t.Value<string>("Code"),
                     Name = t.Value<string>("Name"),
+                    UberCode = t.Value<string>("UberCode"),
+                    UltraCode = t.Value<string>("UltraCode"),
                     BaseRequiredLevel = t.Value<int?>("BaseRequiredLevel"),
                     RequiredStrength = t.Value<int?>("RequiredStrength") ?? 0,
                     RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
@@ -401,7 +409,7 @@ namespace D2TxtImporter.lib.Diff
             {
                 var idx = t.Value<int?>("Index") ?? -1;
                 var desc = ReadStringProperty(t, "Description");
-                // Ignore noisy stack maintenance recipes per user request
+                // Ignore stack maintenance recipes to reduce noise
                 if (ShouldIgnoreCubeDescription(desc))
                 {
                     continue;
