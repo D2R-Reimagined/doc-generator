@@ -30,6 +30,10 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
 
+        // Export sockets as a level-range string computed from ItemTypes thresholds
+        [JsonProperty("GemSockets")]
+        public string GemSocketsString => Equipment.BuildSocketRangeString(Type, GemSockets);
+
         // Aggregated Automagic group properties attached at export time
         [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<AutoMagicExportProperty> Properties { get; set; }

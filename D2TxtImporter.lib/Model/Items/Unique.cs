@@ -12,12 +12,33 @@ namespace D2TxtImporter.lib.Model.Items
     public class Unique : Item
     {
         public string Type { get; set; }
+        public string Vanilla { get; set; }
 
         public static List<Unique> Import(string excelFolder)
         {
             var result = new List<Unique>();
 
+            // Build a map of raw line numbers (including header) from the source file
+            var rawLines = Importer.ReadTxtFileToList(excelFolder + "/UniqueItems.txt");
+            var rawIndexByName = new System.Collections.Generic.Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < rawLines.Count; i++)
+            {
+                var line = rawLines[i];
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var parts = line.Split('\t');
+                if (parts.Length == 0) continue;
+                var idx = parts[0]; // index column
+                if (!string.IsNullOrWhiteSpace(idx))
+                {
+                    if (!rawIndexByName.ContainsKey(idx)) rawIndexByName[idx] = i + 1; // 1-based including header
+                }
+            }
+
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/UniqueItems.txt");
+            var sunderNames = new System.Collections.Generic.HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "Cold Rupture", "Flame Rift", "Crack of the Heavens", "Rotting Fissure", "Bone Break", "Black Cleft"
+            };
 
             foreach (var row in table)
             {
@@ -59,7 +80,10 @@ namespace D2TxtImporter.lib.Model.Items
                     RequiredLevel = requiredLevel.Value,
                     Code = code,
                     DamageArmorEnhanced = false,
+                    // Determine Vanilla using raw line number (header counted as line 1)
+                    Vanilla = (rawIndexByName.TryGetValue(name, out var rawRow) && rawRow <= 403) || sunderNames.Contains(name) ? "Y" : "N",
                 };
+                // no debug logging
 
                 Equipment.Equipment eq = null;
 

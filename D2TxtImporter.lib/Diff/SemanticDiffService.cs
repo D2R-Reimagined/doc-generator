@@ -691,8 +691,8 @@ namespace D2TxtImporter.lib.Diff
         public int? DurabilityAfter { get; set; }
         public int? ItemLevelBefore { get; set; }
         public int? ItemLevelAfter { get; set; }
-        public int? SocketsBefore { get; set; }
-        public int? SocketsAfter { get; set; }
+        public string SocketsBefore { get; set; }
+        public string SocketsAfter { get; set; }
         // Weapon-specific
         public int? SpeedBefore { get; set; }
         public int? SpeedAfter { get; set; }

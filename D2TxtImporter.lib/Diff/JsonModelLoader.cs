@@ -21,6 +21,7 @@ namespace D2TxtImporter.lib.Diff
             public string Code { get; set; }
             // Explicit item type exported by the generator (e.g., Axe, Sword, Helmet, Ring, etc.)
             public string Type { get; set; }
+            public string Vanilla { get; set; }
             public System.Collections.Generic.List<string> Properties { get; set; } = new System.Collections.Generic.List<string>();
         }
 
@@ -43,6 +44,7 @@ namespace D2TxtImporter.lib.Diff
             public string Index { get; set; }
             public string Name { get; set; }
             public int Level { get; set; }
+            public string Vanilla { get; set; }
             public System.Collections.Generic.List<string> PartialProperties { get; set; } = new System.Collections.Generic.List<string>();
             public System.Collections.Generic.List<string> FullProperties { get; set; } = new System.Collections.Generic.List<string>();
             public System.Collections.Generic.List<SetItemSimple> SetItems { get; set; } = new System.Collections.Generic.List<SetItemSimple>();
@@ -54,6 +56,7 @@ namespace D2TxtImporter.lib.Diff
             public bool Enabled { get; set; }
             public int ItemLevel { get; set; }
             public int RequiredLevel { get; set; }
+            public string Vanilla { get; set; }
             public System.Collections.Generic.List<string> Properties { get; set; } = new System.Collections.Generic.List<string>();
         }
 
@@ -120,7 +123,7 @@ namespace D2TxtImporter.lib.Diff
             public int RequiredDexterity { get; set; }
             public int Durability { get; set; }
             public int ItemLevel { get; set; }
-            public int GemSockets { get; set; }
+            public string GemSockets { get; set; }
             public int Speed { get; set; }
             public System.Collections.Generic.List<DamageSimple> Damages { get; set; } = new System.Collections.Generic.List<DamageSimple>();
             public System.Collections.Generic.List<string> AutoMagicProps { get; set; } = new System.Collections.Generic.List<string>();
@@ -151,7 +154,7 @@ namespace D2TxtImporter.lib.Diff
             public int RequiredDexterity { get; set; }
             public int Durability { get; set; }
             public int ItemLevel { get; set; }
-            public int GemSockets { get; set; }
+            public string GemSockets { get; set; }
             public string ArmorString { get; set; }
             public int? Block { get; set; }
             public string DamageStringPrefix { get; set; }
@@ -216,6 +219,7 @@ namespace D2TxtImporter.lib.Diff
                     Rarity = t.Value<int?>("Rarity") ?? 0,
                     Code = t.Value<string>("Code"),
                     Type = t.Value<string>("Type") ?? t.Value<string>("type"),
+                    Vanilla = t.Value<string>("Vanilla"),
                     Properties = ExtractPropertyStrings(t["Properties"]) ?? new List<string>()
                 };
                 if (!string.IsNullOrWhiteSpace(u.Index)) list.Add(u);
@@ -237,6 +241,7 @@ namespace D2TxtImporter.lib.Diff
                     Index = t.Value<string>("Index"),
                     Name = t.Value<string>("Name"),
                     Level = t.Value<int?>("Level") ?? 0,
+                    Vanilla = t.Value<string>("Vanilla"),
                     PartialProperties = ExtractPropertyStrings(t["PartialProperties"]) ?? new List<string>(),
                     FullProperties = ExtractPropertyStrings(t["FullProperties"]) ?? new List<string>(),
                     SetItems = new List<SetItemSimple>()
@@ -283,6 +288,7 @@ namespace D2TxtImporter.lib.Diff
                     Enabled = t.Value<bool?>("Enabled") ?? false,
                     ItemLevel = t.Value<int?>("ItemLevel") ?? 0,
                     RequiredLevel = t.Value<int?>("RequiredLevel") ?? 0,
+                    Vanilla = t.Value<string>("Vanilla"),
                     Properties = ExtractPropertyStrings(t["Properties"]) ?? new List<string>()
                 };
                 if (!string.IsNullOrWhiteSpace(r.Index)) list.Add(r);
@@ -310,7 +316,7 @@ namespace D2TxtImporter.lib.Diff
                     RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
                     Durability = t.Value<int?>("Durability") ?? 0,
                     ItemLevel = t.Value<int?>("ItemLevel") ?? 0,
-                    GemSockets = t.Value<int?>("GemSockets") ?? 0,
+                    GemSockets = t.Value<string>("GemSockets"),
                     Speed = t.Value<int?>("Speed") ?? 0,
                     Damages = new System.Collections.Generic.List<DamageSimple>(),
                     AutoMagicProps = new System.Collections.Generic.List<string>()
@@ -370,7 +376,7 @@ namespace D2TxtImporter.lib.Diff
                     RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
                     Durability = t.Value<int?>("Durability") ?? 0,
                     ItemLevel = t.Value<int?>("ItemLevel") ?? 0,
-                    GemSockets = t.Value<int?>("GemSockets") ?? 0,
+                    GemSockets = t.Value<string>("GemSockets"),
                     ArmorString = t.Value<string>("ArmorString"),
                     Block = t.Value<int?>("Block"),
                     DamageStringPrefix = t.Value<string>("DamageStringPrefix"),

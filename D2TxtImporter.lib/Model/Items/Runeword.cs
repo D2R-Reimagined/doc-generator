@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Types;
@@ -13,11 +14,53 @@ namespace D2TxtImporter.lib.Model.Items
 
         public List<Misc> Runes { get; set; }
         public List<ItemType> Types { get; set; }
+        public string Vanilla { get; set; }
         public static List<Runeword> Import(string excelFolder) 
         {
 
             var result = new List<Runeword>();
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Runes.txt");
+
+            // Load canonical rune name strings from project-root relative path: root\D2TxtImporter.lib\bin\D2R Casc\runes.txt
+            var canonicalRuneNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            try
+            {
+                string canonicalPath = null;
+                var roots = new[] { AppDomain.CurrentDomain.BaseDirectory, Directory.GetCurrentDirectory() };
+                foreach (var r in roots)
+                {
+                    var dir = new DirectoryInfo(r);
+                    for (int i = 0; i < 10 && dir != null; i++)
+                    {
+                        var candidate = Path.Combine(dir.FullName, "D2TxtImporter.lib", "bin", "D2R Casc", "runes.txt");
+                        if (File.Exists(candidate)) { canonicalPath = candidate; break; }
+                        dir = dir.Parent;
+                    }
+                    if (canonicalPath != null) break;
+                }
+
+                if (!string.IsNullOrEmpty(canonicalPath) && File.Exists(canonicalPath))
+                {
+                    var cascRows = Importer.ReadTxtFileToDictionaryList(canonicalPath);
+                    foreach (var crow in cascRows)
+                    {
+                        string val = null;
+                        if (crow.ContainsKey("*Rune Names")) val = crow["*Rune Names"];
+                        else if (crow.ContainsKey("*Rune Name")) val = crow["*Rune Name"];
+                        else if (crow.ContainsKey("*RunesUsed")) val = crow["*RunesUsed"];
+
+                        var isComplete = crow.ContainsKey("complete") && string.Equals(crow["complete"], "1", StringComparison.OrdinalIgnoreCase);
+                        if (!string.IsNullOrWhiteSpace(val) && isComplete)
+                        {
+                            canonicalRuneNames.Add(val.Trim());
+                        }
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                // Swallow; treat as empty set if any issue reading canonical file
+            }
 
             foreach (var row in table) 
             {
@@ -100,8 +143,20 @@ namespace D2TxtImporter.lib.Model.Items
                     RequiredLevel = runes.Max(x => x.RequiredLevel),
                     Code = row["Name"],
                     Types = types,
-                    Runes = runes
+                    Runes = runes,
+                    Vanilla = "N"
                 };
+
+                // Determine Vanilla flag from the imported row's rune names token compared to canonical list
+                string importedRuneNames = null;
+                if (row.ContainsKey("*Rune Names")) importedRuneNames = row["*Rune Names"];
+                else if (row.ContainsKey("*Rune Name")) importedRuneNames = row["*Rune Name"];
+                else if (row.ContainsKey("*RunesUsed")) importedRuneNames = row["*RunesUsed"];
+
+                if (!string.IsNullOrWhiteSpace(importedRuneNames) && canonicalRuneNames.Contains(importedRuneNames.Trim()))
+                {
+                    runeword.Vanilla = "Y";
+                }
 
                 var propList = new List<PropertyInfo>();
 

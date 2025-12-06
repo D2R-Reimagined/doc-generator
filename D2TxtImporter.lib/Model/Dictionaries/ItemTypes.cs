@@ -17,6 +17,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public string Equiv1 { get; set; }
         [JsonIgnore]
         public string BodyLoc1 { get; set; }
+        // Socket thresholds from ItemTypes.txt
+        // We keep them ignored for JSON to avoid leaking into exports directly
+        [JsonIgnore]
+        public int? MaxSockets1 { get; set; }
+        [JsonIgnore]
+        public int? MaxSocketsLevelThreshold1 { get; set; }
+        [JsonIgnore]
+        public int? MaxSockets2 { get; set; }
+        [JsonIgnore]
+        public int? MaxSocketsLevelThreshold2 { get; set; }
+        [JsonIgnore]
+        public int? MaxSockets3 { get; set; }
         [JsonIgnore]
         public static Dictionary<string, ItemType> ItemTypes;
         
@@ -35,7 +47,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     Equiv1 = row["Equiv1"],
                     Equiv2 = row["Equiv2"],
                     Class = row["Class"],
-                    BodyLoc1 = row["BodyLoc1"]
+                    BodyLoc1 = row["BodyLoc1"],
+                    MaxSockets1 = Model.Utility.ToNullableInt(row.ContainsKey("MaxSockets1") ? row["MaxSockets1"] : null),
+                    MaxSocketsLevelThreshold1 = Model.Utility.ToNullableInt(row.ContainsKey("MaxSocketsLevelThreshold1") ? row["MaxSocketsLevelThreshold1"] : null),
+                    MaxSockets2 = Model.Utility.ToNullableInt(row.ContainsKey("MaxSockets2") ? row["MaxSockets2"] : null),
+                    MaxSocketsLevelThreshold2 = Model.Utility.ToNullableInt(row.ContainsKey("MaxSocketsLevelThreshold2") ? row["MaxSocketsLevelThreshold2"] : null),
+                    MaxSockets3 = Model.Utility.ToNullableInt(row.ContainsKey("MaxSockets3") ? row["MaxSockets3"] : null)
                 };
 
                 ItemTypes[itemType.Code] = itemType;

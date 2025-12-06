@@ -15,6 +15,8 @@ namespace D2TxtImporter.lib.Model.Items
         public string Type { get; set; }
         public string Set { get; set; }
         [JsonIgnore]
+        public string Vanilla { get; set; }
+        [JsonIgnore]
         public List<ItemProperty> SetProperties { get; set; }
         public List<string> SetPropertiesString { get; set; }
         [JsonIgnore]
@@ -25,6 +27,21 @@ namespace D2TxtImporter.lib.Model.Items
         public static void Import(string excelFolder)
         {
             SetItems = new List<SetItem>();
+            // Build a map of raw line numbers (including header) from the source file
+            var rawLines = Importer.ReadTxtFileToList(excelFolder + "/SetItems.txt");
+            var rawIndexByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < rawLines.Count; i++)
+            {
+                var line = rawLines[i];
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var parts = line.Split('\t');
+                if (parts.Length == 0) continue;
+                var idx = parts[0]; // index column
+                if (!string.IsNullOrWhiteSpace(idx))
+                {
+                    if (!rawIndexByName.ContainsKey(idx)) rawIndexByName[idx] = i + 1; // 1-based with header included
+                }
+            }
             
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/SetItems.txt");
 
@@ -56,8 +73,14 @@ namespace D2TxtImporter.lib.Model.Items
                     RequiredLevel = requiredLevel.Value,
                     Code = row["item"],
                     DamageArmorEnhanced = false,
-                    AddFunc = addFunc.HasValue ? addFunc.Value : 0
+                    AddFunc = addFunc.HasValue ? addFunc.Value : 0,
+                    Vanilla = "N"
                 };
+                // Determine absolute raw line number from the file (includes header as line 1)
+                if (rawIndexByName.TryGetValue(setItem.Index, out var rawRow) && rawRow <= 129)
+                {
+                    setItem.Vanilla = "Y";
+                }
                 
                 Equipment.Equipment eq = null;
                 if (Armor.Armors.ContainsKey(setItem.Code))
