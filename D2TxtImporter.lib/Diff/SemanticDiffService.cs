@@ -302,6 +302,8 @@ namespace D2TxtImporter.lib.Diff
             if (a == null && b != null) return true;
             if (a != null && b == null) return true;
             if (a == null && b == null) return false;
+            // Base (code) change should be considered a modification
+            if (!string.Equals(a.Code ?? string.Empty, b.Code ?? string.Empty, StringComparison.OrdinalIgnoreCase)) return true;
             if (a.Enabled != b.Enabled) return true;
             if (a.ItemLevel != b.ItemLevel) return true;
             if (a.RequiredLevel != b.RequiredLevel) return true;
@@ -411,6 +413,8 @@ namespace D2TxtImporter.lib.Diff
             if (a == null && b != null) return true;
             if (a != null && b == null) return true;
             if (a == null && b == null) return false;
+            // Consider base (code) change as a modification
+            if (!string.Equals(a.Code ?? string.Empty, b.Code ?? string.Empty, StringComparison.OrdinalIgnoreCase)) return true;
             if (a.Enabled != b.Enabled) return true;
             if (a.ItemLevel != b.ItemLevel) return true;
             if (a.RequiredLevel != b.RequiredLevel) return true;
@@ -953,6 +957,8 @@ namespace D2TxtImporter.lib.Diff
     {
         public string Name { get; set; }
         public string BaseCode { get; set; }
+        public string BaseCodeBefore { get; set; }
+        public string BaseCodeAfter { get; set; }
         // Item type from JSON export (e.g., Axe, Sword, Ring)
         public string TypeBefore { get; set; }
         public string TypeAfter { get; set; }
@@ -982,6 +988,8 @@ namespace D2TxtImporter.lib.Diff
             {
                 Name = (newU ?? oldU)?.Index,
                 BaseCode = (newU ?? oldU)?.Code,
+                BaseCodeBefore = oldU?.Code,
+                BaseCodeAfter = newU?.Code,
                 TypeBefore = oldU?.Type,
                 TypeAfter = newU?.Type,
                 EnabledBefore = oldU?.Enabled,
@@ -1120,6 +1128,8 @@ namespace D2TxtImporter.lib.Diff
             if (a == null && b != null) return true;
             if (a != null && b == null) return true;
             if (a == null && b == null) return false;
+            // Consider base (code) change as a modification
+            if (!string.Equals(a.Code ?? string.Empty, b.Code ?? string.Empty, StringComparison.OrdinalIgnoreCase)) return true;
             if (a.Enabled != b.Enabled) return true;
             if (a.ItemLevel != b.ItemLevel) return true;
             if (a.RequiredLevel != b.RequiredLevel) return true;
@@ -1145,6 +1155,8 @@ namespace D2TxtImporter.lib.Diff
     {
         public string Name { get; set; }
         public string BaseCode { get; set; }
+        public string BaseCodeBefore { get; set; }
+        public string BaseCodeAfter { get; set; }
         // Item type from JSON export
         public string TypeBefore { get; set; }
         public string TypeAfter { get; set; }
@@ -1171,6 +1183,8 @@ namespace D2TxtImporter.lib.Diff
             {
                 Name = (newI ?? oldI)?.Index,
                 BaseCode = (newI ?? oldI)?.Code,
+                BaseCodeBefore = oldI?.Code,
+                BaseCodeAfter = newI?.Code,
                 TypeBefore = oldI?.Type,
                 TypeAfter = newI?.Type,
                 EnabledBefore = oldI?.Enabled,

@@ -217,7 +217,7 @@ namespace D2TxtImporter.lib.Diff
                     foreach (var u in g.OrderBy(x => x.Name))
                     {
                         var baseName = (!string.IsNullOrWhiteSpace(u.BaseCode) && diff.BaseCodeToName.TryGetValue(u.BaseCode, out var nm)) ? nm : u.BaseCode;
-                        sb.AppendLine($"- {u.Name} [{baseName}]");
+                        sb.AppendLine($"- {u.Name} ({baseName})");
                         var baseParts = new System.Collections.Generic.List<string>();
                         AppendFieldCurrent(baseParts, "Enabled", u.EnabledAfter);
                         AppendFieldCurrent(baseParts, "Item Level", u.ItemLevelAfter);
@@ -279,7 +279,20 @@ namespace D2TxtImporter.lib.Diff
                     foreach (var u in g.OrderBy(x => x.Name))
                     {
                         var baseName = (!string.IsNullOrWhiteSpace(u.BaseCode) && diff.BaseCodeToName.TryGetValue(u.BaseCode, out var nm)) ? nm : u.BaseCode;
-                        sb.AppendLine($"- {u.Name} [{baseName}]");
+                        sb.AppendLine($"- {u.Name} ({baseName})");
+                        // Show base item change when the underlying base code changes (e.g., swb -> 6sw)
+                        var beforeCode = u.BaseCodeBefore;
+                        var afterCode = u.BaseCodeAfter;
+                        var beforeName = (!string.IsNullOrWhiteSpace(beforeCode) && diff.BaseCodeToName.TryGetValue(beforeCode, out var bnm)) ? bnm : beforeCode;
+                        var afterName = (!string.IsNullOrWhiteSpace(afterCode) && diff.BaseCodeToName.TryGetValue(afterCode, out var anm)) ? anm : afterCode;
+                        if (!string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var bDisp = !string.IsNullOrWhiteSpace(beforeName) ? beforeName : "?";
+                            var aDisp = !string.IsNullOrWhiteSpace(afterName) ? afterName : "?";
+                            var bCodeDisp = !string.IsNullOrWhiteSpace(beforeCode) ? beforeCode : "?";
+                            var aCodeDisp = !string.IsNullOrWhiteSpace(afterCode) ? afterCode : "?";
+                            sb.AppendLine($"  - Base Item: {aDisp} [{aCodeDisp}] (was {bDisp} [{bCodeDisp}])");
+                        }
                         var baseParts = new System.Collections.Generic.List<string>();
                         AppendFieldChange(baseParts, "Enabled", u.EnabledBefore, u.EnabledAfter);
                         AppendFieldChange(baseParts, "Item Level", u.ItemLevelBefore, u.ItemLevelAfter);
@@ -363,7 +376,7 @@ namespace D2TxtImporter.lib.Diff
                         foreach (var i in s.ItemsAdded.OrderBy(x => x.Name))
                         {
                             var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                            sb.AppendLine($"  - {i.Name} [{baseName}]");
+                            sb.AppendLine($"  - {i.Name} ({baseName})");
                             var partsI = new System.Collections.Generic.List<string>();
                             AppendFieldCurrent(partsI, "Enabled", i.EnabledAfter);
                             AppendFieldCurrent(partsI, "Item Level", i.ItemLevelAfter);
@@ -491,7 +504,7 @@ namespace D2TxtImporter.lib.Diff
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
                                     var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} [{baseName}]");
+                                    sb.AppendLine($"  - {i.Name} ({baseName})");
                                     var partsI = new System.Collections.Generic.List<string>();
                                     AppendFieldCurrent(partsI, "Enabled", i.EnabledAfter);
                                     AppendFieldCurrent(partsI, "Item Level", i.ItemLevelAfter);
@@ -526,7 +539,7 @@ namespace D2TxtImporter.lib.Diff
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
                                     var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} [{baseName}]");
+                                    sb.AppendLine($"  - {i.Name} ({baseName})");
                                     var partsI = new System.Collections.Generic.List<string>();
                                     AppendFieldCurrent(partsI, "Enabled", i.EnabledBefore);
                                     AppendFieldCurrent(partsI, "Item Level", i.ItemLevelBefore);
@@ -561,7 +574,20 @@ namespace D2TxtImporter.lib.Diff
                                 foreach (var i in g.OrderBy(x => x.Name))
                                 {
                                     var baseName = (!string.IsNullOrWhiteSpace(i.BaseCode) && diff.BaseCodeToName.TryGetValue(i.BaseCode, out var nm)) ? nm : i.BaseCode;
-                                    sb.AppendLine($"  - {i.Name} [{baseName}]");
+                                    sb.AppendLine($"  - {i.Name} ({baseName})");
+                                    // Show base item change for set pieces when the underlying base code changes
+                                    var beforeCode = i.BaseCodeBefore;
+                                    var afterCode = i.BaseCodeAfter;
+                                    var beforeName = (!string.IsNullOrWhiteSpace(beforeCode) && diff.BaseCodeToName.TryGetValue(beforeCode, out var bnm)) ? bnm : beforeCode;
+                                    var afterName = (!string.IsNullOrWhiteSpace(afterCode) && diff.BaseCodeToName.TryGetValue(afterCode, out var anm)) ? anm : afterCode;
+                                    if (!string.Equals(beforeCode ?? string.Empty, afterCode ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        var bDisp = !string.IsNullOrWhiteSpace(beforeName) ? beforeName : "?";
+                                        var aDisp = !string.IsNullOrWhiteSpace(afterName) ? afterName : "?";
+                                        var bCodeDisp = !string.IsNullOrWhiteSpace(beforeCode) ? beforeCode : "?";
+                                        var aCodeDisp = !string.IsNullOrWhiteSpace(afterCode) ? afterCode : "?";
+                                        sb.AppendLine($"    - Base Item: {aDisp} [{aCodeDisp}] (was {bDisp} [{bCodeDisp}])");
+                                    }
                                     var parts = new System.Collections.Generic.List<string>();
                                     AppendFieldChange(parts, "Enabled", i.EnabledBefore, i.EnabledAfter);
                                     AppendFieldChange(parts, "Item Level", i.ItemLevelBefore, i.ItemLevelAfter);
