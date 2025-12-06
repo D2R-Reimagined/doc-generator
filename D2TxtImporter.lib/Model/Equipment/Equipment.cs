@@ -1,5 +1,6 @@
 ﻿using System;
 using D2TxtImporter.lib.Model.Dictionaries;
+using System.Linq;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Equipment
@@ -24,11 +25,16 @@ namespace D2TxtImporter.lib.Model.Equipment
         {
             get
             {
-                if (string.IsNullOrEmpty(Type.Equiv2) || Type.Equiv2.Equals("afwe",StringComparison.OrdinalIgnoreCase) || Type.Equiv2.Equals("merc",StringComparison.OrdinalIgnoreCase))
+                // Resolve Equiv2 to an ItemType and return only if it maps to a character class
+                var equiv2 = Type?.Equiv2;
+                if (string.IsNullOrEmpty(equiv2) || !ItemType.ItemTypes.ContainsKey(equiv2))
                 {
                     return "";
                 }
-                return ItemType.ItemTypes[Type.Equiv2].Name.Replace(" Item", "");
+
+                var resolved = ItemType.ItemTypes[equiv2].Name.Replace(" Item", "");
+                var classes = new[] { "Sorceress", "Barbarian", "Druid", "Assassin", "Necromancer", "Paladin", "Amazon" };
+                return classes.Contains(resolved) ? resolved : "";
             }
         }
 
