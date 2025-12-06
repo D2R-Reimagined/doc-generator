@@ -416,9 +416,7 @@ namespace D2TxtImporter.lib.Diff
                     sb.AppendLine("<details>");
                     sb.AppendLine($"<summary>{s.Name}</summary>");
                     sb.AppendLine();
-                    var baseParts = new System.Collections.Generic.List<string>();
-                    AppendFieldCurrent(baseParts, "Level", s.LevelAfter);
-                    if (baseParts.Count > 0) sb.AppendLine("- Base: " + string.Join(", ", baseParts));
+                    // Intentionally omit base-level line for added sets to reduce redundancy
                     if (s.PartialAdded.Any())
                     {
                         // H4 header to match item name treatment
@@ -439,7 +437,7 @@ namespace D2TxtImporter.lib.Diff
                     }
                     if (s.ItemsAdded.Any())
                     {
-                        sb.AppendLine("Items:");
+                        // Omit redundant "Items:" label; list items directly
                         foreach (var i in s.ItemsAdded.OrderBy(x => x.Name))
                         {
                             // Item header: H4 with spacing
