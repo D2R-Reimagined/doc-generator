@@ -104,7 +104,6 @@ namespace D2TxtImporter.lib.Model.Equipment
         }
 
         // Compute per-level socket limits string using ItemTypes thresholds and item gem socket cap
-        // Example output: "1-25:3, 26-40:4, 41+:6"
         public static string BuildSocketRangeString(ItemType type, int gemSockets)
         {
             if (gemSockets <= 0 || type == null)
@@ -173,11 +172,11 @@ namespace D2TxtImporter.lib.Model.Equipment
                 }
             }
 
-            // If after merge there is a single band from 1 to +, show "1+:X"
+            // If after merge there is a single band from 1 to +, show "(1+):X"
             string FormatBand((int Start, int? End, int Sockets) b)
-                => b.End.HasValue ? $"{b.Start}-{b.End}:{b.Sockets}" : $"{b.Start}+:{b.Sockets}";
-
-            return string.Join(", ", merged.ConvertAll(FormatBand));
+                => b.End.HasValue ? $"({b.Start}-{b.End}): {b.Sockets}" : $"({b.Start}+): {b.Sockets}";
+            
+            return string.Join(" - ", merged.ConvertAll(FormatBand));
         }
     }
 

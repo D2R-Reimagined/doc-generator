@@ -14,6 +14,7 @@ namespace D2TxtImporter.lib.Model.Items
     {
         public string Type { get; set; }
         public string Set { get; set; }
+        [JsonIgnore]
         public string Vanilla { get; set; }
         [JsonIgnore]
         public List<ItemProperty> SetProperties { get; set; }
