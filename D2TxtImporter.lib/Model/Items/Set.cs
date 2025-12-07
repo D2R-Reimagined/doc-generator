@@ -15,7 +15,6 @@ namespace D2TxtImporter.lib.Model.Items
         public List<ItemProperty> PartialProperties { get; set; }
         public List<ItemProperty> FullProperties { get; set; }
         public int Level { get; set; }
-        public string Vanilla { get; set; }
 
         public static List<Set> Import(string excelFolder)
         {
@@ -75,9 +74,6 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 set.SetItems = SetItem.SetItems.Where(x => x.Set == set.Index).ToList();
-                // Vanilla flag: default N; becomes Y if any child set item is Vanilla Y
-                var anyVanilla = set.SetItems != null && set.SetItems.Any(si => string.Equals(si.Vanilla, "Y", StringComparison.OrdinalIgnoreCase));
-                set.Vanilla = anyVanilla ? "Y" : "N";
                 
                 result.Add(set);
             }

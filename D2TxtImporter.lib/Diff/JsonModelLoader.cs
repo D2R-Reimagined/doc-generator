@@ -35,6 +35,7 @@ namespace D2TxtImporter.lib.Diff
             public int Rarity { get; set; }
             // Explicit item type exported by the generator
             public string Type { get; set; }
+            public string Vanilla { get; set; }
             public System.Collections.Generic.List<string> Properties { get; set; } = new System.Collections.Generic.List<string>();
             public System.Collections.Generic.List<string> SetPropertiesString { get; set; } = new System.Collections.Generic.List<string>();
         }
@@ -44,7 +45,6 @@ namespace D2TxtImporter.lib.Diff
             public string Index { get; set; }
             public string Name { get; set; }
             public int Level { get; set; }
-            public string Vanilla { get; set; }
             public System.Collections.Generic.List<string> PartialProperties { get; set; } = new System.Collections.Generic.List<string>();
             public System.Collections.Generic.List<string> FullProperties { get; set; } = new System.Collections.Generic.List<string>();
             public System.Collections.Generic.List<SetItemSimple> SetItems { get; set; } = new System.Collections.Generic.List<SetItemSimple>();
@@ -241,7 +241,6 @@ namespace D2TxtImporter.lib.Diff
                     Index = t.Value<string>("Index"),
                     Name = t.Value<string>("Name"),
                     Level = t.Value<int?>("Level") ?? 0,
-                    Vanilla = t.Value<string>("Vanilla"),
                     PartialProperties = ExtractPropertyStrings(t["PartialProperties"]) ?? new List<string>(),
                     FullProperties = ExtractPropertyStrings(t["FullProperties"]) ?? new List<string>(),
                     SetItems = new List<SetItemSimple>()
@@ -261,6 +260,7 @@ namespace D2TxtImporter.lib.Diff
                             RequiredLevel = it.Value<int?>("RequiredLevel") ?? 0,
                             Rarity = it.Value<int?>("Rarity") ?? 0,
                             Type = it.Value<string>("Type") ?? it.Value<string>("type"),
+                            Vanilla = it.Value<string>("Vanilla"),
                             Properties = ExtractPropertyStrings(it["Properties"]) ?? new List<string>(),
                             SetPropertiesString = ExtractStringList(it["SetPropertiesString"]) ?? new List<string>()
                         };
