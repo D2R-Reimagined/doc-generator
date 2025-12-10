@@ -21,45 +21,25 @@ namespace D2TxtImporter.lib.Model.Items
             var result = new List<Runeword>();
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Runes.txt");
 
-            // Load canonical rune name strings from project-root relative path: root\D2TxtImporter.lib\bin\D2R Casc\runes.txt
+            // Load canonical rune name strings strictly from the required constants path
             var canonicalRuneNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            try
-            {
-                string canonicalPath = null;
-                var roots = new[] { AppDomain.CurrentDomain.BaseDirectory, Directory.GetCurrentDirectory() };
-                foreach (var r in roots)
-                {
-                    var dir = new DirectoryInfo(r);
-                    for (int i = 0; i < 10 && dir != null; i++)
-                    {
-                        var candidate = Path.Combine(dir.FullName, "D2TxtImporter.lib", "bin", "D2R Casc", "runes.txt");
-                        if (File.Exists(candidate)) { canonicalPath = candidate; break; }
-                        dir = dir.Parent;
-                    }
-                    if (canonicalPath != null) break;
-                }
+            var canonicalPath = ResolveConstantsFilePath("runes.txt");
+            if (!File.Exists(canonicalPath))
+                throw new FileNotFoundException($"Expected dependency file no located: \"{canonicalPath}\"");
 
-                if (!string.IsNullOrEmpty(canonicalPath) && File.Exists(canonicalPath))
-                {
-                    var cascRows = Importer.ReadTxtFileToDictionaryList(canonicalPath);
-                    foreach (var crow in cascRows)
-                    {
-                        string val = null;
-                        if (crow.ContainsKey("*Rune Names")) val = crow["*Rune Names"];
-                        else if (crow.ContainsKey("*Rune Name")) val = crow["*Rune Name"];
-                        else if (crow.ContainsKey("*RunesUsed")) val = crow["*RunesUsed"];
-
-                        var isComplete = crow.ContainsKey("complete") && string.Equals(crow["complete"], "1", StringComparison.OrdinalIgnoreCase);
-                        if (!string.IsNullOrWhiteSpace(val) && isComplete)
-                        {
-                            canonicalRuneNames.Add(val.Trim());
-                        }
-                    }
-                }
-            }
-            catch (Exception)
+            var cascRows = Importer.ReadTxtFileToDictionaryList(canonicalPath);
+            foreach (var crow in cascRows)
             {
-                // Swallow; treat as empty set if any issue reading canonical file
+                string val = null;
+                if (crow.ContainsKey("*Rune Names")) val = crow["*Rune Names"];
+                else if (crow.ContainsKey("*Rune Name")) val = crow["*Rune Name"];
+                else if (crow.ContainsKey("*RunesUsed")) val = crow["*RunesUsed"];
+
+                var isComplete = crow.ContainsKey("complete") && string.Equals(crow["complete"], "1", StringComparison.OrdinalIgnoreCase);
+                if (!string.IsNullOrWhiteSpace(val) && isComplete)
+                {
+                    canonicalRuneNames.Add(val.Trim());
+                }
             }
 
             foreach (var row in table) 
@@ -262,6 +242,43 @@ namespace D2TxtImporter.lib.Model.Items
             }
 
             return result.OrderBy(x => x.RequiredLevel).ToList();
+        }
+
+        private static string ResolveConstantsFilePath(string fileName)
+        {
+            // Probe likely bases and walk up to find project root, then utilities\constants
+            var bases = new List<string>();
+            try { bases.Add(AppDomain.CurrentDomain.BaseDirectory); } catch { }
+            try { bases.Add(Directory.GetCurrentDirectory()); } catch { }
+            try { bases.Add(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)); } catch { }
+
+            foreach (var b in bases.Where(s => !string.IsNullOrEmpty(s)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                var dir = new DirectoryInfo(b);
+                for (int i = 0; i < 10 && dir != null; i++, dir = dir.Parent)
+                {
+                    // Prefer detecting by solution file at project root
+                    var sln = Path.Combine(dir.FullName, "D2TxtImporter.sln");
+                    if (File.Exists(sln))
+                    {
+                        var expect = Path.Combine(dir.FullName, "utilities", "constants", fileName);
+                        if (File.Exists(expect)) return expect;
+                        return expect; // return expected path even if missing (for error message)
+                    }
+
+                    // Or directly if utilities\constants exists
+                    var constantsDir = Path.Combine(dir.FullName, "utilities", "constants");
+                    if (Directory.Exists(constantsDir))
+                    {
+                        var expect = Path.Combine(constantsDir, fileName);
+                        if (File.Exists(expect)) return expect;
+                        return expect;
+                    }
+                }
+            }
+
+            // Last resort for message consistency
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? string.Empty, "utilities", "constants", fileName);
         }
     }
 }

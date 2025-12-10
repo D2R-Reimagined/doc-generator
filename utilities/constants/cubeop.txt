@@ -1,0 +1,30 @@
+Op ID	Parameters	cubeOpStr	Description
+(empty)			Do nothing
+1	param,value	Current Month Day < (don't use)	Require that the current day of the month is less than param or greater than value
+2	value	Day !=	Require that the current day of the week does not equal value, (0=None, 1=Sunday, 2=Monday, 3=Tuesday, 4=Wednesday, 5=Thursday, 6=Friday, 7=Saturday)
+3	param,value	Player Total Stat =>	Require that the player's current stat param is greater than or equal to value
+4	param, value	Player Total Stat =<	Require that the player's current stat param is less than or equal to value
+5	param, value	Player Total Stat !=	Require that the player's current stat param is not equal to value
+6	param, value	Player Total Stat ==	Require that the player's current stat param is equal to value
+7	param, value	Player Base Stat =>	Require that the player's base stat param is greater than or equal to value
+8	param, value	Player Base Stat =<	Require that the player's base stat param is less than or equal to value
+9	param, value	Player Base Stat !=	Require that the player's base stat param is not equal to value
+10	param, value	Player Base Stat ==	Require that the player's base stat param is equal to value
+11	param, value	Player Bonus Stat =>	Require that the player's non-base stat param is greater than or equal to value
+12	param, value	Player Bonus Stat =<	Require that the player's non-base stat param is less than or equal to value
+13	param, value	Player Bonus Stat !=	Require that the player's non-base stat param is not equal to value
+14	param, value	Player Bonus Stat ==	Require that the player's non-base stat param is equal to value
+15	param, value	Item Total Stat =>	Require that the input item's current stat param is greater than or equal to value
+16	param, value	Item Total Stat =<	Require that the input item's current stat param is less than or equal to value
+17	param, value	Item Total Stat !=	Require that the input item's current stat param is not equal to value
+18	param, value	Item Total Stat ==	Require that the input item's current stat param is equal to value
+19	param, value	Item Base Stat =>	Require that the input item's base stat param is greater than or equal to value
+20	param, value	Item Base Stat =<	Require that the input item's base stat param is less than or equal to value
+21	param, value	Item Base Stat !=	Require that the input item's base stat param is not equal to value
+22	param, value	Item Base Stat ==	Require that the input item's base stat param is equal to value
+23	param, value	Item Bonus Stat =>	Require that the input item's non-base stat param is greater than or equal to value
+24	param, value	Item Bonus Stat =<	Require that the input item's non-base stat param is less than or equal to value
+25	param, value	Item Bonus Stat !=	Require that the input item's non-base stat param is not equal to value
+26	param, value	Item Bonus Stat ==	Require that the input item's non-base stat param is equal to value
+27	value	ID/Quality	Require that the item's Mod Class is not equal to value. An item's Mod Class value can be the item's unique ID or quality type, depending on the case.
+28		Quest Flag	Checks that the item has the Quest and QuestDiffCheck flag, then ensures that the item's quest difficulty is greater than the game's difficulty level

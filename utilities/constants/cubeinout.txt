@@ -1,0 +1,52 @@
+Code	Description
+Inputs	The Following are input modifiers
+qty=#	The number (#) of this item type required for the recipe
+low	Low Quality
+nor	Normal Quality
+hiq	High Quality (Superior)
+mag	Magic Item
+set	Set Item
+rar	Rare Item
+uni	Unique Item
+crf	Crafted Item
+tmp	Tempered Item
+nos	Item with no sockets
+sock=#	Item with sockets, where # defines the number of sockets
+noe	Item that is not Ethereal
+eth	Item that is Ethereal
+upg	Item that allows Upgrades
+bas	Basic Item
+exc	Exceptional Item
+eli	Elite Item
+nru	Item is not a Rune Word
+Outputs	The following are output modifiers
+Cow Portal	Special code to create the Portal to the Moo Moo Farm
+Pandemonium Portal	Random 1 of 3 mini-uber portals
+Pandemonium Finale Portal	Special code to create the Portal to Uber Tristram
+Red Portal	"Special code to create a permanent Red Portal to a Level ID.
+The Level ID is determined by the output ""qty=#"" code."	
+usetype	Use the same item type as input 1 for the output item's type
+useitem	Use the item from "input 1" as the output item
+qty=#	The number (#) of this item type created
+pre=#	Force the output item to have an item prefix, where # equals the ID of the prefix (the row count on MagicPrefix.txt)
+suf=#	Force the output item to have an item suffix, where # equals the ID of the suffix (the row count on MagicSuffix.txt)
+low	Low Quality Item
+nor	Normal Item
+hiq	High Quality Item (Superior)
+mag	Magic Item
+set	Set Item
+rar	Rare Item
+uni	Unique Item
+crf	Crafted Item
+tmp	Tempered Item
+eth	Ethereal Item
+sock	Item with sockets, where # defines the number of sockets
+mod	Use the item modifiers from "input 1" as the output item's modifiers
+uns	Destroy all Gems/runes/jewels in the item's sockets
+rem	Remove all Gems/runes/jewels in the item's sockets
+reg	If the function has "usetype" and if the item is a Unique, then regenerate/reroll the Unique
+exc	Exceptional Item
+eli	Elite Item
+rep	Repair the Item
+rch	Recharge all of the skill charges on the Item
+lvl=#	The number (#) of this item type created (same as "qty=#")

@@ -5,11 +5,7 @@ using System.Linq;
 
 namespace D2TxtImporter.lib.Model.Items
 {
-    /// <summary>
-    /// Loads qualifier token maps and friendly names for Cube recipes.
-    /// Uses a hardcoded, canonical token set. Optionally enriches friendly
-    /// names from a nearby TSV if present. Keeps a single cached instance.
-    /// </summary>
+    // Loads qualifier token maps and friendly names for Cube recipes.
     internal static class CubeQualifiers
     {
         internal sealed class Maps
@@ -18,7 +14,6 @@ namespace D2TxtImporter.lib.Model.Items
             public ISet<string> OutputTokens { get; set; }
             public Dictionary<string, string> InputDisplay { get; set; }
             public Dictionary<string, string> OutputDisplay { get; set; }
-            // Merged friendly names to avoid double lookups during parse
             public Dictionary<string, string> CombinedDisplay { get; set; }
         }
 
@@ -43,24 +38,17 @@ namespace D2TxtImporter.lib.Model.Items
                 "qty=#",
                 "low","nor","hiq",
                 "mag","set","rar","uni","crf","tmp",
-                // sockets: allow both presence (sock) and exact count (sock=#) for inputs
                 "nos","sock","sock=#","noe","eth","upg",
                 "bas","exc","eli","nru"
             };
 
             var outputTokens = new[]
             {
-                // Special meta outputs (kept as tokens for completeness)
                 "Cow Portal","Pandemonium Portal","Pandemonium Finale Portal","Red Portal",
-                // Behavioral keywords
                 "usetype","useitem",
-                // Generic controls
                 "qty=#","pre=#","suf=#","lvl=#",
-                // Quality/state
                 "low","nor","hiq","mag","set","rar","uni","crf","tmp","eth",
-                // Socket ops / transforms
                 "sock","sock=#","mod","uns","rem","reg",
-                // Tier transforms & repair/recharge
                 "exc","eli","rep","rch"
             };
 
@@ -133,41 +121,34 @@ namespace D2TxtImporter.lib.Model.Items
             Seed(maps.OutputDisplay, "rch", "Recharge Charges");
             Seed(maps.OutputDisplay, "lvl=#", "Set Level (#)");
 
-            // Enrich friendly strings from a nearby TSV if present (optional)
-            try
+            // Enrich friendly strings from required TSV. If missing, throw.
+            var path = TryLocateReferenceFile();
+            var lines = File.ReadAllLines(path);
+            bool inOutput = false;
+            for (int i = 0; i < lines.Length; i++)
             {
-                var path = TryLocateReferenceFile();
-                if (!string.IsNullOrEmpty(path) && File.Exists(path))
+                if (i < 2) continue; // skip headers
+                var parts = lines[i].Split('\t');
+                if (parts.Length == 0) continue;
+                var key = (parts[0] ?? string.Empty).Trim();
+                if (string.IsNullOrEmpty(key)) continue;
+
+                if (key.Equals("Outputs", StringComparison.OrdinalIgnoreCase)) { inOutput = true; continue; }
+                if (key.Equals("Inputs", StringComparison.OrdinalIgnoreCase)) { inOutput = false; continue; }
+
+                var friendly = parts.Length > 1 ? (parts[1] ?? string.Empty).Trim() : string.Empty;
+                if (!string.IsNullOrEmpty(friendly) && friendly != "--")
                 {
-                    var lines = File.ReadAllLines(path);
-                    bool inOutput = false;
-                    for (int i = 0; i < lines.Length; i++)
+                    if (!inOutput)
                     {
-                        if (i < 2) continue; // skip headers
-                        var parts = lines[i].Split('\t');
-                        if (parts.Length == 0) continue;
-                        var key = (parts[0] ?? string.Empty).Trim();
-                        if (string.IsNullOrEmpty(key)) continue;
-
-                        if (key.Equals("Outputs", StringComparison.OrdinalIgnoreCase)) { inOutput = true; continue; }
-                        if (key.Equals("Inputs", StringComparison.OrdinalIgnoreCase)) { inOutput = false; continue; }
-
-                        var friendly = parts.Length > 1 ? (parts[1] ?? string.Empty).Trim() : string.Empty;
-                        if (!string.IsNullOrEmpty(friendly) && friendly != "--")
-                        {
-                            if (!inOutput)
-                            {
-                                if (maps.InputTokens.Contains(key)) maps.InputDisplay[key] = friendly;
-                            }
-                            else
-                            {
-                                if (maps.OutputTokens.Contains(key)) maps.OutputDisplay[key] = friendly;
-                            }
-                        }
+                        if (maps.InputTokens.Contains(key)) maps.InputDisplay[key] = friendly;
+                    }
+                    else
+                    {
+                        if (maps.OutputTokens.Contains(key)) maps.OutputDisplay[key] = friendly;
                     }
                 }
             }
-            catch { /* ignore enrichment failures */ }
 
             // Build merged display once to avoid repeated dual lookups elsewhere
             foreach (var kv in maps.InputDisplay)
@@ -186,34 +167,47 @@ namespace D2TxtImporter.lib.Model.Items
 
         private static string TryLocateReferenceFile()
         {
-            try
+            // Expect: <projectRoot>\utilities\constants\cubeinout.txt
+            var path = ResolveConstantsFilePath("cubeinout.txt");
+            if (File.Exists(path)) return path;
+            throw new FileNotFoundException($"Expected dependency file no located: \"{path}\"");
+        }
+
+        private static string ResolveConstantsFilePath(string fileName)
+        {
+            // Probe from a few likely bases up the directory tree to find project root
+            var bases = new List<string>();
+            try { bases.Add(AppDomain.CurrentDomain.BaseDirectory); } catch { }
+            try { bases.Add(Directory.GetCurrentDirectory()); } catch { }
+            try { bases.Add(Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)); } catch { }
+
+            foreach (var b in bases.Where(s => !string.IsNullOrEmpty(s)).Distinct(StringComparer.OrdinalIgnoreCase))
             {
-                var candidates = new List<string>();
-
-                // Executing assembly directory (DLL copied next to EXE)
-                var asmDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
-                if (!string.IsNullOrEmpty(asmDir))
+                var dir = new DirectoryInfo(b);
+                for (int i = 0; i < 10 && dir != null; i++, dir = dir.Parent)
                 {
-                    candidates.Add(Path.Combine(asmDir, "Cube Related", "cubeinout.txt"));
+                    // Preferred: detect project root by solution file
+                    var sln = Path.Combine(dir.FullName, "D2TxtImporter.sln");
+                    if (File.Exists(sln))
+                    {
+                        var expect = Path.Combine(dir.FullName, "utilities", "constants", fileName);
+                        if (File.Exists(expect)) return expect;
+                        return expect; // Give the expected path in error even if missing
+                    }
+
+                    // Otherwise, if utilities\constants folder exists, use it
+                    var constantsDir = Path.Combine(dir.FullName, "utilities", "constants");
+                    if (Directory.Exists(constantsDir))
+                    {
+                        var expect = Path.Combine(constantsDir, fileName);
+                        if (File.Exists(expect)) return expect;
+                        return expect; // Return expected path for error message
+                    }
                 }
-
-                // App base directory (WPF/console)
-                candidates.Add(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Cube Related", "cubeinout.txt"));
-
-                // Probe repository layout from client/bin/Debug back to root
-                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                var up1 = Directory.GetParent(baseDir)?.FullName;            // .../D2TxtImporter.client/bin
-                var up2 = Directory.GetParent(up1 ?? baseDir)?.FullName;     // .../D2TxtImporter.client
-                var up3 = Directory.GetParent(up2 ?? up1 ?? baseDir)?.FullName; // .../doc-generator (repo root)
-                if (!string.IsNullOrEmpty(up3))
-                {
-                    candidates.Add(Path.Combine(up3, "D2TxtImporter.lib", "bin", "Cube Related", "cubeinout.txt"));
-                    candidates.Add(Path.Combine(up3, "D2TxtImporter.lib", "bin", "Debug", "Cube Related", "cubeinout.txt"));
-                }
-
-                return candidates.FirstOrDefault(File.Exists);
             }
-            catch { return null; }
+
+            // Last resort: assume under current base directory
+            return Path.Combine(AppDomain.CurrentDomain.BaseDirectory ?? string.Empty, "utilities", "constants", fileName);
         }
 
         private static string ToFriendly(string token)
