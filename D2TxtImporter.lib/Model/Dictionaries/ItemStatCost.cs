@@ -525,6 +525,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             var par = Utility.ToNullableInt(parameter);
                             if (!par.HasValue)
                             {
+                                // Support class name string like in case 13 or error as usual
+                                if (CharStat.CharStats.ContainsKey(parameter))
+                                {
+                                    // Set lstValue to parsed class name and a fixed valueString
+                                    lstValue = CharStat.CharStats[parameter].Class;
+                                    valueString = $"+{value} Random Skill Tab ({lstValue} Only)";
+                                    break;
+                                }
                                 throw ItemStatCostException.Create(
                                     $"Could not convert parameter '{parameter}' to a valid integer");
                             }

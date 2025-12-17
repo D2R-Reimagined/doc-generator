@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
+using DocumentFormat.OpenXml.Spreadsheet;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Types
@@ -96,6 +97,29 @@ namespace D2TxtImporter.lib.Model.Types
                 }
 
                 Parameter = Property.Code;
+            }
+
+            // Fix random skill tabs all showing as Amazon
+            if (propStat == "item_addskill_tab")
+            {
+                if (propCode == "tab-rand")
+                {
+                    // 0–2 Amazon, 8–10 Sorceress, 16–18 Necro, 24–26 Paladin,
+                    // 32–34 Barbarian, 40–42 Druid, 48–50 Assassin
+                    var parValue = int.TryParse(Parameter, out var parsed) ? parsed : 0;
+
+                    // Convert the absolute index into a 0-based tab index
+                    var tabIndex = (Min.GetValueOrDefault() / 8); // 0..6
+
+                    // Lookup by class order
+                    var tabs = new[] { "ama", "sor", "nec", "pal", "bar", "dru", "ass" };
+
+                    if ((uint)tabIndex < (uint)tabs.Length)
+                    {
+                        Parameter = tabs[tabIndex];
+                        Min = Max = parValue;
+                    }
+                }
             }
             
             // Check hash list for manually set stats
