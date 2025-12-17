@@ -68,7 +68,7 @@
                         <CheckBox Margin="0,0,0,0" IsChecked="{Binding ExportJson}" ToolTip="Master switch for JSON files (uniques, sets, runewords, weapons, armors, magic affixes).">Export JSONs</CheckBox>
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding PrettyPrintJson}" IsEnabled="{Binding ExportJson}" ToolTip="Indents all JSON exports, including Cube Recipes V2.">VSC Indents</CheckBox>
                         <CheckBox Margin="16,2,0,0" IsChecked="{Binding DuplicateKeyReportEnabled}" IsEnabled="{Binding ExportJson}" ToolTip="Writes 'jason key duplicates.txt' under json/. Scans translation keys in tbl/json (independent of which JSON files you export).">Report Key Dupes (TSV)</CheckBox>
-                        <CheckBox Margin="16,2,0,0" IsChecked="{Binding ExportSetsByBase}" IsEnabled="{Binding ExportJson}" ToolTip="Writes sets_by_base.json grouping set items under each base armor/weapon.">Sets grouped by base (sets_by_base.json)</CheckBox>
+                        <CheckBox Margin="16,2,0,0" IsChecked="{Binding ExportSetsByBase}" IsEnabled="{Binding ExportJson}" ToolTip="Writes sets_by_base.json grouping set items under each base armor/weapon.">Sets grouped by base (sets__by__base.json)</CheckBox>
 
                         <CheckBox Margin="0,10,0,0" IsChecked="{Binding CubeRecipesV2ExportEnabled}" ToolTip="Enable export of cube_recipes_v2.json">Cube Recipes V2</CheckBox>
                         <CheckBox Margin="16,2,0,0"

@@ -141,11 +141,15 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     if (!inOutput)
                     {
-                        if (maps.InputTokens.Contains(key)) maps.InputDisplay[key] = friendly;
+                        // Only fill from external file when not already seeded
+                        if (maps.InputTokens.Contains(key) && !maps.InputDisplay.ContainsKey(key))
+                            maps.InputDisplay[key] = friendly;
                     }
                     else
                     {
-                        if (maps.OutputTokens.Contains(key)) maps.OutputDisplay[key] = friendly;
+                        // Only fill from external file when not already seeded
+                        if (maps.OutputTokens.Contains(key) && !maps.OutputDisplay.ContainsKey(key))
+                            maps.OutputDisplay[key] = friendly;
                     }
                 }
             }
