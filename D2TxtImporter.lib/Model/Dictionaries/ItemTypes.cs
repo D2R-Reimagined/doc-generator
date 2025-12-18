@@ -73,16 +73,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         
         private static readonly Dictionary<string, string> Normalizations = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
         {
-            //Name normalization for website display/filtering
             { "medium charm", "Large Charm" },
             { "armor", "Body Armor" },
             { "large charm", "Grand Charm" },
             { "merc equip", "Helm" },
-            { "hand to hand 2", "Hand to Hand" },
-            { "barbarian item", "Primal Helm" },
-            { "druid item", "Pelt" },
-            { "necromancer item", "Voodoo Heads" },
-            { "paladin item", "Auric Shields" }
+            { "hand to hand 2", "Hand to Hand" }
         };
 
         public override string ToString()
