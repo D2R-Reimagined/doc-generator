@@ -228,7 +228,12 @@ namespace D2TxtImporter.lib.Exporters
 
         private static void Runewords(string destination, List<Runeword> runewords, bool prettyPrint)
         {
-            var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
+            // Use a runeword-only converter to optionally rewrite ItemType Name/Index values
+            var settings = new JsonSerializerSettings
+            {
+                StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
+                Converters = { new ItemTypeRewriteConverter(MapItemTypeForRunewords) }
+            };
             var json = SerializeWithIndent(runewords, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
         }
@@ -409,6 +414,72 @@ namespace D2TxtImporter.lib.Exporters
             var settings = new JsonSerializerSettings { StringEscapeHandling = StringEscapeHandling.EscapeNonAscii };
             var json = SerializeWithIndent(summaries, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);
+        }
+
+        // --- Helper & Converter for Runewords ItemType export tweaks ---
+
+        // Mapping requested by the user: when an ItemType corresponds to one of these
+        // class-item categories, export both Index and Name as the replacement value.
+        private static readonly System.Collections.Generic.Dictionary<string, string> RunewordTypeOverrides
+            = new System.Collections.Generic.Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase)
+            {
+                { "Barbarian Item",   "Primal Helm" },
+                { "Druid Item",       "Pelt" },
+                { "Necromancer Item", "Voodoo Heads" },
+                { "Paladin Item",     "Auric Shields" }
+            };
+
+        // Helper that applies the override mapping. Returns the (Index, Name) pair to serialize.
+        // We match on either the current Name or Index to be robust vs. TBL/localization.
+        private static (string Index, string Name) MapItemTypeForRunewords(Model.Dictionaries.ItemType t)
+        {
+            if (t == null) return (null, null);
+
+            // Prefer matching by the display Name; fallback to Index.
+            if (!string.IsNullOrWhiteSpace(t.Name) && RunewordTypeOverrides.TryGetValue(t.Name, out var replByName))
+            {
+                return (replByName, replByName);
+            }
+
+            if (!string.IsNullOrWhiteSpace(t.Index) && RunewordTypeOverrides.TryGetValue(t.Index, out var replByIndex))
+            {
+                return (replByIndex, replByIndex);
+            }
+
+            // Default pass-through
+            return (t.Index, t.Name);
+        }
+
+        // Converter that is only used for Runewords export to keep other exports untouched.
+        private sealed class ItemTypeRewriteConverter : JsonConverter<Model.Dictionaries.ItemType>
+        {
+            private readonly System.Func<Model.Dictionaries.ItemType, (string Index, string Name)> _map;
+
+            public ItemTypeRewriteConverter(System.Func<Model.Dictionaries.ItemType, (string Index, string Name)> map)
+            {
+                _map = map;
+            }
+
+            public override void WriteJson(JsonWriter writer, Model.Dictionaries.ItemType value, JsonSerializer serializer)
+            {
+                var (idx, name) = _map != null ? _map(value) : (value?.Index, value?.Name);
+
+                writer.WriteStartObject();
+                writer.WritePropertyName("Name");
+                writer.WriteValue(name);
+                writer.WritePropertyName("Index");
+                writer.WriteValue(idx);
+                writer.WritePropertyName("Class");
+                writer.WriteValue(value?.Class);
+                writer.WriteEndObject();
+            }
+
+            public override Model.Dictionaries.ItemType ReadJson(JsonReader reader, System.Type objectType, Model.Dictionaries.ItemType existingValue, bool hasExistingValue, JsonSerializer serializer)
+            {
+                throw new System.NotSupportedException();
+            }
+
+            public override bool CanRead => false;
         }
 
         // Public helper to write the optional sets_by_base.json under item-jsons
