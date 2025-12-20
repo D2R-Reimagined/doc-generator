@@ -119,8 +119,8 @@ namespace D2TxtImporter.lib.Diff
             public string UberCode { get; set; }
             public string UltraCode { get; set; }
             public int? BaseRequiredLevel { get; set; }
-            public int RequiredStrength { get; set; }
-            public int RequiredDexterity { get; set; }
+            public string RequiredStrength { get; set; }
+            public string RequiredDexterity { get; set; }
             public int Durability { get; set; }
             public int ItemLevel { get; set; }
             public string GemSockets { get; set; }
@@ -150,8 +150,8 @@ namespace D2TxtImporter.lib.Diff
             public string UberCode { get; set; }
             public string UltraCode { get; set; }
             public int? BaseRequiredLevel { get; set; }
-            public int RequiredStrength { get; set; }
-            public int RequiredDexterity { get; set; }
+            public string RequiredStrength { get; set; }
+            public string RequiredDexterity { get; set; }
             public int Durability { get; set; }
             public int ItemLevel { get; set; }
             public string GemSockets { get; set; }
@@ -312,8 +312,8 @@ namespace D2TxtImporter.lib.Diff
                     UberCode = t.Value<string>("UberCode"),
                     UltraCode = t.Value<string>("UltraCode"),
                     BaseRequiredLevel = t.Value<int?>("BaseRequiredLevel"),
-                    RequiredStrength = t.Value<int?>("RequiredStrength") ?? 0,
-                    RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
+                    RequiredStrength = t.Value<string>("RequiredStrength") ?? "0",
+                    RequiredDexterity = t.Value<string>("RequiredDexterity") ?? "0",
                     Durability = t.Value<int?>("Durability") ?? 0,
                     ItemLevel = t.Value<int?>("ItemLevel") ?? 0,
                     GemSockets = t.Value<string>("GemSockets"),
@@ -372,8 +372,8 @@ namespace D2TxtImporter.lib.Diff
                     UberCode = t.Value<string>("UberCode"),
                     UltraCode = t.Value<string>("UltraCode"),
                     BaseRequiredLevel = t.Value<int?>("BaseRequiredLevel"),
-                    RequiredStrength = t.Value<int?>("RequiredStrength") ?? 0,
-                    RequiredDexterity = t.Value<int?>("RequiredDexterity") ?? 0,
+                    RequiredStrength = t.Value<string>("RequiredStrength") ?? "0",
+                    RequiredDexterity = t.Value<string>("RequiredDexterity") ?? "0",
                     Durability = t.Value<int?>("Durability") ?? 0,
                     ItemLevel = t.Value<int?>("ItemLevel") ?? 0,
                     GemSockets = t.Value<string>("GemSockets"),

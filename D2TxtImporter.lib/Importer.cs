@@ -13,6 +13,8 @@ namespace D2TxtImporter.lib
 {
     public class Importer
     {
+        public const int DISPLAY_LEVEL = 100;
+
         private string _outputPath;
         private string _excelPath;
         private string _tablePath;

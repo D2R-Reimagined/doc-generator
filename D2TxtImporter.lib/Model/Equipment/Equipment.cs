@@ -11,8 +11,8 @@ namespace D2TxtImporter.lib.Model.Equipment
         public string Name { get { return Table.GetValue(Code); } }
         public string Code { get; set; }
         public int? BaseRequiredLevel { get; set; }
-        public int RequiredStrength { get; set; }
-        public int RequiredDexterity { get; set; }
+        public string RequiredStrength { get; set; }
+        public string RequiredDexterity { get; set; }
         public int Durability { get; set; }
         public int ItemLevel { get; set; }
         public ItemType Type { get; set; }

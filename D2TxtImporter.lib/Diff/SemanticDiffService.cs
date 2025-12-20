@@ -683,10 +683,10 @@ namespace D2TxtImporter.lib.Diff
         // Shared fields
         public int? BaseReqLevelBefore { get; set; }
         public int? BaseReqLevelAfter { get; set; }
-        public int? ReqStrBefore { get; set; }
-        public int? ReqStrAfter { get; set; }
-        public int? ReqDexBefore { get; set; }
-        public int? ReqDexAfter { get; set; }
+        public string ReqStrBefore { get; set; }
+        public string ReqStrAfter { get; set; }
+        public string ReqDexBefore { get; set; }
+        public string ReqDexAfter { get; set; }
         public int? DurabilityBefore { get; set; }
         public int? DurabilityAfter { get; set; }
         public int? ItemLevelBefore { get; set; }

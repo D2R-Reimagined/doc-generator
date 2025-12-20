@@ -105,7 +105,7 @@ function GetUniqueItemDiv(el, itemType) {
   }
 
   // Required Strength
-  if (el.Equipment.RequiredStrength > 0) {
+  if (el.Equipment.RequiredStrength && el.Equipment.RequiredStrength != "0") {
     var $req = $("<span>");
     $req.addClass("requirement");
     $req.addClass("col-sm-12");
@@ -114,7 +114,7 @@ function GetUniqueItemDiv(el, itemType) {
   }
 
   // Required Dexterity
-  if (el.Equipment.RequiredDexterity > 0) {
+  if (el.Equipment.RequiredDexterity && el.Equipment.RequiredDexterity != "0") {
     var $req = $("<span>");
     $req.addClass("col-sm-12");
     $req.addClass("requirement");

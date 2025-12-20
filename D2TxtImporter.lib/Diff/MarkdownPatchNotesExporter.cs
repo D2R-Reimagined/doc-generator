@@ -156,8 +156,8 @@ namespace D2TxtImporter.lib.Diff
 
                     var baseParts = new System.Collections.Generic.List<string>();
                     AppendFieldChange(baseParts, "Base Required Level", b.BaseReqLevelBefore, b.BaseReqLevelAfter);
-                    AppendFieldChange(baseParts, "Required Strength", b.ReqStrBefore, b.ReqStrAfter);
-                    AppendFieldChange(baseParts, "Required Dexterity", b.ReqDexBefore, b.ReqDexAfter);
+                    AppendFieldChangeIfStringChanged(baseParts, "Required Strength", b.ReqStrBefore, b.ReqStrAfter);
+                    AppendFieldChangeIfStringChanged(baseParts, "Required Dexterity", b.ReqDexBefore, b.ReqDexAfter);
                     AppendFieldChange(baseParts, "Durability", b.DurabilityBefore, b.DurabilityAfter);
                     AppendFieldChangeIfStringChanged(baseParts, "Sockets", b.SocketsBefore, b.SocketsAfter);
                     if (string.Equals(b.Category, "Weapon", StringComparison.OrdinalIgnoreCase))

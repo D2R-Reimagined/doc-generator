@@ -66,13 +66,13 @@ namespace D2TxtImporter.lib.Exporters
                 }
 
                 sb.AppendLine("Required Level: " + unique.RequiredLevel);
-
-                if (unique.Equipment.RequiredStrength > 0)
+                
+                if (!string.IsNullOrEmpty(unique.Equipment.RequiredStrength) && unique.Equipment.RequiredStrength != "0")
                 {
                     sb.AppendLine("Required Strength: " + unique.Equipment.RequiredStrength);
                 }
 
-                if (unique.Equipment.RequiredDexterity > 0)
+                if (!string.IsNullOrEmpty(unique.Equipment.RequiredDexterity) && unique.Equipment.RequiredDexterity != "0")
                 {
                     sb.AppendLine("Required Dexterity: " + unique.Equipment.RequiredDexterity);
                 }

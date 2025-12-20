@@ -159,58 +159,172 @@ namespace D2TxtImporter.lib.Model.Items
                 throw new Exception($"Could not find equipment for item '{unique.Name}'");
             }
 
+            unique.AdjustRequirements();
+
+            // Handle Ethereal property bonus to base damage/armor before other calculations
+            var ethProp = unique.Properties.FirstOrDefault(x => x.Property.Code == "ethereal");
+            if (ethProp != null && (ethProp.Min ?? 0) >= 1)
+            {
+                if (unique.Equipment is Weapon weapon)
+                {
+                    foreach (var dt in weapon.DamageTypes)
+                    {
+                        dt.MinDamage = (int)(dt.MinDamage * 1.5f);
+                        dt.MaxDamage = (int)(dt.MaxDamage * 1.5f);
+                    }
+                }
+                else if (unique.Equipment is Armor armor)
+                {
+                    armor.MinAc = (int)(armor.MinAc * 1.5f);
+                    armor.MaxAc = (int)(armor.MaxAc * 1.5f);
+
+                    if (armor.MinDamage.HasValue) armor.MinDamage = (int)(armor.MinDamage.Value * 1.5f);
+                    if (armor.MaxDamage.HasValue) armor.MaxDamage = (int)(armor.MaxDamage.Value * 1.5f);
+                }
+            }
+
             if (unique.Equipment.EquipmentType == EquipmentType.Weapon)
             {
                 var weapon = unique.Equipment as Weapon;
 
+                int lowLevel = Math.Max(1, unique.RequiredLevel);
+                int highLevel = 100;
+
+                // Aggregate modifiers in three phases to ensure correct order of operations and consolidation.
+                // Phase 1: Enhanced Damage
+                float edLowMin = 0, edHighMin = 0;
+                float edLowMax = 0, edHighMax = 0;
+
+                // Phase 2: Normal Flat Damage
+                int flatLowMin = 0, flatHighMin = 0;
+                int flatLowMax = 0, flatHighMax = 0;
+
+                // Phase 3: Per-Level Flat Damage
+                int plLowMin = 0, plHighMin = 0;
+                int plLowMax = 0, plHighMax = 0;
+
+                foreach (var property in unique.Properties)
+                {
+                    switch (property.Property.Code)
+                    {
+                        case "dmg%":
+                            {
+                                float valMin = property.Min ?? 0;
+                                float valMax = property.Max ?? property.Min ?? 0;
+                                edLowMin += valMin; edHighMin += valMax;
+                                edLowMax += valMin; edHighMax += valMax;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg%/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                float valLow = (float)(growthMin / opMath * lowLevel);
+                                float valHigh = (float)(growthMax / opMath * highLevel);
+                                // User said: "maximum dmg% per character level"
+                                edLowMax += valLow; edHighMax += valHigh;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg-norm":
+                            {
+                                int valMin = property.Min ?? 0;
+                                int valMax = property.Max ?? 0;
+                                flatLowMin += valMin; flatHighMin += valMin;
+                                flatLowMax += valMax; flatHighMax += valMax;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg-min":
+                            {
+                                int valMin = property.Min ?? 0;
+                                int valMax = property.Max ?? property.Min ?? 0;
+                                flatLowMin += valMin;
+                                flatHighMin += valMax;
+
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg-max":
+                            {
+                                flatLowMax += property.Min ?? 0;
+                                flatHighMax += property.Max ?? property.Min ?? 0;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg/lvl":
+                        case "dmg-max/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                int valLow = (int)(growthMin / opMath * lowLevel);
+                                int valHigh = (int)(growthMax / opMath * highLevel);
+                                plLowMax += valLow; plHighMax += valHigh;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "dmg-min/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                int valLow = (int)(growthMin / opMath * lowLevel);
+                                int valHigh = (int)(growthMax / opMath * highLevel);
+                                plLowMin += valLow; plHighMin += valHigh;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "flat-dmg/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                int valLowMin = (int)(growthMin / opMath * lowLevel);
+                                int valHighMin = (int)(growthMin / opMath * highLevel);
+                                int valLowMax = (int)(growthMax / opMath * lowLevel);
+                                int valHighMax = (int)(growthMax / opMath * highLevel);
+                                plLowMin += valLowMin; plHighMin += valHighMin;
+                                plLowMax += valLowMax; plHighMax += valHighMax;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                    }
+                }
+
                 foreach (var damageType in weapon.DamageTypes)
                 {
-                    int minDam1 = damageType.MinDamage;
-                    int minDam2 = damageType.MinDamage;
-                    int maxDam1 = damageType.MaxDamage;
-                    int maxDam2 = damageType.MaxDamage;
+                    // 1. Apply ED and consolidate (round/int)
+                    int minDam1 = (int)(damageType.MinDamage * (100f + edLowMin) / 100f);
+                    int minDam2 = (int)(damageType.MinDamage * (100f + edHighMin) / 100f);
 
-                    foreach (var property in unique.Properties.OrderBy(x => x.Property.Code))
-                    {
-                        switch (property.Property.Code)
-                        {
-                            case "dmg%":
-                                minDam1 = (int)(property.Min / 100f * damageType.MinDamage + damageType.MinDamage);
-                                minDam2 = (int)(property.Max / 100f * damageType.MinDamage + damageType.MinDamage);
+                    int maxDam1 = (int)(damageType.MaxDamage * (100f + edLowMax) / 100f);
+                    int maxDam2 = (int)(damageType.MaxDamage * (100f + edHighMax) / 100f);
 
-                                maxDam1 = (int)(property.Min / 100f * damageType.MaxDamage + damageType.MaxDamage);
-                                maxDam2 = (int)(property.Max / 100f * damageType.MaxDamage + damageType.MaxDamage);
+                    // 2. Apply Flat Damage (Normal + Per-Level)
+                    minDam1 += flatLowMin + plLowMin;
+                    minDam2 += flatHighMin + plHighMin;
+                    maxDam1 += flatLowMax + plLowMax;
+                    maxDam2 += flatHighMax + plHighMax;
 
-                                unique.DamageArmorEnhanced = true;
-                                break;
-                            case "dmg-norm":
-                                minDam1 += property.Min.Value;
-                                minDam2 += property.Min.Value;
+                    maxDam1 = Math.Max(maxDam1, minDam1 + 1);
+                    maxDam2 = Math.Max(maxDam2, minDam2 + 1);
 
-                                maxDam1 += property.Max.Value;
-                                maxDam2 += property.Max.Value;
-                                unique.DamageArmorEnhanced = true;
-                                break;
-                            case "dmg-min":
-                                minDam1 += property.Min.Value;
-                                minDam2 += property.Max.Value;
-                                unique.DamageArmorEnhanced = true;
-                                break;
-                            case "dmg-max":
-                                maxDam1 += property.Min.Value;
-                                maxDam2 += property.Max.Value;
-                                unique.DamageArmorEnhanced = true;
-                                break;
-                        }
-                    }
+                    // Update numeric fields for JSON consistency
+                    damageType.MinDamage = minDam1;
+                    damageType.MaxDamage = maxDam1;
 
-                    if (minDam1 == minDam2)
+                    if (minDam1 == minDam2 && maxDam1 == maxDam2)
                     {
                         damageType.DamageString = $"{minDam1} to {maxDam1}";
                     }
                     else
                     {
-                        damageType.DamageString = $"({minDam1}-{minDam2}) to ({maxDam1}-{maxDam2})";
+                        string minStr = minDam1 == minDam2 ? minDam1.ToString() : $"({minDam1}-{minDam2})";
+                        string maxStr = maxDam1 == maxDam2 ? maxDam1.ToString() : $"({maxDam1}-{maxDam2})";
+                        damageType.DamageString = $"{minStr} to {maxStr}";
                     }
                 }
             }
@@ -219,33 +333,103 @@ namespace D2TxtImporter.lib.Model.Items
                 // Calculate armor
                 var armor = unique.Equipment as Armor;
 
-                int minAc = armor.MaxAc;
-                int maxAc = armor.MaxAc;
+                int lowLevel = Math.Max(1, unique.RequiredLevel);
+                int highLevel = 100;
 
-                foreach (var property in unique.Properties.OrderByDescending(x => x.Property.Code))
+                float edLowMin = 0, edHighMin = 0;
+                float edLowMax = 0, edHighMax = 0;
+                int flatLowMin = 0, flatHighMin = 0;
+                int flatLowMax = 0, flatHighMax = 0;
+                bool hasEd = false;
+
+                foreach (var property in unique.Properties)
                 {
                     switch (property.Property.Code)
                     {
                         case "ac%":
-                            minAc = (int)Math.Floor(((minAc + 1) * (100f + property.Min) / 100f).Value);
-                            maxAc = (int)Math.Floor(((maxAc + 1) * (100f + property.Max) / 100f).Value);
-                            unique.DamageArmorEnhanced = true;
+                            {
+                                float valMin = property.Min ?? 0;
+                                float valMax = property.Max ?? property.Min ?? 0;
+                                edLowMin += valMin; edHighMin += valMin;
+                                edLowMax += valMax; edHighMax += valMax;
+                                hasEd = true;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "ac%/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                float valLowMin = (float)(growthMin / opMath * lowLevel);
+                                float valHighMin = (float)(growthMin / opMath * highLevel);
+                                float valLowMax = (float)(growthMax / opMath * lowLevel);
+                                float valHighMax = (float)(growthMax / opMath * highLevel);
+
+                                edLowMin += valLowMin; edHighMin += valHighMin;
+                                edLowMax += valLowMax; edHighMax += valHighMax;
+                                hasEd = true;
+                                unique.DamageArmorEnhanced = true;
+                            }
                             break;
                         case "ac":
-                            minAc += property.Min.Value;
-                            maxAc += property.Max.Value;
-                            unique.DamageArmorEnhanced = true;
+                            {
+                                int valMin = property.Min ?? 0;
+                                int valMax = property.Max ?? property.Min ?? 0;
+                                flatLowMin += valMin; flatHighMin += valMin;
+                                flatLowMax += valMax; flatHighMax += valMax;
+                                unique.DamageArmorEnhanced = true;
+                            }
+                            break;
+                        case "ac/lvl":
+                            {
+                                var opMath = Math.Pow(2, property.ItemStatCost.OpParam ?? 0);
+                                float growthMin = property.Min ?? (float.TryParse(property.Parameter, out var p1) ? p1 : 0);
+                                float growthMax = property.Max ?? growthMin;
+                                int valLowMin = (int)(growthMin / opMath * lowLevel);
+                                int valHighMin = (int)(growthMin / opMath * highLevel);
+                                int valLowMax = (int)(growthMax / opMath * lowLevel);
+                                int valHighMax = (int)(growthMax / opMath * highLevel);
+
+                                flatLowMin += valLowMin; flatHighMin += valHighMin;
+                                flatLowMax += valLowMax; flatHighMax += valHighMax;
+                                unique.DamageArmorEnhanced = true;
+                            }
                             break;
                     }
                 }
 
-                if (minAc == maxAc)
+                int minAc1, minAc2, maxAc1, maxAc2;
+                if (hasEd)
                 {
-                    armor.ArmorString = $"{maxAc}";
+                    // In D2, if an item has ED%, the base AC is fixed at MaxAc + 1
+                    minAc1 = (int)Math.Floor((armor.MaxAc + 1) * (100f + edLowMin) / 100f) + flatLowMin;
+                    minAc2 = (int)Math.Floor((armor.MaxAc + 1) * (100f + edHighMin) / 100f) + flatHighMin;
+                    maxAc1 = (int)Math.Floor((armor.MaxAc + 1) * (100f + edLowMax) / 100f) + flatLowMax;
+                    maxAc2 = (int)Math.Floor((armor.MaxAc + 1) * (100f + edHighMax) / 100f) + flatHighMax;
                 }
                 else
                 {
-                    armor.ArmorString = $"{minAc}-{maxAc}";
+                    // No ED%, just add flat AC to the base range
+                    minAc1 = armor.MinAc + flatLowMin;
+                    minAc2 = armor.MinAc + flatHighMin;
+                    maxAc1 = armor.MaxAc + flatLowMax;
+                    maxAc2 = armor.MaxAc + flatHighMax;
+                }
+
+                armor.MinAc = minAc1;
+                armor.MaxAc = maxAc1;
+
+                string minStr = minAc1 == minAc2 ? minAc1.ToString() : $"({minAc1}-{minAc2})";
+                string maxStr = maxAc1 == maxAc2 ? maxAc1.ToString() : $"({maxAc1}-{maxAc2})";
+
+                if (minStr == maxStr)
+                {
+                    armor.ArmorString = minStr;
+                }
+                else
+                {
+                    armor.ArmorString = $"{minStr}-{maxStr}";
                 }
 
                 // Handle smite/kick damage using a shared helper
