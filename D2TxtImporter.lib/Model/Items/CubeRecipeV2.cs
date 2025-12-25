@@ -44,6 +44,7 @@ namespace D2TxtImporter.lib.Model.Items
             var qmaps = CubeQualifiers.Load();
 
             int rowIndex = 0;
+            bool afterSentinel = false;
             foreach (var row in lines)
             {
                 rowIndex++;
@@ -53,9 +54,16 @@ namespace D2TxtImporter.lib.Model.Items
 
                 var input1 = Get(row, "input 1");
                 var outA = Get(row, "output");
-                if (EnableEarlyStopSentinel && IsEarlyStopSentinel(input1, outA))
+
+                if (EnableEarlyStopSentinel && !afterSentinel && IsEarlyStopSentinel(input1, outA))
                 {
-                    break; // finish import and export whatever we have
+                    afterSentinel = true;
+                }
+
+                if (EnableEarlyStopSentinel && afterSentinel)
+                {
+                    if (MatchesIgnoreRule(row)) continue;
+                    if (!IsSocketPunchRecipe(row)) continue;
                 }
 
                 // Skip rows containing blocked input tokens
@@ -421,6 +429,12 @@ namespace D2TxtImporter.lib.Model.Items
                         AddNote("Orb of Socketing Recipe", added);
                     }
 
+                    // 5.5) Socket Punch Recipe
+                    if (IsSocketPunchRecipe(row))
+                    {
+                        AddNote("Socket Punch Recipe", added);
+                    }
+
                     // 6) numinputs = 2 and one is ooe → Orb of Shadows Recipe
                     if (recipe.NumInputs == 2 && InputsContainAnyCodes("ooe"))
                     {
@@ -651,6 +665,51 @@ namespace D2TxtImporter.lib.Model.Items
             if (string.IsNullOrWhiteSpace(input1) || string.IsNullOrWhiteSpace(output)) return false;
             var sent = new HashSet<string>(new[] { "agr", "tgr", "sgr", "egr", "mgr", "rgr", "kgr" }, StringComparer.OrdinalIgnoreCase);
             return sent.Contains(NormalizeToken(input1)) && sent.Contains(NormalizeToken(output));
+        }
+
+        private static bool IsSocketPunchRecipe(Dictionary<string, string> row)
+        {
+            var outA = Get(row, "output");
+            if (string.IsNullOrWhiteSpace(outA)) return false;
+            if (!string.Equals(NormalizeToken(outA), "useitem", StringComparison.OrdinalIgnoreCase)) return false;
+
+            for (int i = 1; i <= 5; i++)
+            {
+                if (string.Equals(Get(row, $"mod {i}"), "sock", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
+        }
+
+        private static bool MatchesIgnoreRule(Dictionary<string, string> row)
+        {
+            bool hasTors = false;
+            for (int i = 1; i <= 7; i++)
+            {
+                var tok = Get(row, $"input {i}");
+                if (string.Equals(NormalizeToken(tok), "tors", StringComparison.OrdinalIgnoreCase))
+                {
+                    hasTors = true;
+                    break;
+                }
+            }
+            if (!hasTors) return false;
+
+            if (CheckOutputIgnore(row, "")) return true;
+            if (CheckOutputIgnore(row, "b ")) return true;
+            if (CheckOutputIgnore(row, "c ")) return true;
+
+            return false;
+        }
+
+        private static bool CheckOutputIgnore(Dictionary<string, string> row, string prefix)
+        {
+            if (string.Equals(Get(row, $"{prefix}mod 1"), "sock", StringComparison.OrdinalIgnoreCase))
+            {
+                var minVal = ToInt(Get(row, $"{prefix}mod 1 min"));
+                if (minVal == 5 || minVal == 6) return true;
+            }
+            return false;
         }
 
         private static string NormalizeToken(string raw)
