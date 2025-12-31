@@ -38,6 +38,13 @@ namespace D2TxtImporter.lib.Model.Types
         {
             CurrentItemProperty = this;
             Parameter = parameter;
+
+            // Intercept 'skill' property and convert numeric ID to name
+            if (property.Equals("skill", StringComparison.OrdinalIgnoreCase) && int.TryParse(Parameter, out _))
+            {
+                Parameter = Skill.GetSkill(Parameter).Name;
+            }
+
             Min = min;
             Max = max;
             Index = index;
