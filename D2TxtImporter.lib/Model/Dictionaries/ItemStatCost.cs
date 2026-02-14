@@ -569,7 +569,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
 
                             valueString = lstValue.Replace("%d%", value.Value.ToString())
-                                .Replace("%d", valueString)
+                                .Replace("%d", valueString)                                                                                                                                                                                                              
                                 .Replace("%s", CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.SkillDesc));
 
                             if (string.IsNullOrEmpty(skill.SkillDesc))
