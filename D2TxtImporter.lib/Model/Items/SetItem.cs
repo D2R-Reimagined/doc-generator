@@ -15,6 +15,8 @@ namespace D2TxtImporter.lib.Model.Items
         public string Type { get; set; }
         public string Set { get; set; }
         [JsonIgnore]
+        public string DropConditionCalc { get; set; }
+        [JsonIgnore]
         public string Vanilla { get; set; }
         [JsonIgnore]
         public List<ItemProperty> SetProperties { get; set; }
@@ -47,6 +49,16 @@ namespace D2TxtImporter.lib.Model.Items
 
             foreach (var row in table)
             {
+                if (string.IsNullOrWhiteSpace(row["item"]))
+                {
+                    continue;
+                }
+
+                if (row.ContainsKey("disabled") && row["disabled"] == "1")
+                {
+                    continue;
+                }
+
                 var addFunc = Utility.ToNullableInt(row["add func"]);
                 var name = row["index"];
                 var rarity = Utility.ToNullableInt(row["rarity"]);
@@ -67,7 +79,8 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     Index = name,
                     Set = row["set"],
-                    Enabled = true,
+                    Enabled = row.ContainsKey("spawnable") ? row["spawnable"] == "1" : true,
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
                     Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
@@ -101,6 +114,7 @@ namespace D2TxtImporter.lib.Model.Items
                     eq = new Equipment.Equipment
                     {
                         Code = misc.Code,
+                        NameStr = misc.NameStr,
                         EquipmentType = EquipmentType.Jewelery,
                         Type = misc.Type
                     };

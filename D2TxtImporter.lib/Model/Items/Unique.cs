@@ -6,6 +6,7 @@ using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Equipment;
 using D2TxtImporter.lib.Model.Types;
+using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Items
 {
@@ -13,6 +14,8 @@ namespace D2TxtImporter.lib.Model.Items
     {
         public string Type { get; set; }
         public string Vanilla { get; set; }
+        [JsonIgnore]
+        public string DropConditionCalc { get; set; }
 
         public static List<Unique> Import(string excelFolder)
         {
@@ -42,6 +45,11 @@ namespace D2TxtImporter.lib.Model.Items
 
             foreach (var row in table)
             {
+                if (row.ContainsKey("disabled") && row["disabled"] == "1")
+                {
+                    continue;
+                }
+
                 if (string.IsNullOrEmpty(row["lvl"]))
                 {
                     continue;
@@ -74,7 +82,8 @@ namespace D2TxtImporter.lib.Model.Items
                 var unique = new Unique
                 {
                     Index = name,
-                    Enabled = row["enabled"] == "1",
+                    Enabled = row.ContainsKey("spawnable") ? row["spawnable"] == "1" : (row.ContainsKey("enabled") ? row["enabled"] == "1" : false),
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
                     Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
@@ -104,6 +113,7 @@ namespace D2TxtImporter.lib.Model.Items
                     eq = new Equipment.Equipment
                     {
                         Code = misc.Code,
+                        NameStr = misc.NameStr,
                         EquipmentType = EquipmentType.Jewelery,
                         Type = misc.Type
                     };

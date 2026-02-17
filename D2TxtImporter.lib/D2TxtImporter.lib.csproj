@@ -58,6 +58,7 @@
     <Compile Include="Model\Dictionaries\MagicSuffix.cs" />
     <Compile Include="Model\Dictionaries\MonStat.cs" />
     <Compile Include="Model\Dictionaries\Gem.cs" />
+    <Compile Include="Model\Dictionaries\PropertyGroup.cs" />
     <Compile Include="Model\Dictionaries\RequiredLevelReport.cs" />
     <Compile Include="Model\Items\CubeQualifiers.cs" />
     <Compile Include="Model\Items\CubeRecipeV2.cs" />

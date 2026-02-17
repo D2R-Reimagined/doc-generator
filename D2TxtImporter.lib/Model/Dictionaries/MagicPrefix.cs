@@ -37,12 +37,13 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var index = 0;
             foreach (var row in table)
             {
-                // Skip entries that are not spawnable
-                if (row.ContainsKey("spawnable") && row["spawnable"] == "0")
+                index++;
+
+                // Skip entries that are not spawnable or look like section headers
+                if (row.ContainsKey("spawnable") && (row["spawnable"] == "0" || string.IsNullOrWhiteSpace(row["spawnable"])))
                 {
                     continue;
                 }
-                index++;
                 var level = Utility.ToNullableInt(row.ContainsKey("level") ? row["level"] : null) ?? 0;
 
                 var magicPrefix = new MagicPrefix

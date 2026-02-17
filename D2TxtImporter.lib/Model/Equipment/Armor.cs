@@ -29,6 +29,10 @@ namespace D2TxtImporter.lib.Model.Equipment
         public int? Block { get; set; }
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
+        [JsonIgnore]
+        public string DropConditionCalc { get; set; }
+        [JsonIgnore]
+        public string UICatOverride { get; set; }
 
         // Export sockets as a level-range string computed from ItemTypes thresholds
         [JsonProperty("GemSockets")]
@@ -51,6 +55,11 @@ namespace D2TxtImporter.lib.Model.Equipment
 
             foreach (var row in table)
             {
+                if (string.IsNullOrWhiteSpace(row["code"]))
+                {
+                    continue;
+                }
+
                 var name = row["name"];
 
                 if (!ItemType.ItemTypes.ContainsKey(row["type"]))
@@ -94,6 +103,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 var armor = new Armor
                 {
                     Code = row["code"],
+                    NameStr = row.ContainsKey("namestr") ? row["namestr"] : null,
                     BaseRequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : (row.ContainsKey("lvl req") ? row["lvl req"] : null)),
                     MinAc = minAc.Value,
                     MaxAc = maxAc.Value,
@@ -111,7 +121,9 @@ namespace D2TxtImporter.lib.Model.Equipment
                     UberCode = row.ContainsKey("ubercode") ? row["ubercode"] : null,
                     UltraCode = row.ContainsKey("ultracode") ? row["ultracode"] : null,
                     GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
-                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
+                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null),
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
+                    UICatOverride = row.ContainsKey("UICatOverride") ? row["UICatOverride"] : null
                 };
 
                 // Set block only for shields or shield-equivalent types
@@ -155,6 +167,7 @@ namespace D2TxtImporter.lib.Model.Equipment
             {
                 EquipmentType = EquipmentType,
                 Code = Code,
+                NameStr = NameStr,
                 BaseRequiredLevel = BaseRequiredLevel,
                 RequiredStrength = RequiredStrength,
                 RequiredDexterity = RequiredDexterity,
@@ -168,6 +181,8 @@ namespace D2TxtImporter.lib.Model.Equipment
                 UltraCode = UltraCode,
                 GemSockets = GemSockets,
                 AutoPrefix = AutoPrefix,
+                DropConditionCalc = DropConditionCalc,
+                UICatOverride = UICatOverride,
                 MinAc = MinAc,
                 MaxAc = MaxAc,
                 MinDamage = MinDamage,

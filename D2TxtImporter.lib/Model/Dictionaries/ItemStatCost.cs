@@ -518,13 +518,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 classReplace = CharStat.CharStats[parameter].Class;
                             }
 
-                            valueString = lstValue.Replace("%+d", valueString).Replace("%s", classReplace);
+                            valueString = lstValue.Replace("%+d", valueString).Replace("+%d", valueString).Replace("%s", classReplace);
                             break;
 
                         case 14:
                             var par = Utility.ToNullableInt(parameter);
                             if (!par.HasValue)
                             {
+                                if (parameter == "21-23")
+                                {
+                                    parameter = "war";
+                                }
+
                                 // Support class name string like in case 13 or error as usual
                                 if (CharStat.CharStats.ContainsKey(parameter))
                                 {
@@ -553,7 +558,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
 
                             lstValue = Table.Tables[skillTab];
-                            valueString = $"+{lstValue.Replace("%+d", valueString)} ({className} Only)";
+                            valueString = $"+{lstValue.Replace("%+d", valueString).Replace("+%d", valueString)} ({className} Only)";
                             break;
 
                         case 15:

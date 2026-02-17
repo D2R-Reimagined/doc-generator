@@ -31,7 +31,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Gems.txt");
 
             foreach (var row in table)
-            { 
+            {
+                if (string.IsNullOrWhiteSpace(row["code"]))
+                {
+                    continue;
+                }
+
                 var gem = new Gem
                 {
                     Index = row["name"],

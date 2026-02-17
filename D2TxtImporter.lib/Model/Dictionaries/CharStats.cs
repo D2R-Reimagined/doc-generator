@@ -31,7 +31,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 {9, "StrSklTabItem6" }, {10, "StrSklTabItem5" }, {11, "StrSklTabItem4" },
                 {12, "StrSklTabItem11" }, {13, "StrSklTabItem12" }, {14, "StrSklTabItem10" },
                 {15, "StrSklTabItem16" }, {16, "StrSklTabItem17" }, {17, "StrSklTabItem18" },
-                {18, "StrSklTabItem19" }, {19, "StrSklTabItem20" }, {20, "StrSklTabItem21" }
+                {18, "StrSklTabItem19" }, {19, "StrSklTabItem20" }, {20, "StrSklTabItem21" },
+                {21, "StrSklTabItem24" }, {22, "StrSklTabItem22" }, {23, "StrSklTabItem23" },
             };
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/CharStats.txt");

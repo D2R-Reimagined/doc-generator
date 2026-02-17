@@ -70,6 +70,7 @@ namespace D2TxtImporter.lib
                 Skill.Import(_excelPath);
                 CharStat.Import(_excelPath);
                 MonStat.Import(_excelPath);
+                PropertyGroup.Import(_excelPath);
                 MagicPrefix.Import(_excelPath);
                 MagicSuffix.Import(_excelPath);
                 AutoMagic.Import(_excelPath);
@@ -201,15 +202,15 @@ namespace D2TxtImporter.lib
                 var dataArray = fileArray.Skip(1);
                 foreach (var valueLine in dataArray)
                 {
-                    var values = valueLine.Split('\t');
-                    if (string.IsNullOrEmpty(values[1]))
+                    if (string.IsNullOrWhiteSpace(valueLine))
                     {
                         continue;
                     }
 
+                    var values = valueLine.Split('\t');
                     var row = new Dictionary<string, string>();
 
-                    for (var i = 0; i < values.Length; i++)
+                    for (var i = 0; i < values.Length && i < headerArray.Length; i++)
                     {
                         row[headerArray[i]] = values[i];
                     }

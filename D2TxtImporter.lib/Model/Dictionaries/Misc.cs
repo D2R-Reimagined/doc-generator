@@ -13,9 +13,15 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public int RequiredLevel { get; set; }
         [JsonIgnore]
         public string Code { get; set; }
+        [JsonIgnore]
+        public string NameStr { get; set; }
         public ItemType Type { get; set; }
         [JsonIgnore]
         public string Type2 { get; set; }
+        [JsonIgnore]
+        public string DropConditionCalc { get; set; }
+        [JsonIgnore]
+        public string AutoPrefix { get; set; }
         [JsonIgnore]
         public static Dictionary<string, Misc> MiscItems;
 
@@ -57,8 +63,11 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
                     Code = row["code"],
+                    NameStr = row.ContainsKey("namestr") ? row["namestr"] : null,
                     Type = ItemType.ItemTypes[row["type"]],
-                    Type2 = row["type2"]
+                    Type2 = row["type2"],
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
+                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null)
                 };
 
                 MiscItems[misc.Code] = misc;

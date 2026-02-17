@@ -24,6 +24,8 @@ namespace D2TxtImporter.lib.Model.Types
         public int? Max { get; set; }
         [JsonIgnore]
         public ItemStatCost ItemStatCost { get; set; }
+        public bool ShouldSerializePropertyString() => GroupProperties == null;
+        public bool ShouldSerializeIndex() => GroupProperties == null;
         private string _propertyString;
         public string PropertyString { get => _propertyString + Suffix; private set => _propertyString = value; }
         public int Index { get; set; }
@@ -31,8 +33,10 @@ namespace D2TxtImporter.lib.Model.Types
         public int ItemLevel { get; set; }
         [JsonIgnore]
         public string Suffix { get; set; }
+        [JsonProperty("group-properties", NullValueHandling = NullValueHandling.Ignore)]
+        public Dictionary<string, List<ItemProperty>> GroupProperties { get; set; }
         [JsonIgnore]
-        public string CompareKey => ItemStatCost.Stat + Parameter;
+        public string CompareKey => (ItemStatCost != null ? ItemStatCost.Stat : Property?.Code) + Parameter;
 
         public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "")
         {
@@ -50,6 +54,16 @@ namespace D2TxtImporter.lib.Model.Types
             Index = index;
             ItemLevel = itemLevel;
             Suffix = suffix;
+
+            // Check if it's a group property from propertygroups.txt
+            if (PropertyGroup.PropertyGroups != null && PropertyGroup.PropertyGroups.TryGetValue(property, out var groupDef))
+            {
+                GroupProperties = new Dictionary<string, List<ItemProperty>>(StringComparer.OrdinalIgnoreCase);
+                GroupProperties[property] = GetProperties(groupDef.PropertyInfos, itemLevel);
+                Property = new EffectProperty { Code = property };
+                _propertyString = property;
+                return;
+            }
 
             // Look up the property code as-is; dictionary is case-insensitive
             if (!EffectProperty.EffectProperties.ContainsKey(property)) 

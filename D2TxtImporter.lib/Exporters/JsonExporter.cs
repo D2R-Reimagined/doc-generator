@@ -232,7 +232,8 @@ namespace D2TxtImporter.lib.Exporters
             var settings = new JsonSerializerSettings
             {
                 StringEscapeHandling = StringEscapeHandling.EscapeNonAscii,
-                Converters = { new ItemTypeRewriteConverter(MapItemTypeForRunewords) }
+                Converters = { new ItemTypeRewriteConverter(MapItemTypeForRunewords) },
+                ContractResolver = new EquipmentFilterContractResolver()
             };
             var json = SerializeWithIndent(runewords, settings, prettyPrint);
             File.WriteAllText(destination, json, System.Text.Encoding.UTF8);

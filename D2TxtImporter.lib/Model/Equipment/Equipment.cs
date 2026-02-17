@@ -8,8 +8,26 @@ namespace D2TxtImporter.lib.Model.Equipment
     public class Equipment : ICloneable
     {
         public EquipmentType EquipmentType { get; set; }
-        public string Name { get { return Table.GetValue(Code); } }
+        public string Name
+        {
+            get
+            {
+                if (Table.Tables.ContainsKey(Code))
+                {
+                    return Table.GetValue(Code);
+                }
+
+                if (!string.IsNullOrEmpty(NameStr) && Table.Tables.ContainsKey(NameStr))
+                {
+                    return Table.GetValue(NameStr);
+                }
+
+                return Code;
+            }
+        }
         public string Code { get; set; }
+        [JsonIgnore]
+        public string NameStr { get; set; }
         public int? BaseRequiredLevel { get; set; }
         public string RequiredStrength { get; set; }
         public string RequiredDexterity { get; set; }
@@ -34,7 +52,7 @@ namespace D2TxtImporter.lib.Model.Equipment
                 }
 
                 var resolved = ItemType.ItemTypes[equiv2].Name.Replace(" Item", "");
-                var classes = new[] { "Sorceress", "Barbarian", "Druid", "Assassin", "Necromancer", "Paladin", "Amazon" };
+                var classes = new[] { "Sorceress", "Barbarian", "Druid", "Assassin", "Necromancer", "Paladin", "Amazon", "Warlock" };
                 return classes.Contains(resolved) ? resolved : "";
             }
         }
@@ -89,6 +107,7 @@ namespace D2TxtImporter.lib.Model.Equipment
             {
                 EquipmentType = EquipmentType,
                 Code = Code,
+                NameStr = NameStr,
                 BaseRequiredLevel = BaseRequiredLevel,
                 RequiredStrength = RequiredStrength,
                 RequiredDexterity = RequiredDexterity,
