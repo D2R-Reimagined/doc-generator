@@ -870,6 +870,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             if (value >= 126 && value2 <= 155) return "Barbarian";
             if (value >= 221 && value2 <= 250) return "Druid";
             if (value >= 251 && value2 <= 280) return "Assassin";
+            if (value >= 373 && value2 <= 402) return "Warlock";
 
             throw ItemStatCostException.Create(
                 $"Invalid skill ID range {value} - {value2} for Random Class Skill. Verify the range in Skills.txt "
