@@ -604,9 +604,8 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
 
                             //Per Level Display Fix
-                            else if (Stat.Contains("perlevel"))
+                            else if (Stat.Contains("perlevel") || Stat.Contains("perlvl"))
                             {
-
                                 var opMath = OpParam != null ? Math.Pow(2, OpParam.Value) : 0;
                                 double.TryParse(parameter, out var lvlGrowth);
                                 string perLvlCalc;

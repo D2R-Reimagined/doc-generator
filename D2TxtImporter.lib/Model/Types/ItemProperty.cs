@@ -133,7 +133,7 @@ namespace D2TxtImporter.lib.Model.Types
                     var tabIndex = (Min.GetValueOrDefault() / 8); // 0..6
 
                     // Lookup by class order
-                    var tabs = new[] { "ama", "sor", "nec", "pal", "bar", "dru", "ass" };
+                    var tabs = new[] { "ama", "sor", "nec", "pal", "bar", "dru", "ass", "war" };
 
                     if ((uint)tabIndex < (uint)tabs.Length)
                     {
