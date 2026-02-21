@@ -159,6 +159,7 @@ namespace D2TxtImporter.lib.Diff
                     AppendFieldChangeIfStringChanged(baseParts, "Required Strength", b.ReqStrBefore, b.ReqStrAfter);
                     AppendFieldChangeIfStringChanged(baseParts, "Required Dexterity", b.ReqDexBefore, b.ReqDexAfter);
                     AppendFieldChange(baseParts, "Durability", b.DurabilityBefore, b.DurabilityAfter);
+                    AppendFieldChange(baseParts, "Item Level", b.ItemLevelBefore, b.ItemLevelAfter);
                     AppendFieldChangeIfStringChanged(baseParts, "Sockets", b.SocketsBefore, b.SocketsAfter);
                     if (string.Equals(b.Category, "Weapon", StringComparison.OrdinalIgnoreCase))
                     {
