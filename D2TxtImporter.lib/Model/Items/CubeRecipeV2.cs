@@ -534,7 +534,7 @@ namespace D2TxtImporter.lib.Model.Items
                     // 17) numinputs = 3 and input contains rin/amu/cm1/cm2/cm3 and qty=3 (all same type)
                     if (recipe.NumInputs == 3)
                     {
-                        var allowed = new[] { "rin", "amu", "cm1", "cm2", "cm3" };
+                        var allowed = new[] { "rin", "amu", "cm1", "cm2", "cm3", "cs1" };
                         var counts = allowed.ToDictionary(a => a, a => InputQtyForMain(a), StringComparer.OrdinalIgnoreCase);
                         var present = counts.Where(kv => kv.Value > 0).Select(kv => kv.Key).ToList();
                         // exactly one of the allowed types present, and its total qty == 3, and no other input types present
