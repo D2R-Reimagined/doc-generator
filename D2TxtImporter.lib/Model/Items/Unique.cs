@@ -90,7 +90,7 @@ namespace D2TxtImporter.lib.Model.Items
                     Code = code,
                     DamageArmorEnhanced = false,
                     // Determine Vanilla using raw line number (header counted as line 1)
-                    Vanilla = (rawIndexByName.TryGetValue(name, out var rawRow) && rawRow <= 403) || sunderNames.Contains(name) ? "Y" : "N",
+                    Vanilla = (rawIndexByName.TryGetValue(name, out var rawRow) && rawRow <= 441) || sunderNames.Contains(name) ? "Y" : "N",
                 };
                 // no debug logging
 

@@ -90,7 +90,7 @@ namespace D2TxtImporter.lib.Model.Items
                     Vanilla = "N"
                 };
                 // Determine absolute raw line number from the file (includes header as line 1)
-                if (rawIndexByName.TryGetValue(setItem.Index, out var rawRow) && rawRow <= 129)
+                if (rawIndexByName.TryGetValue(setItem.Index, out var rawRow) && rawRow <= 142)
                 {
                     setItem.Vanilla = "Y";
                 }
