@@ -510,10 +510,14 @@ namespace D2TxtImporter.lib.Model.Items
                         AddNote("Repair Non-Ethereal Item", added);
                     }
 
-                    // 15) inputs contain r01 and r15 AND outputs contain usetype,nor → Force White Recipe
+                    // 15) inputs contain r01 and r15 OR oor → Force White Recipe
                     // Some datasets label 'nor' as "Normal Quality" instead of "Normal Item"; accept either.
-                    if (InputsContainCodes("r01") && InputsContainCodes("r15") && OutputEqualsUseType() &&
-                        (AnyOutputHasQualifiers("Normal Item") || AnyOutputHasQualifiers("Normal Quality")))
+                    // For 'oor' (Orb of Rebirth), the result is High Quality (Superior), but it still counts as this recipe type.
+                    bool isOor = InputsContainCodes("oor");
+                    bool isR01R15 = InputsContainCodes("r01") && InputsContainCodes("r15");
+                    bool hasNormalOutput = AnyOutputHasQualifiers("Normal Item") || AnyOutputHasQualifiers("Normal Quality");
+
+                    if ((isR01R15 && OutputEqualsUseType() && hasNormalOutput) || isOor)
                     {
                         AddNote("Force White Recipe", added);
                     }
