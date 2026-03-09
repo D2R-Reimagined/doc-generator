@@ -155,6 +155,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 return input;
             }
 
+            int truncateIndex = input.IndexOf(" ÿc9(");
+            if (truncateIndex != -1)
+            {
+                input = input.Substring(0, truncateIndex);
+            }
+
             var result = new System.Text.StringBuilder(input.Length);
             int i = 0;
 

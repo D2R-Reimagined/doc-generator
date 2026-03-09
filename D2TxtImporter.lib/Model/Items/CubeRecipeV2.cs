@@ -6,6 +6,7 @@ using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Types;
 using D2TxtImporter.lib.Model.Equipment;
+using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Items
 {
@@ -345,6 +346,30 @@ namespace D2TxtImporter.lib.Model.Items
                         return mainsAll.Any(m => codes.Any(c => string.Equals(m, c, StringComparison.OrdinalIgnoreCase)));
                     }
 
+                    bool OutputsContainAnyCodes(params string[] codes)
+                    {
+                        foreach (var o in outs)
+                        {
+                            if (o == null) continue;
+                            var main = o.MainToken;
+                            if (string.Equals(main, "useitem", StringComparison.OrdinalIgnoreCase))
+                            {
+                                var first = recipe.Inputs?.FirstOrDefault();
+                                if (first != null)
+                                {
+                                    var firstMain = NormalizeToken(first.RawToken);
+                                    if (codes.Any(c => string.Equals(firstMain, c, StringComparison.OrdinalIgnoreCase)))
+                                        return true;
+                                }
+                            }
+                            else if (codes.Any(c => string.Equals(main, c, StringComparison.OrdinalIgnoreCase)))
+                            {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
                     bool InputsQualifiersContain(string friendly)
                     {
                         if (recipe.Inputs == null) return false;
@@ -643,6 +668,13 @@ namespace D2TxtImporter.lib.Model.Items
                     if (recipe.NumInputs >= 4 && InputsContainAnyCodes("ibk", "tpk") && (AnyOutputNameContains("Jewel") || AnyOutputNameContains("Grand Charm")))
                     {
                         AddNote("Recycle Recipe", added);
+                    }
+
+                    // 30) Inputs and Outputs contain xa1-5 or ua1-5 → Reroll Uber Ancient Material
+                    var uberAncientCodes = new[] { "xa1", "xa2", "xa3", "xa4", "xa5", "ua1", "ua2", "ua3", "ua4", "ua5" };
+                    if (InputsContainAnyCodes(uberAncientCodes) && OutputsContainAnyCodes(uberAncientCodes))
+                    {
+                        AddNote("Reroll Uber Ancient Material", added);
                     }
                 }
                 catch (Exception ex)
@@ -992,7 +1024,8 @@ namespace D2TxtImporter.lib.Model.Items
                     Quantity = parsed.Quantity,
                     Qualifiers = qualsList,
                     OutputChance = chance,
-                    Properties = new List<CubePropertyV2>()
+                    Properties = new List<CubePropertyV2>(),
+                    MainToken = parsed.MainToken
                 };
             }
             else if (string.Equals(parsed.MainToken, "useitem", StringComparison.OrdinalIgnoreCase))
@@ -1022,7 +1055,8 @@ namespace D2TxtImporter.lib.Model.Items
                     Quantity = parsed.Quantity,
                     Qualifiers = qualsList2,
                     OutputChance = chance,
-                    Properties = new List<CubePropertyV2>()
+                    Properties = new List<CubePropertyV2>(),
+                    MainToken = parsed.MainToken
                 };
             }
             else
@@ -1036,7 +1070,8 @@ namespace D2TxtImporter.lib.Model.Items
                     Quantity = parsed.Quantity,
                     Qualifiers = parsed.QualifiersFriendly.ToList(),
                     OutputChance = chance,
-                    Properties = new List<CubePropertyV2>()
+                    Properties = new List<CubePropertyV2>(),
+                    MainToken = parsed.MainToken
                 };
             }
         }
@@ -1142,7 +1177,17 @@ namespace D2TxtImporter.lib.Model.Items
                 // Try resolution order: Misc → Armor → Weapon
                 if (Misc.MiscItems.ContainsKey(main))
                 {
-                    return Misc.MiscItems[main].Name;
+                    var misc = Misc.MiscItems[main];
+                    if (!string.Equals(main, "rvs", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(main, "rvl", StringComparison.OrdinalIgnoreCase) &&
+                        !string.Equals(main, "cs1", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrEmpty(misc.NameStr))
+                    {
+                        var tableName = Table.GetValue(misc.NameStr);
+                        if (!string.IsNullOrEmpty(tableName))
+                            return tableName;
+                    }
+                    return misc.Name;
                 }
                 if (Armor.Armors.ContainsKey(main))
                 {
@@ -1185,6 +1230,8 @@ namespace D2TxtImporter.lib.Model.Items
         public List<string> Qualifiers { get; set; }
         public int? OutputChance { get; set; }
         public List<CubePropertyV2> Properties { get; set; }
+        [JsonIgnore]
+        public string MainToken { get; set; }
     }
 
     public sealed class CubePropertyV2

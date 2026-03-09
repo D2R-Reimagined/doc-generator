@@ -10,7 +10,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class Gem : Item
     {
-        public new string Name { get { return Index; } }
+        public new string Name
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(Code) && Misc.MiscItems != null && Misc.MiscItems.ContainsKey(Code))
+                {
+                    var misc = Misc.MiscItems[Code];
+                    if (!string.IsNullOrEmpty(misc.NameStr))
+                    {
+                        var tableName = Table.GetValue(misc.NameStr);
+                        if (!string.IsNullOrEmpty(tableName))
+                            return tableName;
+                    }
+                }
+                return Index;
+            }
+        }
         [JsonIgnore]
         public string Letter { get; set; }
         [JsonIgnore]
