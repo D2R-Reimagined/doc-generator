@@ -208,6 +208,14 @@ namespace D2TxtImporter.lib
                     }
 
                     var values = valueLine.Split('\t');
+
+                    // Skip rows where only the index (first column) is populated
+                    // (the final column may also contain a "0" which should still be treated as empty)
+                    if (values.Length <= 1 || values.Skip(1).All(v => string.IsNullOrWhiteSpace(v) || v.Trim() == "0"))
+                    {
+                        continue;
+                    }
+
                     var row = new Dictionary<string, string>();
 
                     for (var i = 0; i < values.Length && i < headerArray.Length; i++)
