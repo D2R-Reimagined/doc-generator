@@ -10,32 +10,32 @@ namespace D2TxtImporter.lib.Model.Equipment
 {
     public class Weapon : Equipment
     {
+        // ── Serialized properties (included in JSON output) ───────────────
         public List<DamageType> DamageTypes { get; set; }
         public int Speed { get; set; }
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
-        [JsonIgnore]
-        public string DropConditionCalc { get; set; }
-        [JsonIgnore]
-        public string UICatOverride { get; set; }
 
         // Export sockets as a level-range string computed from ItemTypes thresholds
         [JsonProperty("GemSockets")]
         public string GemSocketsString => Equipment.BuildSocketRangeString(Type, GemSockets);
 
         // Aggregated Automagic group properties attached at export time
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<AutoMagicExportProperty> Properties { get; set; }
 
-        // New grouped representation: groups by Name + Level + RequiredLevel across the entire list
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        // Grouped representation: groups by Name + Level + RequiredLevel across the entire list
         public List<AutoMagicExportPropertyGroup> AutoMagicGroups { get; set; }
 
-        [JsonIgnore]
-        public static Dictionary<string, Weapon> Weapons;
+        // ── Conditional serialization (Newtonsoft.Json ShouldSerialize convention) ──
+        public bool ShouldSerializeProperties()      => Properties != null;
+        public bool ShouldSerializeAutoMagicGroups() => AutoMagicGroups != null;
+
+        // ── Internal properties (excluded from JSON output) ──────────────
+        [JsonIgnore] public string DropConditionCalc { get; set; }
+        [JsonIgnore] public string UICatOverride { get; set; }
+        [JsonIgnore] public static Dictionary<string, Weapon> Weapons;
         // Preserve import order (Weapons.txt order)
-        [JsonIgnore]
-        public static List<Weapon> WeaponOrder;
+        [JsonIgnore] public static List<Weapon> WeaponOrder;
 
         public static void Import(string excelFolder)
         {

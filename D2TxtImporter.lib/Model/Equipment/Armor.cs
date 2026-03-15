@@ -10,41 +10,38 @@ namespace D2TxtImporter.lib.Model.Equipment
 {
     class Armor : Equipment
     {
-        [JsonIgnore]
-        public int MinAc { get; set; }
-        [JsonIgnore]
-        public int MaxAc { get; set; }
-        [JsonIgnore]
-        public int? MinDamage { get; set; }
-        [JsonIgnore]
-        public int? MaxDamage { get; set; }
+        // ── Serialized properties (included in JSON output) ───────────────
         public string DamageString { get; set; }
         public string DamageStringPrefix { get; set; }
-        [JsonIgnore]
-        public static Dictionary<string, Armor> Armors;
-        // Preserve import order (Armor.txt order)
-        [JsonIgnore]
-        public static List<Armor> ArmorOrder;
         public string ArmorString { get; set; }
         public int? Block { get; set; }
         public int StrBonus { get; set; }
         public int DexBonus { get; set; }
-        [JsonIgnore]
-        public string DropConditionCalc { get; set; }
-        [JsonIgnore]
-        public string UICatOverride { get; set; }
 
         // Export sockets as a level-range string computed from ItemTypes thresholds
         [JsonProperty("GemSockets")]
         public string GemSocketsString => Equipment.BuildSocketRangeString(Type, GemSockets);
 
         // Aggregated Automagic group properties attached at export time
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
         public List<AutoMagicExportProperty> Properties { get; set; }
 
-        // New grouped representation: groups by Name + Level + RequiredLevel across the entire list
-        [JsonProperty(NullValueHandling = NullValueHandling.Ignore)]
+        // Grouped representation: groups by Name + Level + RequiredLevel across the entire list
         public List<AutoMagicExportPropertyGroup> AutoMagicGroups { get; set; }
+
+        // ── Conditional serialization (Newtonsoft.Json ShouldSerialize convention) ──
+        public bool ShouldSerializeProperties()      => Properties != null;
+        public bool ShouldSerializeAutoMagicGroups() => AutoMagicGroups != null;
+
+        // ── Internal properties (excluded from JSON output) ──────────────
+        [JsonIgnore] public int MinAc { get; set; }
+        [JsonIgnore] public int MaxAc { get; set; }
+        [JsonIgnore] public int? MinDamage { get; set; }
+        [JsonIgnore] public int? MaxDamage { get; set; }
+        [JsonIgnore] public string DropConditionCalc { get; set; }
+        [JsonIgnore] public string UICatOverride { get; set; }
+        [JsonIgnore] public static Dictionary<string, Armor> Armors;
+        // Preserve import order (Armor.txt order)
+        [JsonIgnore] public static List<Armor> ArmorOrder;
 
         public static void Import(string excelFolder)
         {

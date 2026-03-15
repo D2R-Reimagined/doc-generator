@@ -5,46 +5,41 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
-using DocumentFormat.OpenXml.Spreadsheet;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Types
 {
     public class ItemProperty
     {
-        [JsonIgnore]
-        public static ItemProperty CurrentItemProperty { get; set; }
-        [JsonIgnore]
-        public EffectProperty Property { get; set; }
-        [JsonIgnore]
-        public string Parameter { get; set; }
-        [JsonIgnore]
-        public int? Min { get; set; }
-        [JsonIgnore]
-        public int? Max { get; set; }
-        [JsonIgnore]
-        public ItemStatCost ItemStatCost { get; set; }
-        public bool ShouldSerializePropertyString() => GroupProperties == null && !IsPickModeEntry;
-        public bool ShouldSerializeIndex() => GroupProperties == null && !IsPickModeEntry;
-        public bool ShouldSerializePickMode() => IsPickModeEntry;
-        public bool ShouldSerializeChance() => !IsPickModeEntry && Chance.HasValue;
+        // ── Serialized properties (included in JSON output) ───────────────
         private string _propertyString;
         public string PropertyString { get => _propertyString + Suffix; private set => _propertyString = value; }
         public int Index { get; set; }
-        [JsonProperty("PickMode", NullValueHandling = NullValueHandling.Ignore)]
         public string PickMode { get; set; }
-        [JsonProperty("Chance", NullValueHandling = NullValueHandling.Ignore)]
         public int? Chance { get; set; }
-        [JsonIgnore]
-        public bool IsPickModeEntry { get; set; }
-        [JsonIgnore]
-        public int ItemLevel { get; set; }
-        [JsonIgnore]
-        public string Suffix { get; set; }
-        [JsonProperty("group-properties", NullValueHandling = NullValueHandling.Ignore)]
+
+        [JsonProperty("group-properties")]
         public Dictionary<string, List<ItemProperty>> GroupProperties { get; set; }
-        [JsonIgnore]
-        public string CompareKey => (ItemStatCost != null ? ItemStatCost.Stat : Property?.Code) + Parameter;
+
+        // ── Conditional serialization (Newtonsoft.Json ShouldSerialize convention) ──
+        // Each method controls whether its corresponding property is written to JSON.
+        public bool ShouldSerializePropertyString() => GroupProperties == null && !IsPickModeEntry;
+        public bool ShouldSerializeIndex()          => GroupProperties == null && !IsPickModeEntry;
+        public bool ShouldSerializePickMode()        => IsPickModeEntry && PickMode != null;
+        public bool ShouldSerializeChance()          => !IsPickModeEntry && Chance.HasValue;
+        public bool ShouldSerializeGroupProperties() => GroupProperties != null;
+
+        // ── Internal properties (excluded from JSON output) ──────────────
+        [JsonIgnore] public static ItemProperty CurrentItemProperty { get; set; }
+        [JsonIgnore] public EffectProperty Property { get; set; }
+        [JsonIgnore] public string Parameter { get; set; }
+        [JsonIgnore] public int? Min { get; set; }
+        [JsonIgnore] public int? Max { get; set; }
+        [JsonIgnore] public ItemStatCost ItemStatCost { get; set; }
+        [JsonIgnore] public bool IsPickModeEntry { get; set; }
+        [JsonIgnore] public int ItemLevel { get; set; }
+        [JsonIgnore] public string Suffix { get; set; }
+        [JsonIgnore] public string CompareKey => (ItemStatCost != null ? ItemStatCost.Stat : Property?.Code) + Parameter;
 
         private ItemProperty() { }
 

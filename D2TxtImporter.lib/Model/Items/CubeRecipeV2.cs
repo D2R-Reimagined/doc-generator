@@ -498,6 +498,14 @@ namespace D2TxtImporter.lib.Model.Items
                         AddNote("Sunder Item Crafting Recipe", added);
                     }
 
+                    // 10.5) input contains any Latent Sunder charm → Item Crafting Recipe
+                    if (InputsNamesContainExact(
+                        "Latent Cold Rupture", "Latent Flame Rift", "Latent Crack of the Heavens",
+                        "Latent Rotting Fissure", "Latent Bone Break", "Latent Black Cleft"))
+                    {
+                        AddNote("Sunder Item Crafting Recipe", added);
+                    }
+
                     // 11) inputs contain at least one mpa or blc or dia → Tristram Uber Souls Recipe
                     if (InputsContainAnyCodes("mpa", "blc", "dia"))
                     {

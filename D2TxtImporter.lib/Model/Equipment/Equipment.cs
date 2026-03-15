@@ -7,6 +7,7 @@ namespace D2TxtImporter.lib.Model.Equipment
 {
     public class Equipment : ICloneable
     {
+        // ── Serialized properties (included in JSON output) ───────────────
         public EquipmentType EquipmentType { get; set; }
         public string Name
         {
@@ -26,8 +27,6 @@ namespace D2TxtImporter.lib.Model.Equipment
             }
         }
         public string Code { get; set; }
-        [JsonIgnore]
-        public string NameStr { get; set; }
         public int? BaseRequiredLevel { get; set; }
         public string RequiredStrength { get; set; }
         public string RequiredDexterity { get; set; }
@@ -37,8 +36,6 @@ namespace D2TxtImporter.lib.Model.Equipment
         public string NormCode { get; set; }
         public string UberCode { get; set; }
         public string UltraCode { get; set; }
-        [JsonIgnore]
-        public int GemSockets { get; set; }
         public string AutoPrefix { get; set; }
         public string RequiredClass
         {
@@ -56,6 +53,10 @@ namespace D2TxtImporter.lib.Model.Equipment
                 return classes.Contains(resolved) ? resolved : "";
             }
         }
+
+        // ── Internal properties (excluded from JSON output) ──────────────
+        [JsonIgnore] public string NameStr { get; set; }
+        [JsonIgnore] public int GemSockets { get; set; }
 
         // Shared helper to determine damage string prefixes across equipment/uniques
         public static string GetDamagePrefix(ItemType type)
