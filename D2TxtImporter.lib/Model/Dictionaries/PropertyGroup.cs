@@ -7,6 +7,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     public class PropertyGroup
     {
         public string Code { get; set; }
+        public string PickMode { get; set; }
         public List<PropertyInfo> PropertyInfos { get; set; }
 
         public static Dictionary<string, PropertyGroup> PropertyGroups;
@@ -23,9 +24,12 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 var code = row.ContainsKey("code") ? row["code"] : null;
                 if (string.IsNullOrWhiteSpace(code)) continue;
 
+                var pickMode = row.ContainsKey("PickMode") ? row["PickMode"] : null;
+
                 var pg = new PropertyGroup
                 {
                     Code = code,
+                    PickMode = pickMode,
                     PropertyInfos = new List<PropertyInfo>()
                 };
 
@@ -47,11 +51,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                         parameter = parMax;
                     }
 
+                    var chanceStr = row.ContainsKey($"Chance{i}") ? row[$"Chance{i}"] : null;
+
                     pg.PropertyInfos.Add(new PropertyInfo(
                         prop,
                         parameter,
                         row.ContainsKey($"ModMin{i}") ? row[$"ModMin{i}"] : null,
-                        row.ContainsKey($"ModMax{i}") ? row[$"ModMax{i}"] : null
+                        row.ContainsKey($"ModMax{i}") ? row[$"ModMax{i}"] : null,
+                        chanceStr
                     ));
                 }
 

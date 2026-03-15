@@ -8,6 +8,7 @@ namespace D2TxtImporter.lib.Model.Types
         [JsonIgnore] public string Parameter { get; set; }
         [JsonIgnore] public int? Min { get; set; }
         [JsonIgnore] public int? Max { get; set; }
+        [JsonIgnore] public int? Chance { get; set; }
 
         public PropertyInfo(string property, string parameter, int? min, int? max)
         {
@@ -23,6 +24,15 @@ namespace D2TxtImporter.lib.Model.Types
             Parameter = parameter;
             Min = Utility.ToNullableInt(min);
             Max = Utility.ToNullableInt(max);
+        }
+
+        public PropertyInfo(string property, string parameter, string min, string max, string chance)
+        {
+            Property = property;
+            Parameter = parameter;
+            Min = Utility.ToNullableInt(min);
+            Max = Utility.ToNullableInt(max);
+            Chance = Utility.ToNullableInt(chance);
         }
 
         public override string ToString()

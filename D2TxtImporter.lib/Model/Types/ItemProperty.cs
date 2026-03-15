@@ -24,11 +24,19 @@ namespace D2TxtImporter.lib.Model.Types
         public int? Max { get; set; }
         [JsonIgnore]
         public ItemStatCost ItemStatCost { get; set; }
-        public bool ShouldSerializePropertyString() => GroupProperties == null;
-        public bool ShouldSerializeIndex() => GroupProperties == null;
+        public bool ShouldSerializePropertyString() => GroupProperties == null && !IsPickModeEntry;
+        public bool ShouldSerializeIndex() => GroupProperties == null && !IsPickModeEntry;
+        public bool ShouldSerializePickMode() => IsPickModeEntry;
+        public bool ShouldSerializeChance() => !IsPickModeEntry && Chance.HasValue;
         private string _propertyString;
         public string PropertyString { get => _propertyString + Suffix; private set => _propertyString = value; }
         public int Index { get; set; }
+        [JsonProperty("PickMode", NullValueHandling = NullValueHandling.Ignore)]
+        public string PickMode { get; set; }
+        [JsonProperty("Chance", NullValueHandling = NullValueHandling.Ignore)]
+        public int? Chance { get; set; }
+        [JsonIgnore]
+        public bool IsPickModeEntry { get; set; }
         [JsonIgnore]
         public int ItemLevel { get; set; }
         [JsonIgnore]
@@ -37,6 +45,18 @@ namespace D2TxtImporter.lib.Model.Types
         public Dictionary<string, List<ItemProperty>> GroupProperties { get; set; }
         [JsonIgnore]
         public string CompareKey => (ItemStatCost != null ? ItemStatCost.Stat : Property?.Code) + Parameter;
+
+        private ItemProperty() { }
+
+        public static ItemProperty CreatePickModeEntry(string pickMode)
+        {
+            return new ItemProperty
+            {
+                IsPickModeEntry = true,
+                PickMode = pickMode,
+                Suffix = string.Empty
+            };
+        }
 
         public ItemProperty(string property, string parameter, int? min, int? max, int index, int itemLevel = 0, string suffix = "")
         {
@@ -59,7 +79,26 @@ namespace D2TxtImporter.lib.Model.Types
             if (PropertyGroup.PropertyGroups != null && PropertyGroup.PropertyGroups.TryGetValue(property, out var groupDef))
             {
                 GroupProperties = new Dictionary<string, List<ItemProperty>>(StringComparer.OrdinalIgnoreCase);
-                GroupProperties[property] = GetProperties(groupDef.PropertyInfos, itemLevel);
+                var groupItems = new List<ItemProperty>();
+
+                if (!string.IsNullOrEmpty(groupDef.PickMode))
+                {
+                    groupItems.Add(CreatePickModeEntry(groupDef.PickMode));
+                }
+
+                var props = GetProperties(groupDef.PropertyInfos, itemLevel);
+
+                // Propagate chance from PropertyInfos to generated ItemProperties by index
+                foreach (var gp in props)
+                {
+                    if (gp.Index >= 0 && gp.Index < groupDef.PropertyInfos.Count)
+                    {
+                        gp.Chance = groupDef.PropertyInfos[gp.Index].Chance;
+                    }
+                }
+
+                groupItems.AddRange(props);
+                GroupProperties[property] = groupItems;
                 Property = new EffectProperty { Code = property };
                 _propertyString = property;
                 return;
@@ -126,7 +165,7 @@ namespace D2TxtImporter.lib.Model.Types
                 if (propCode == "tab-rand")
                 {
                     // 0–2 Amazon, 8–10 Sorceress, 16–18 Necro, 24–26 Paladin,
-                    // 32–34 Barbarian, 40–42 Druid, 48–50 Assassin
+                    // 32–34 Barbarian, 40–42 Druid, 48–50 Assassin, 56-58 Warlock
                     var parValue = int.TryParse(Parameter, out var parsed) ? parsed : 0;
 
                     // Convert the absolute index into a 0-based tab index
