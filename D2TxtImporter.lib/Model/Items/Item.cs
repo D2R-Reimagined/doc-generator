@@ -69,7 +69,7 @@ namespace D2TxtImporter.lib.Model.Items
             int finalMax = Math.Max(val1, val2);
 
             if (finalMin == finalMax) return finalMin.ToString();
-            return $"{finalMin} to {finalMax}";
+            return $"{finalMin}-{finalMax}";
         }
 
         public override string ToString()
