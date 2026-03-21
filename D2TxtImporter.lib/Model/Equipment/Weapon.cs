@@ -142,14 +142,8 @@ namespace D2TxtImporter.lib.Model.Equipment
                 
                 foreach (var dt in weapon.DamageTypes)
                 {
-                    if (dt.MinDamage == dt.MaxDamage)
-                    {
-                        dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
-                    }
-                    else
-                    {
-                        dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
-                    }
+                    dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
+                    dt.AverageDamage = (dt.MinDamage + dt.MaxDamage) / 2.0;
                 }
 
                 Weapons[weapon.Code] = weapon;

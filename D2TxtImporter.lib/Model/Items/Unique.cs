@@ -336,7 +336,13 @@ namespace D2TxtImporter.lib.Model.Items
                         string maxStr = maxDam1 == maxDam2 ? maxDam1.ToString() : $"({maxDam1}-{maxDam2})";
                         damageType.DamageString = $"{minStr} to {maxStr}";
                     }
+
+                    // Compute average using min of mins and max of maxes
+                    damageType.AverageDamage = (Math.Min(minDam1, minDam2) + Math.Max(maxDam1, maxDam2)) / 2.0;
                 }
+
+                // Extract elemental damage properties and add as additional damage types
+                AddElementalDamageTypes(unique.Properties, weapon.DamageTypes);
             }
             else if (unique.Equipment.EquipmentType == EquipmentType.Armor)
             {
@@ -474,6 +480,84 @@ namespace D2TxtImporter.lib.Model.Items
             }
         }
         
+        // Combined elemental damage codes (e.g. dmg-fire carries both min and max)
+        private static readonly HashSet<string> ElementalDamageCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+        {
+            "dmg-fire", "dmg-cold", "dmg-ltng", "dmg-pois", "dmg-mag"
+        };
+
+        // Separate min/max elemental damage codes (e.g. fire-min + fire-max)
+        private static readonly Dictionary<string, string> ElementalMinMaxPairs = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            { "fire-min", "fire-max" },
+            { "cold-min", "cold-max" },
+            { "ltng-min", "ltng-max" },
+            { "pois-min", "pois-max" }
+        };
+
+        private static void AddElementalDamageTypes(List<ItemProperty> properties, List<DamageType> damageTypes)
+        {
+            int elemMinSum = 0;
+            int elemMaxSum = 0;
+            bool hasElemental = false;
+
+            foreach (var property in properties)
+            {
+                // Handle combined codes like dmg-fire (min and max on one property)
+                if (ElementalDamageCodes.Contains(property.Property.Code))
+                {
+                    int minVal = property.Min ?? 0;
+                    int maxVal = property.Max ?? 0;
+
+                    // Poison damage (dmg-pois) stores bitrate values with duration in Parameter.
+                    // Convert to per-second damage: total = raw * frames / 256, dps = total / (frames / 25)
+                    if (string.Equals(property.Property.Code, "dmg-pois", StringComparison.OrdinalIgnoreCase))
+                    {
+                        int lenFrames = Utility.ToNullableInt(property.Parameter) ?? 0;
+                        if (lenFrames > 0)
+                        {
+                            double seconds = lenFrames / 25.0;
+                            minVal = (int)Math.Round(Math.Ceiling(minVal * lenFrames / 256.0) / seconds);
+                            maxVal = (int)Math.Round(Math.Ceiling(maxVal * lenFrames / 256.0) / seconds);
+                        }
+                    }
+
+                    elemMinSum += minVal;
+                    elemMaxSum += maxVal;
+                    hasElemental = true;
+                }
+            }
+
+            // Handle separate min/max codes like fire-min + fire-max
+            foreach (var pair in ElementalMinMaxPairs)
+            {
+                var minProp = properties.FirstOrDefault(p => string.Equals(p.Property.Code, pair.Key, StringComparison.OrdinalIgnoreCase));
+                var maxProp = properties.FirstOrDefault(p => string.Equals(p.Property.Code, pair.Value, StringComparison.OrdinalIgnoreCase));
+
+                if (minProp != null || maxProp != null)
+                {
+                    int minVal = minProp?.Min ?? 0;
+                    int maxVal = maxProp?.Max ?? maxProp?.Min ?? 0;
+
+                    elemMinSum += minVal;
+                    elemMaxSum += maxVal;
+                    hasElemental = true;
+                }
+            }
+
+            if (hasElemental)
+            {
+                damageTypes.Add(new DamageType
+                {
+                    Type = DamageTypeEnum.Elemental,
+                    MinDamage = elemMinSum,
+                    MaxDamage = elemMaxSum,
+                    DamageString = $"{elemMinSum} to {elemMaxSum}",
+                    AverageDamage = (elemMinSum + elemMaxSum) / 2.0
+                });
+            }
+        }
+
         private static readonly HashSet<string> ItemsToIgnore = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
         {
             // Add parts of the name for unique items you want to ignore case-insensitive

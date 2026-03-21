@@ -11,6 +11,7 @@ namespace D2TxtImporter.lib.Model.Types
         [JsonIgnore]
         public int MaxDamage { get; set; }
         public string DamageString { get; set; }
+        public double AverageDamage { get; set; }
 
         public object Clone()
         {
@@ -19,7 +20,8 @@ namespace D2TxtImporter.lib.Model.Types
                 DamageString = DamageString,
                 Type = Type,
                 MaxDamage = MaxDamage,
-                MinDamage = MinDamage
+                MinDamage = MinDamage,
+                AverageDamage = AverageDamage
             };
         }
 
@@ -34,6 +36,7 @@ namespace D2TxtImporter.lib.Model.Types
         OneHanded,
         TwoHanded,
         Thrown,
-        Normal
+        Normal,
+        Elemental
     }
 }
