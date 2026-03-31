@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Dictionaries
@@ -12,6 +13,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public string CharClass { get; set; }
         [JsonIgnore]
         public string SkillDesc { get; set; }
+        [JsonIgnore]
+        public string StrNameKey { get; set; }
+        public string LocalizedName { get; set; }
         public int RequiredLevel { get; set; }
         [JsonIgnore]
         private static Dictionary<int?, Skill> _idSkillDictionary;
@@ -20,11 +24,28 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         [JsonIgnore]
         private static Dictionary<string, Skill> _descSkillDictionary;
 
+        // Maps skilldesc.txt skilldesc value -> str name key
+        [JsonIgnore]
+        private static Dictionary<string, string> _skillDescToStrName;
+
         public static void Import(string excelFolder)
         {
             _idSkillDictionary = new Dictionary<int?, Skill>();
             _nameSkillDictionary = new Dictionary<string, Skill>();
             _descSkillDictionary = new Dictionary<string, Skill>();
+
+            // Load skilldesc.txt to build skilldesc -> str name mapping
+            _skillDescToStrName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var skillDescTable = Importer.ReadTxtFileToDictionaryList(excelFolder + "/skilldesc.txt");
+            foreach (var descRow in skillDescTable)
+            {
+                var skilldesc = descRow["skilldesc"];
+                var strName = descRow["str name"];
+                if (!string.IsNullOrEmpty(skilldesc) && !string.IsNullOrEmpty(strName))
+                {
+                    _skillDescToStrName[skilldesc] = strName;
+                }
+            }
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Skills.txt");
 
@@ -34,7 +55,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 if (!reqLevel.HasValue || reqLevel.Value < 1)
                 {
                     reqLevel = 1;
-                    //ExceptionHandler.LogException(new Exception($"Invalid required level for skill '{row["reqlevel"]}' in Skills.txt, should be an integer value 1 or above"));
+                }
+
+                var skilldescValue = row["skilldesc"];
+                string strNameKey = null;
+                string localizedName = null;
+
+                if (!string.IsNullOrEmpty(skilldescValue) && _skillDescToStrName.TryGetValue(skilldescValue, out strNameKey))
+                {
+                    if (!string.IsNullOrEmpty(strNameKey) && Table.Tables.ContainsKey(strNameKey))
+                    {
+                        localizedName = Table.GetValue(strNameKey);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(localizedName))
+                {
+                    localizedName = row["skill"];
                 }
 
                 var skill = new Skill
@@ -42,13 +79,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     Name = row["skill"],
                     Id = Utility.ToNullableInt(row["*Id"]),
                     CharClass = row["charclass"],
-                    SkillDesc = row["skilldesc"],
+                    SkillDesc = skilldescValue,
+                    StrNameKey = strNameKey,
+                    LocalizedName = localizedName,
                     RequiredLevel = reqLevel.Value
                 };
 
                 _idSkillDictionary[skill.Id] = skill;
                 _nameSkillDictionary[skill.Name] = skill;
-                _descSkillDictionary[skill.SkillDesc] = skill;
+                if (!string.IsNullOrEmpty(skill.SkillDesc))
+                {
+                    _descSkillDictionary[skill.SkillDesc] = skill;
+                }
             }
         }
 
@@ -74,7 +116,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         public override string ToString()
         {
-            return Name;
+            return LocalizedName ?? Name;
         }
     }
 }

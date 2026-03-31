@@ -128,17 +128,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             ItemStatCosts[ethereal.Stat] = ethereal;
 
-            var eledam = new ItemStatCost
-            {
-                Stat = "eledam",
-                DescriptionPriority = ItemStatCosts["firemindam"].DescriptionPriority,
-                DescriptionFunction = 30,
-                DescriptonStringPositive = "Adds %d Weapon %s Damage",
-                DescriptionValue = 3
-            };
-
-            ItemStatCosts["eledam"] = eledam;
-
             var dmgLtng = new ItemStatCost
             {
                 Stat = "dmg-ltng",
@@ -419,7 +408,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"+({valueString} Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} (Based on Character Level)";
+                            valueString = $"+({valueString} {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
 
                         case 7:
@@ -440,7 +429,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"({valueString}% Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)}% {lstValue} (Based on Character Level)";
+                            valueString = $"({valueString}% {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)}% {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
 
                         case 8:
@@ -461,7 +450,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"+({valueString} Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} (Based on Character Level)";
+                            valueString = $"+({valueString} {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
 
                         case 9:
@@ -482,7 +471,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"{lstValue} {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} ({valueString} Per Character Level)";
+                            valueString = $"{lstValue} {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} ({valueString} {Table.GetValue("increaseswithplaylevelX")})";
                             break;
 
                         case 11:
@@ -575,7 +564,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                             valueString = lstValue.Replace("%d%", value.Value.ToString())
                                 .Replace("%d", valueString)                                                                                                                                                                                                              
-                                .Replace("%s", CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.SkillDesc));
+                                .Replace("%s", skill.LocalizedName);
 
                             if (string.IsNullOrEmpty(skill.SkillDesc))
                             {
@@ -585,7 +574,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                         case 16:
                             valueString = lstValue.Replace("%d", valueString)
-                                .Replace("%s", Skill.GetSkill(parameter).Name);
+                                .Replace("%s", Skill.GetSkill(parameter).LocalizedName);
                             DescriptionValue = 3;
                             break;
 
@@ -629,7 +618,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                     throw new Exception(
                                         $"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'");
                                 }
-                                valueString = lstValue.Replace("%+d%", '+' + perLvlCalc).Replace("%+d", '+' + perLvlCalc).Replace("%d%", perLvlCalc).Replace("%d", perLvlCalc) + " (Per Character Level)";
+                                valueString = lstValue.Replace("%+d%", '+' + perLvlCalc).Replace("%+d", '+' + perLvlCalc).Replace("%d%", perLvlCalc).Replace("%d", perLvlCalc) + " " + Table.GetValue("increaseswithplaylevelX");
                             }
 
                             else
@@ -653,7 +642,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             break;
 
                         case 24:
-                            valueString = lstValue.Replace("%d/%d", $"{value}").Replace("%d", $"{value2}").Replace("%s", Skill.GetSkill(parameter).Name);
+                            valueString = lstValue.Replace("%d/%d", $"{value}").Replace("%d", $"{value2}").Replace("%s", Skill.GetSkill(parameter).LocalizedName);
 
                             break;
 
@@ -679,19 +668,19 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                     }
 
                                     reqString = $" ({charInfo.Class} Only)";
-                                    valueString = $"+{valueString} to {skillRandSkill.Name}{reqString}";
+                                    valueString = $"+{valueString} to {skillRandSkill.LocalizedName}{reqString}";
                                 }
                             }
 
                             else
                             {
                                 // No CharClass given — fallback to normal
-                                valueString = $"+{valueString} to {skillRandSkill.Name}";
+                                valueString = $"+{valueString} to {skillRandSkill.LocalizedName}";
                             }
                             break;
 
                         case 28:
-                            valueString = lstValue.Replace("%+d", '+' + valueString).Replace("%s", Skill.GetSkill(parameter).Name);
+                            valueString = lstValue.Replace("%+d", '+' + valueString).Replace("%s", Skill.GetSkill(parameter).LocalizedName);
                             break;
 
                         case 29: // Custom for sockets
@@ -734,39 +723,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 }
             }
 
-            // Check for and replace Skill Names for those reworked but not renamed in Skills.txt or are mispelled or just completely different
-            if (!string.IsNullOrEmpty(valueString))
-            {
-                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    { "stun", "Tectonic Slam" },
-                    { "concentrate", "Carnage" },
-                    { "poison explosion", "Poison Volley" },
-                    { "hunger", "Toxic Fangs" },
-                    { "quickness", "Burst of Speed" },
-                    { "wearwolf", "Werewolf" },
-                    { "wearbear", "Werebear" },
-                    { "shape shifting", "Lycanthropy" },
-                    { "dopplezon", "Decoy" },
-                    { "bloodgolem", "Blood Golem" },
-                    { "irongolem", "Iron Golem" },
-                    { "firegolem", "Fire Golem" },
-                    { "plague poppy", "Poison Creeper" },
-                    { "cycle of life", "Carrion Vine" },
-                    { "fenris", "Dire Wolf" },
-                    { "vines", "Solar Creeper" },
-                    { "fire trauma", "Fire Blast" },
-                    { "royal strike", "Phoenix Strike" }
-                };
-
-                foreach (var pair in replacements)
-                {
-                    if (valueString.IndexOf(" skills", StringComparison.OrdinalIgnoreCase) < 0)
-                    {
-                        valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
-                    }
-                }
-            }
 
             if (DescriptionValue.HasValue && !string.IsNullOrEmpty(lstValue))
             {
