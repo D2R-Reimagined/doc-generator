@@ -1,0 +1,447 @@
+======================================================================
+File Comparison Report
+Generated: 2026-04-01 18:05:31
+======================================================================
+
+======================================================================
+TSV File Comparison — global/excel
+NEW: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data\global\excel
+OLD: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data_old\global\excel
+======================================================================
+
+----------------------------------------------------------------------
+FILE-BY-FILE DIFFERENCES
+----------------------------------------------------------------------
+
+>>> cubemain.txt
+  Rows with cell changes (6):
+    [description=1 Fal Rune + 1 Perfect Topaz + 1 Uber Ancient Summon Material Act3 + 1 Crack of the Heavens -> Magnetic Crack of the Heavens]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+    [description=1 Io Rune + 1 Perfect Ruby + 1 Uber Ancient Summon Material Act4 + 1 Flame Rift -> Incendiary Flame Rift]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+    [description=1 Ko Rune + 1 Perfect Emerald + 1 Uber Ancient Summon Material Act1 + 1 Rotting Fissure -> Virulent Rotting Fissure                                                                                                                                                                                                ]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+    [description=1 Lum Rune + 1 Perfect Sapphire + 1 Uber Ancient Summon Material Act2 + 1 Cold Rupture -> Gelid Cold Rupture]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+    [description=1 Mal Rune + 1 Perfect Diamond + 1 Uber Ancient Summon Material Act5 + 1 Black Cleft -> Mystical Black Cleft]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+    [description=1 Pul Rune + 1 Perfect Amethyst + 1 Uber Ancient Summon Material Act5 + 1 Bone Break -> Breaching Bone Break]
+      lvl: (empty) -> 69
+      ilvl: 69 -> (empty)
+
+>>> monstats.txt
+  Rows with cell changes (6):
+    [Id=colbarbfrenzy]
+      SplEndDeath: (empty) -> 3
+    [Id=colbarbthrow]
+      SplEndDeath: (empty) -> 3
+    [Id=colbarbwhirl]
+      SplEndDeath: (empty) -> 3
+    [Id=colossal1]
+      SplEndDeath: (empty) -> 3
+    [Id=colossal2]
+      SplEndDeath: (empty) -> 3
+    [Id=colossal3]
+      SplEndDeath: (empty) -> 3
+
+>>> skills.txt
+  Rows with cell changes (1):
+    [skill=Ring of Fire]
+      calc1: 0 -> (empty)
+      *calc1 desc: Missile Velocity Adder -> "if sHitParam in the Server Missile is 0, then use calc1 to dictate the radius of the explosion."
+      calc3: (empty) -> 0
+      *calc3 desc: (empty) -> Missile Velocity Adder
+
+>>> sounds.txt
+  Rows with cell changes (3):
+    [Sound=Warlock_Skill_Seal_Death_Hit]
+      Volume Min: 40 -> 20
+      Volume Max: 89 -> 40
+    [Sound=Warlock_Skill_Seal_Lethargy_Hit]
+      Volume Min: 50 -> 20
+      Volume Max: 100 -> 40
+      Fade In: 5 -> 0
+    [Sound=Warlock_Skill_Seal_Rancor_Hit]
+      Volume Min: 40 -> 20
+      Volume Max: 100 -> 40
+      Fade In: 5 -> 0
+
+>>> weapons.txt
+  Rows with cell changes (4):
+    [code=bld]
+      OrmusMin: 1 -> 3
+      OrmusMax: 1 -> 3
+      OrmusMagicMin: 1 -> 3
+      OrmusMagicMax: 1 -> 3
+      OrmusMagicLvl: 20 -> 1
+      JamellaMin: 1 -> 5
+      JamellaMax: 1 -> 5
+      JamellaMagicMin: 1 -> 5
+      JamellaMagicMax: 1 -> 5
+      MalahMin: 1 -> 5
+      MalahMax: 1 -> 5
+      MalahMagicMin: 1 -> 5
+      MalahMagicMax: 1 -> 5
+    [code=dgr]
+      AkaraMin: 1 -> 3
+      AkaraMax: 1 -> 5
+      AkaraMagicMin: 1 -> 3
+      AkaraMagicMax: 1 -> 5
+      AkaraMagicLvl: 20 -> 1
+      DrognanMin: 1 -> 3
+      DrognanMax: 1 -> 5
+      DrognanMagicMin: 1 -> 3
+      DrognanMagicMax: 1 -> 5
+      DrognanMagicLvl: 20 -> 1
+    [code=dir]
+      AkaraMin: (empty) -> 2
+      AkaraMax: (empty) -> 3
+      AkaraMagicMin: (empty) -> 1
+      AkaraMagicMax: (empty) -> 2
+      AkaraMagicLvl: 255 -> 1
+      DrognanMin: 1 -> 4
+      DrognanMax: 1 -> 5
+      DrognanMagicMin: 1 -> 4
+      DrognanMagicMax: 1 -> 5
+      DrognanMagicLvl: 20 -> 1
+      CainMin: 1 -> (empty)
+      CainMax: 1 -> (empty)
+      CainMagicMin: 1 -> (empty)
+      CainMagicMax: 1 -> (empty)
+      CainMagicLvl: 1 -> 255
+    [code=kri]
+      OrmusMin: 1 -> 3
+      OrmusMax: 1 -> 5
+      OrmusMagicMin: (empty) -> 3
+      OrmusMagicMax: 1 -> 5
+      OrmusMagicLvl: 20 -> 1
+      JamellaMagicMin: 1 -> 3
+      JamellaMagicMax: 1 -> 5
+      MalahMagicMin: 1 -> 3
+      MalahMagicMax: 1 -> 5
+
+
+======================================================================
+JSON File Comparison — global/ui/layouts
+NEW: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data\global\ui\layouts
+OLD: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data_old\global\ui\layouts
+======================================================================
+
+----------------------------------------------------------------------
+FILE-BY-FILE DIFFERENCES
+----------------------------------------------------------------------
+
+>>> lootfiltermiscitempanelhd.json
+  ERROR comparing: Expecting value: line 8 column 3 (char 213)
+
+>>> lootfilteroptionspanelhd.json
+  ERROR comparing: Expecting property name enclosed in double quotes: line 53 column 17 (char 2261)
+
+>>> lootfilterprofilepanelhd.json
+  ERROR comparing: Expecting value: line 222 column 5 (char 6916)
+
+>>> videooptionspanelhd.json
+  Keys ADDED (282): children[1].children[0].children[10].children[1].fields.filename, children[1].children[0].children[10].children[1].fields.focusIndicatorFilename, children[1].children[0].children[10].children[1].fields.focusIndicatorOffset.x, children[1].children[0].children[10].children[1].fields.focusIndicatorOffset.y, children[1].children[0].children[10].children[1].fields.focusIndicatorPadding, children[1].children[0].children[10].children[1].fields.onClickMessage, children[1].children[0].children[10].children[1].fields.rect, children[1].children[0].children[10].children[1].fields.sound, children[1].children[0].children[10].children[1].fields.toggledFrame, children[1].children[0].children[10].children[1].fields.toggledHoveredFrame, children[1].children[0].children[10].children[1].fields.toggledPressedFrame, children[1].children[0].children[10].children[1].fields.tooltipString, children[1].children[0].children[10].children[1].fields.tooltipStyle.showAfterDelay, children[1].children[0].children[10].children[1].fields.untoggledDisabledFrame, children[1].children[0].children[10].children[1].fields.untoggledFrame, children[1].children[0].children[10].children[1].fields.untoggledHoveredFrame, children[1].children[0].children[10].children[1].fields.untoggledPressedFrame, children[1].children[0].children[10].children[1].name, children[1].children[0].children[10].children[1].type, children[1].children[0].children[11].children[1].fields.background... and 262 more
+  Keys REMOVED (247): children[1].children[0].children[10].children[0].children[0].fields.filename, children[1].children[0].children[10].children[0].children[0].fields.rect, children[1].children[0].children[10].children[0].children[0].name, children[1].children[0].children[10].children[0].children[0].type, children[1].children[0].children[11].children[1].children[0].children[0].fields.filename, children[1].children[0].children[11].children[1].children[0].children[0].name, children[1].children[0].children[11].children[1].children[0].children[0].type, children[1].children[0].children[11].children[1].children[0].fields.filename, children[1].children[0].children[11].children[1].children[0].fields.useAdvancedColoring, children[1].children[0].children[11].children[1].children[0].name, children[1].children[0].children[11].children[1].children[0].type, children[1].children[0].children[11].children[1].fields.focusIndicatorOffset.x, children[1].children[0].children[11].children[1].fields.focusIndicatorOffset.y, children[1].children[0].children[11].children[1].fields.fontType, children[1].children[0].children[11].children[1].fields.rect.height, children[1].children[0].children[11].children[1].fields.rect.width, children[1].children[0].children[11].children[1].fields.rect.x, children[1].children[0].children[11].children[1].fields.rect.y, children[1].children[0].children[12].children[1].fields.disabledColor, children[1].children[0].children[12].children[1].fields.enabledColor... and 227 more
+  Values changed (251):
+    children[1].children[0].children[0].children[0].fields.text: @OptionsMenuDisplay -> @HandheldTitle
+    children[1].children[0].children[0].children[0].name: Video Options -> Handheld Options
+    children[1].children[0].children[0].name: Row Video Options -> Row Handheld Options
+    children[1].children[0].children[10].children[0].fields.style: $StyleSettingsTitle -> $StyleSettingsText
+    children[1].children[0].children[10].children[0].fields.text: @Graphics -> @VSync
+    children[1].children[0].children[10].children[0].name: Graphics -> VSyncText
+    children[1].children[0].children[10].name: Row Graphics -> Row VSync
+    children[1].children[0].children[11].children[0].fields.text: @VRAMUsage -> @FramerateCap
+    children[1].children[0].children[11].children[0].name: VRAMUsageText -> FramerateCapText
+    children[1].children[0].children[11].children[1].fields.focusIndicatorFilename: Controller/HoverImages/Controller_vram_hover -> $OptionsSliderFocusIndicatorFilename
+    children[1].children[0].children[11].children[1].fields.tooltipString: @VRAMUsageTooltip -> @OptionsMenuFramerateCapTooltip
+    children[1].children[0].children[11].children[1].name: VRAMUsage -> FramerateCap
+    children[1].children[0].children[11].children[1].type: FocusableWidget -> SettingsSliderWidget
+    children[1].children[0].children[11].name: Row VRAMUsage -> Row FramerateCap
+    children[1].children[0].children[12].children[0].fields.style: $StyleSettingsText -> $StyleSettingsTitle
+    children[1].children[0].children[12].children[0].fields.text: @GraphicPresetsText -> @Graphics
+    children[1].children[0].children[12].children[0].name: GraphicPresetsText -> Graphics
+    children[1].children[0].children[12].name: Row GraphicPresets -> Row Graphics
+    children[1].children[0].children[13].children[0].fields.text: @TextureQuality -> @VRAMUsage
+    children[1].children[0].children[13].children[0].name: TextureQualityText -> VRAMUsageText
+    children[1].children[0].children[13].children[1].fields.focusIndicatorFilename: $OptionsCarouselFocusIndicatorFilename -> Controller/HoverImages/Controller_vram_hover
+    children[1].children[0].children[13].children[1].fields.tooltipString: @OptionsMenuTextureQualityTooltip -> @VRAMUsageTooltip
+    children[1].children[0].children[13].children[1].name: TextureQuality -> VRAMUsage
+    children[1].children[0].children[13].children[1].type: CarouselWidget -> FocusableWidget
+    children[1].children[0].children[13].name: Row TextureQuality -> Row VRAMUsage
+    children[1].children[0].children[14].children[0].fields.text: @AnisotropicFiltering -> @GraphicPresetsText
+    children[1].children[0].children[14].children[0].name: TextureAnisotropyText -> GraphicPresetsText
+    children[1].children[0].children[14].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetTextureAnisotropy -> OptionsPanelMessage:SetGraphicPresets
+    children[1].children[0].children[14].children[1].fields.states[0]: Anisotropy1 -> Low
+    children[1].children[0].children[14].children[1].fields.states[1]: Anisotropy2 -> Medium
+    children[1].children[0].children[14].children[1].fields.states[2]: Anisotropy4 -> High
+    children[1].children[0].children[14].children[1].fields.states[3]: Anisotropy8 -> VeryHigh
+    children[1].children[0].children[14].children[1].fields.states[4]: Anisotropy16 -> BatterySaver
+    children[1].children[0].children[14].children[1].fields.tooltipString: @OptionsMenuAnisotropicFilteringTooltip -> @GraphicPresetsTooltip
+    children[1].children[0].children[14].children[1].fields.wrapAround: False -> True
+    children[1].children[0].children[14].children[1].name: TextureAnisotropy -> GraphicPresets
+    children[1].children[0].children[14].name: Row TextureAnisotropy -> Row GraphicPresets
+    children[1].children[0].children[15].children[0].fields.text: @AmbientOcclusionQuality -> @TextureQuality
+    children[1].children[0].children[15].children[0].name: AmbientOcclusionQualityText -> TextureQualityText
+    children[1].children[0].children[15].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetAmbientOcclusionQuality -> OptionsPanelMessage:SetTextureQuality
+    children[1].children[0].children[15].children[1].fields.states[0]: Off -> Low
+    children[1].children[0].children[15].children[1].fields.states[1]: Low -> Medium
+    children[1].children[0].children[15].children[1].fields.states[2]: Medium -> High
+    children[1].children[0].children[15].children[1].fields.states[3]: High -> VeryHigh
+    children[1].children[0].children[15].children[1].fields.tooltipString: @OptionsMenuAmbientOcclusionQualityTooltip -> @OptionsMenuTextureQualityTooltip
+    children[1].children[0].children[15].children[1].name: AmbientOcclusionQuality -> TextureQuality
+    children[1].children[0].children[15].name: Row AmbientOcclusionQuality -> Row TextureQuality
+    children[1].children[0].children[16].children[0].fields.text: @CharacterDetail -> @AnisotropicFiltering
+    children[1].children[0].children[16].children[0].name: CharacterDetailText -> TextureAnisotropyText
+    children[1].children[0].children[16].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetCharacterDetail -> OptionsPanelMessage:SetTextureAnisotropy
+    children[1].children[0].children[16].children[1].fields.states[0]: Low -> Anisotropy1
+    children[1].children[0].children[16].children[1].fields.states[1]: Medium -> Anisotropy2
+    children[1].children[0].children[16].children[1].fields.states[2]: High -> Anisotropy4
+    children[1].children[0].children[16].children[1].fields.states[3]: VeryHigh -> Anisotropy8
+    children[1].children[0].children[16].children[1].fields.tooltipString: @OptionsMenuCharacterDetailTooltip -> @OptionsMenuAnisotropicFilteringTooltip
+    children[1].children[0].children[16].children[1].name: CharacterDetail -> TextureAnisotropy
+    children[1].children[0].children[16].name: Row CharacterDetail -> Row TextureAnisotropy
+    children[1].children[0].children[17].children[0].fields.text: @EnvironmentDetail -> @AmbientOcclusionQuality
+    children[1].children[0].children[17].children[0].name: EnvironmentDetailText -> AmbientOcclusionQualityText
+    children[1].children[0].children[17].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetEnvironmentDetail -> OptionsPanelMessage:SetAmbientOcclusionQuality
+    children[1].children[0].children[17].children[1].fields.states[0]: Low -> Off
+    children[1].children[0].children[17].children[1].fields.states[1]: Medium -> Low
+    children[1].children[0].children[17].children[1].fields.states[2]: High -> Medium
+    children[1].children[0].children[17].children[1].fields.states[3]: VeryHigh -> High
+    children[1].children[0].children[17].children[1].fields.tooltipString: @OptionsMenuEnvironmentDetailTooltip -> @OptionsMenuAmbientOcclusionQualityTooltip
+    children[1].children[0].children[17].children[1].name: EnvironmentDetail -> AmbientOcclusionQuality
+    children[1].children[0].children[17].name: Row EnvironmentDetail -> Row AmbientOcclusionQuality
+    children[1].children[0].children[18].children[0].fields.text: @TransparencyQuality -> @CharacterDetail
+    children[1].children[0].children[18].children[0].name: TransparencyQualityText -> CharacterDetailText
+    children[1].children[0].children[18].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetTransparencyQuality -> OptionsPanelMessage:SetCharacterDetail
+    children[1].children[0].children[18].children[1].fields.states[0]: High -> Low
+    children[1].children[0].children[18].children[1].fields.states[1]: VeryHigh -> Medium
+    children[1].children[0].children[18].children[1].fields.states[2]: Ultra -> High
+    children[1].children[0].children[18].children[1].fields.tooltipString: @OptionsMenuTransparencyQualityTooltip -> @OptionsMenuCharacterDetailTooltip
+    children[1].children[0].children[18].children[1].name: TransparencyQuality -> CharacterDetail
+    children[1].children[0].children[18].name: Row TransparencyQuality -> Row CharacterDetail
+    children[1].children[0].children[19].children[0].fields.text: @ShadowQuality -> @EnvironmentDetail
+    children[1].children[0].children[19].children[0].name: ShadowQualityText -> EnvironmentDetailText
+    children[1].children[0].children[19].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetShadowQuality -> OptionsPanelMessage:SetEnvironmentDetail
+    children[1].children[0].children[19].children[1].fields.tooltipString: @OptionsMenuShadowQualityTooltip -> @OptionsMenuEnvironmentDetailTooltip
+    children[1].children[0].children[19].children[1].name: ShadowQuality -> EnvironmentDetail
+    children[1].children[0].children[19].name: Row ShadowQuality -> Row EnvironmentDetail
+    children[1].children[0].children[1].children[0].fields.text: @OptionsMenuDisplayMode -> @DesktopModeSettingName
+    children[1].children[0].children[1].children[0].name: WindowModeText -> DesktopModeText
+    children[1].children[0].children[1].children[1].fields.focusIndicatorFilename: $OptionsDropDownFocusIndicatorFilename -> $OptionsToggleFocusIndicatorFilename
+    children[1].children[0].children[1].children[1].fields.rect: $OptionsDropDownRect -> $OptionsToggleRect
+    children[1].children[0].children[1].children[1].fields.tooltipString: @OptionsMenuWindowModeTooltip -> @DesktopModeSettingTooltip
+    children[1].children[0].children[1].children[1].name: WindowMode -> DesktopMode
+    children[1].children[0].children[1].children[1].type: DropdownListWidget -> ToggleButtonWidget
+    children[1].children[0].children[1].name: Row WindowMode -> Row DesktopMode
+    children[1].children[0].children[20].children[0].fields.text: @AntiAliasing -> @TransparencyQuality
+    children[1].children[0].children[20].children[0].name: AntiAliasingText -> TransparencyQualityText
+    children[1].children[0].children[20].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetAntiAliasing -> OptionsPanelMessage:SetTransparencyQuality
+    children[1].children[0].children[20].children[1].fields.states[0]: Off -> High
+    children[1].children[0].children[20].children[1].fields.states[1]: FXAA -> VeryHigh
+    children[1].children[0].children[20].children[1].fields.states[2]: SMAA1x -> Ultra
+    children[1].children[0].children[20].children[1].fields.tooltipString: @OptionsMenuAntiAliasingTooltip -> @OptionsMenuTransparencyQualityTooltip
+    children[1].children[0].children[20].children[1].name: AntiAliasing -> TransparencyQuality
+    children[1].children[0].children[20].name: Row AntiAliasing -> Row TransparencyQuality
+    children[1].children[0].children[21].children[0].fields.text: @DynamicResolutionScaling -> @ShadowQuality
+    children[1].children[0].children[21].children[0].name: DynamicResolutionScalingText -> ShadowQualityText
+    children[1].children[0].children[21].children[1].fields.focusIndicatorFilename: $OptionsToggleFocusIndicatorFilename -> $OptionsCarouselFocusIndicatorFilename
+    children[1].children[0].children[21].children[1].fields.focusIndicatorPadding: $OptionsToggleFocusIndicatorPadding -> $OptionsCarouselFocusIndicatorPadding
+    children[1].children[0].children[21].children[1].fields.rect: $OptionsToggleRect -> $OptionsCarouselRect
+    children[1].children[0].children[21].children[1].fields.tooltipString: @OptionsMenuDynamicResolutionScalingTooltip -> @OptionsMenuShadowQualityTooltip
+    children[1].children[0].children[21].children[1].name: DynamicResolutionScaling -> ShadowQuality
+    children[1].children[0].children[21].children[1].type: ToggleButtonWidget -> CarouselWidget
+    children[1].children[0].children[21].name: Row DynamicResolutionScaling -> Row ShadowQuality
+    children[1].children[0].children[22].children[0].fields.text: @FramerateTarget -> @AntiAliasing
+    children[1].children[0].children[22].children[0].name: FramerateTargetText -> AntiAliasingText
+    children[1].children[0].children[22].children[1].fields.focusIndicatorFilename: $OptionsSliderFocusIndicatorFilename -> $OptionsCarouselFocusIndicatorFilename
+    children[1].children[0].children[22].children[1].fields.focusIndicatorPadding: $OptionsSliderFocusIndicatorPadding -> $OptionsCarouselFocusIndicatorPadding
+    children[1].children[0].children[22].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetFramerateTarget -> OptionsPanelMessage:SetAntiAliasing
+    children[1].children[0].children[22].children[1].fields.rect: $OptionsSliderRect -> $OptionsCarouselRect
+    children[1].children[0].children[22].children[1].fields.tooltipString: @MinimumFramerateTooltip -> @OptionsMenuAntiAliasingTooltip
+    children[1].children[0].children[22].children[1].name: FramerateTarget -> AntiAliasing
+    children[1].children[0].children[22].children[1].type: SettingsSliderWidget -> CarouselWidget
+    children[1].children[0].children[22].name: Row FramerateTarget -> Row AntiAliasing
+    children[1].children[0].children[23].children[0].fields.text: @VfxQuality -> @DynamicResolutionScaling
+    children[1].children[0].children[23].children[0].name: VfxQualityText -> DynamicResolutionScalingText
+    children[1].children[0].children[23].children[1].fields.focusIndicatorFilename: $OptionsCarouselFocusIndicatorFilename -> $OptionsToggleFocusIndicatorFilename
+    children[1].children[0].children[23].children[1].fields.focusIndicatorPadding: $OptionsCarouselFocusIndicatorPadding -> $OptionsToggleFocusIndicatorPadding
+    children[1].children[0].children[23].children[1].fields.rect: $OptionsCarouselRect -> $OptionsToggleRect
+    children[1].children[0].children[23].children[1].fields.tooltipString: @OptionsMenuVFXQualityTooltip -> @OptionsMenuDynamicResolutionScalingTooltip
+    children[1].children[0].children[23].children[1].name: VfxQuality -> DynamicResolutionScaling
+    children[1].children[0].children[23].children[1].type: CarouselWidget -> ToggleButtonWidget
+    children[1].children[0].children[23].name: Row VfxQuality -> Row DynamicResolutionScaling
+    children[1].children[0].children[24].children[0].fields.text: @VfxLightingQuality -> @FramerateTarget
+    children[1].children[0].children[24].children[0].name: VfxLightingQualityText -> FramerateTargetText
+    children[1].children[0].children[24].children[1].fields.focusIndicatorFilename: $OptionsCarouselFocusIndicatorFilename -> $OptionsSliderFocusIndicatorFilename
+    children[1].children[0].children[24].children[1].fields.focusIndicatorPadding: $OptionsCarouselFocusIndicatorPadding -> $OptionsSliderFocusIndicatorPadding
+    children[1].children[0].children[24].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetVfxLightingQuality -> OptionsPanelMessage:SetFramerateTarget
+    children[1].children[0].children[24].children[1].fields.rect: $OptionsCarouselRect -> $OptionsSliderRect
+    children[1].children[0].children[24].children[1].fields.tooltipString: @OptionsMenuVFXLightingQualityTooltip -> @MinimumFramerateTooltip
+    children[1].children[0].children[24].children[1].name: VfxLightingQuality -> FramerateTarget
+    children[1].children[0].children[24].children[1].type: CarouselWidget -> SettingsSliderWidget
+    children[1].children[0].children[24].name: Row VfxLightingQuality -> Row FramerateTarget
+    children[1].children[0].children[25].children[0].fields.style: $StyleSettingsTitle -> $StyleSettingsText
+    children[1].children[0].children[25].children[0].fields.text: @LegacyVideoOptionsHD -> @VfxQuality
+    children[1].children[0].children[25].children[0].name: Legacy Video Options -> VfxQualityText
+    children[1].children[0].children[25].name: Row Legacy Video Options -> Row VfxQuality
+    children[1].children[0].children[26].children[0].fields.text: @GameResolutionHD -> @VfxLightingQuality
+    children[1].children[0].children[26].children[0].name: ResolutionText -> VfxLightingQualityText
+    children[1].children[0].children[26].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetResolution -> OptionsPanelMessage:SetVfxLightingQuality
+    children[1].children[0].children[26].children[1].fields.states[0]: OptionsMenuLegacyGameResolution640x480 -> Low
+    children[1].children[0].children[26].children[1].fields.states[1]: OptionsMenuLegacyGameResolution800x600 -> Medium
+    children[1].children[0].children[26].children[1].fields.tooltipString: @OptionsMenuLegacyGameResolutionTooltip -> @OptionsMenuVFXLightingQualityTooltip
+    children[1].children[0].children[26].children[1].name: Resolution -> VfxLightingQuality
+    children[1].children[0].children[26].name: Row Resolution -> Row VfxLightingQuality
+    children[1].children[0].children[27].children[0].fields.style: $StyleSettingsText -> $StyleSettingsTitle
+    children[1].children[0].children[27].children[0].fields.text: @LightingQualityHD -> @LegacyVideoOptionsHD
+    children[1].children[0].children[27].children[0].name: LightingQualityText -> Legacy Video Options
+    children[1].children[0].children[27].name: Row LightingQuality -> Row Legacy Video Options
+    children[1].children[0].children[28].children[0].fields.text: @BlendedShadowsHD -> @GameResolutionHD
+    children[1].children[0].children[28].children[0].name: BlendedShadowsText -> ResolutionText
+    children[1].children[0].children[28].children[1].fields.focusIndicatorFilename: $OptionsToggleFocusIndicatorFilename -> $OptionsCarouselFocusIndicatorFilename
+    children[1].children[0].children[28].children[1].fields.focusIndicatorPadding: $OptionsToggleFocusIndicatorPadding -> $OptionsCarouselFocusIndicatorPadding
+    children[1].children[0].children[28].children[1].fields.rect: $OptionsToggleRect -> $OptionsCarouselRect
+    children[1].children[0].children[28].children[1].fields.tooltipString: @OptionsMenuLegacyBlendedShadowsTooltip -> @OptionsMenuLegacyGameResolutionTooltip
+    children[1].children[0].children[28].children[1].name: BlendedShadows -> Resolution
+    children[1].children[0].children[28].children[1].type: ToggleButtonWidget -> CarouselWidget
+    children[1].children[0].children[28].name: Row BlendedShadows -> Row Resolution
+    children[1].children[0].children[29].children[0].fields.text: @PerspectiveHD -> @LightingQualityHD
+    children[1].children[0].children[29].children[0].name: PerspectiveText -> LightingQualityText
+    children[1].children[0].children[29].children[1].fields.focusIndicatorFilename: $OptionsToggleFocusIndicatorFilename -> $OptionsCarouselFocusIndicatorFilename
+    children[1].children[0].children[29].children[1].fields.focusIndicatorPadding: $OptionsToggleFocusIndicatorPadding -> $OptionsCarouselFocusIndicatorPadding
+    children[1].children[0].children[29].children[1].fields.rect: $OptionsToggleRect -> $OptionsCarouselRect
+    children[1].children[0].children[29].children[1].fields.tooltipString: @OptionsMenuLegacyPerspectiveModeTooltip -> @OptionsMenuLegacyLightingQualityTooltip
+    children[1].children[0].children[29].children[1].name: Perspective -> LightingQuality
+    children[1].children[0].children[29].children[1].type: ToggleButtonWidget -> CarouselWidget
+    children[1].children[0].children[29].name: Row Perspective -> Row LightingQuality
+    children[1].children[0].children[2].children[0].fields.style: $StyleSettingsText -> $StyleSettingsTitle
+    children[1].children[0].children[2].children[0].fields.text: @ScreenResolution -> @OptionsMenuDisplay
+    children[1].children[0].children[2].children[0].name: ScreenResolutionText -> Video Options
+    children[1].children[0].children[2].name: Row ScreenResolution -> Row Video Options
+    children[1].children[0].children[30].children[0].fields.text: @ContrastHD -> @BlendedShadowsHD
+    children[1].children[0].children[30].children[0].name: ContrastText -> BlendedShadowsText
+    children[1].children[0].children[30].children[1].fields.focusIndicatorFilename: $OptionsSliderFocusIndicatorFilename -> $OptionsToggleFocusIndicatorFilename
+    children[1].children[0].children[30].children[1].fields.focusIndicatorPadding: $OptionsSliderFocusIndicatorPadding -> $OptionsToggleFocusIndicatorPadding
+    children[1].children[0].children[30].children[1].fields.rect: $OptionsSliderRect -> $OptionsToggleRect
+    children[1].children[0].children[30].children[1].fields.tooltipString: @OptionsMenuLegacyContrastTooltip -> @OptionsMenuLegacyBlendedShadowsTooltip
+    children[1].children[0].children[30].children[1].name: Contrast -> BlendedShadows
+    children[1].children[0].children[30].children[1].type: SettingsSliderWidget -> ToggleButtonWidget
+    children[1].children[0].children[30].name: Row Contrast -> Row BlendedShadows
+    children[1].children[0].children[31].children[0].fields.text: @LegacyGraphicsModeLabel -> @PerspectiveHD
+    children[1].children[0].children[31].children[0].name: LegacyGraphicsModeText -> PerspectiveText
+    children[1].children[0].children[31].children[1].fields.focusIndicatorFilename: $OptionsCarouselFocusIndicatorFilename -> $OptionsToggleFocusIndicatorFilename
+    children[1].children[0].children[31].children[1].fields.focusIndicatorPadding: $OptionsCarouselFocusIndicatorPadding -> $OptionsToggleFocusIndicatorPadding
+    children[1].children[0].children[31].children[1].fields.rect: $OptionsCarouselRect -> $OptionsToggleRect
+    children[1].children[0].children[31].children[1].fields.tooltipString: @LegacyGraphicsModeTooltip -> @OptionsMenuLegacyPerspectiveModeTooltip
+    children[1].children[0].children[31].children[1].name: LegacyGraphicsMode -> Perspective
+    children[1].children[0].children[31].children[1].type: CarouselWidget -> ToggleButtonWidget
+    children[1].children[0].children[31].name: Row LegacyGraphicsMode -> Row Perspective
+    children[1].children[0].children[32].name: Row Spacer -> Row Contrast
+    children[1].children[0].children[3].children[0].fields.text: @DLSS -> @OptionsMenuDisplayMode
+    children[1].children[0].children[3].children[0].name: ResolutionScaleText -> WindowModeText
+    children[1].children[0].children[3].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetDLSSMode -> OptionsPanelMessage:SetWindowMode
+    children[1].children[0].children[3].children[1].fields.states[0]: @Off -> @Windowed
+    children[1].children[0].children[3].children[1].fields.states[1]: @Auto -> @Fullscreen
+    children[1].children[0].children[3].children[1].fields.tooltipString: @DLSSTooltip -> @OptionsMenuWindowModeTooltip
+    children[1].children[0].children[3].children[1].name: DLSS -> WindowMode
+    children[1].children[0].children[3].name: Row DLSS -> Row WindowMode
+    children[1].children[0].children[4].children[0].fields.text: @ResolutionScale -> @ScreenResolution
+    children[1].children[0].children[4].children[0].name: ResolutionScaleText -> ScreenResolutionText
+    children[1].children[0].children[4].children[1].fields.focusIndicatorFilename: $OptionsSliderFocusIndicatorFilename -> $OptionsDropDownFocusIndicatorFilename
+    children[1].children[0].children[4].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetResolutionScale -> OptionsPanelMessage:SetScreenResolution
+    children[1].children[0].children[4].children[1].fields.rect: $OptionsSliderRect -> $OptionsDropDownRect
+    children[1].children[0].children[4].children[1].fields.tooltipString: @OptionsMenuResolutionScaleTooltip -> @OptionsMenuScreenResolutionTooltip
+    children[1].children[0].children[4].children[1].name: ResolutionScale -> ScreenResolution
+    children[1].children[0].children[4].children[1].type: SettingsSliderWidget -> DropdownListWidget
+    children[1].children[0].children[4].name: Row ResolutionScale -> Row ScreenResolution
+    children[1].children[0].children[5].children[0].fields.text: @Sharpening -> @DLSS
+    children[1].children[0].children[5].children[0].name: SharpeningText -> ResolutionScaleText
+    children[1].children[0].children[5].children[1].fields.focusIndicatorFilename: $OptionsSliderFocusIndicatorFilename -> $OptionsDropDownFocusIndicatorFilename
+    children[1].children[0].children[5].children[1].fields.onUpdateMessage: OptionsPanelMessage:SetSharpening -> OptionsPanelMessage:SetDLSSMode
+    children[1].children[0].children[5].children[1].fields.rect: $OptionsSliderRect -> $OptionsDropDownRect
+    children[1].children[0].children[5].children[1].fields.tooltipString: @OptionsMenuSharpeningTooltip -> @DLSSTooltip
+    children[1].children[0].children[5].children[1].name: Sharpening -> DLSS
+    children[1].children[0].children[5].children[1].type: SettingsSliderWidget -> DropdownListWidget
+    children[1].children[0].children[5].name: Row Sharpening -> Row DLSS
+    children[1].children[0].children[6].children[0].fields.text: @BrightnessHD -> @ResolutionScale
+    children[1].children[0].children[6].children[0].name: GammaCalibrationText -> ResolutionScaleText
+    children[1].children[0].children[6].children[1].fields.focusIndicatorFilename: Controller/HoverImages/FrontEndButtonSmall_Hover -> $OptionsSliderFocusIndicatorFilename
+    children[1].children[0].children[6].children[1].fields.tooltipString: @OptionsMenuGammaTooltip -> @OptionsMenuResolutionScaleTooltip
+    children[1].children[0].children[6].children[1].name: GammaCalibration -> ResolutionScale
+    children[1].children[0].children[6].children[1].type: ButtonWidget -> SettingsSliderWidget
+    children[1].children[0].children[6].name: Row GammaCalibration -> Row ResolutionScale
+    children[1].children[0].children[7].children[0].fields.text: @ScreenSpace -> @Sharpening
+    children[1].children[0].children[7].children[0].name: ScreenSpaceCalibrationText -> SharpeningText
+    children[1].children[0].children[7].children[1].fields.focusIndicatorFilename: Controller/HoverImages/FrontEndButtonSmall_Hover -> $OptionsSliderFocusIndicatorFilename
+    children[1].children[0].children[7].children[1].fields.tooltipString: @OptionsMenuScreenSpaceTooltip -> @OptionsMenuSharpeningTooltip
+    children[1].children[0].children[7].children[1].name: ScreenSpaceCalibration -> Sharpening
+    children[1].children[0].children[7].children[1].type: ButtonWidget -> SettingsSliderWidget
+    children[1].children[0].children[7].name: Row ScreenSpaceCalibration -> Row Sharpening
+    children[1].children[0].children[8].children[0].fields.text: @VSync -> @BrightnessHD
+    children[1].children[0].children[8].children[0].name: VSyncText -> GammaCalibrationText
+    children[1].children[0].children[8].children[1].fields.filename: Lobby\CreateGame\CreateGame_AdvancedCheckbox -> FrontEnd/HD/Final/FrontEnd_ButtonSmall
+    children[1].children[0].children[8].children[1].fields.focusIndicatorFilename: $OptionsToggleFocusIndicatorFilename -> Controller/HoverImages/FrontEndButtonSmall_Hover
+    children[1].children[0].children[8].children[1].fields.onClickMessage: OptionsPanelMessage:SetVSync -> OptionsPanelMessage:OpenCalibrationPanel
+    children[1].children[0].children[8].children[1].fields.sound: cursor_menu_select_hd -> cursor_select
+    children[1].children[0].children[8].children[1].fields.tooltipString: @OptionsMenuVerticalSyncTooltip -> @OptionsMenuGammaTooltip
+    children[1].children[0].children[8].children[1].name: VSync -> GammaCalibration
+    children[1].children[0].children[8].children[1].type: ToggleButtonWidget -> ButtonWidget
+    children[1].children[0].children[8].name: Row VSync -> Row GammaCalibration
+    children[1].children[0].children[9].children[0].fields.text: @FramerateCap -> @ScreenSpace
+    children[1].children[0].children[9].children[0].name: FramerateCapText -> ScreenSpaceCalibrationText
+    children[1].children[0].children[9].children[1].fields.focusIndicatorFilename: $OptionsSliderFocusIndicatorFilename -> Controller/HoverImages/FrontEndButtonSmall_Hover
+    children[1].children[0].children[9].children[1].fields.tooltipString: @OptionsMenuFramerateCapTooltip -> @OptionsMenuScreenSpaceTooltip
+    children[1].children[0].children[9].children[1].name: FramerateCap -> ScreenSpaceCalibration
+    children[1].children[0].children[9].children[1].type: SettingsSliderWidget -> ButtonWidget
+    children[1].children[0].children[9].name: Row FramerateCap -> Row ScreenSpaceCalibration
+
+
+======================================================================
+JSON File Comparison — hd/global/excel
+NEW: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data\hd\global\excel
+OLD: C:\Users\lemin\Downloads\z_D2R Tools\zz_Warlock Patch\CASC Files\data_old\hd\global\excel
+======================================================================
+
+----------------------------------------------------------------------
+FILE-BY-FILE DIFFERENCES
+----------------------------------------------------------------------
+
+>>> controllerskillsettings.json
+
+>>> desecratedzones.json
+  Keys ADDED (1): desecrated_zones[0].zones[10].levels[0].waypoint_level_id
+  Keys REMOVED (6): desecrated_zones[0].manual_zones[0].zones[0].levels[17].waypoint_level_id, desecrated_zones[0].zones[10].levels[2].waypoint_level_id, desecrated_zones[0].zones[10].levels[3].level_id, desecrated_zones[0].zones[10].levels[3].name, desecrated_zones[0].zones[10].levels[3].type, desecrated_zones[0].zones[5].levels[0].waypoint_level_id
+  Values changed (4):
+    desecrated_zones[0].zones[10].levels[0].level_id: 0 -> 47
+    desecrated_zones[0].zones[10].levels[1].level_id: 47 -> 48
+    desecrated_zones[0].zones[10].levels[1].waypoint_level_id: 40 -> 48
+    desecrated_zones[0].zones[10].levels[2].level_id: 48 -> 49
+
+
+======================================================================
+SUMMARY
+======================================================================
+  [TSV File Comparison — global/excel]
+    Total files examined: 90
+    Files only in NEW: 0
+    Files only in OLD: 0
+    Common files - identical: 85
+    Common files - different: 5
+  [JSON File Comparison — global/ui/layouts]
+    Total files examined: 205
+    Files only in NEW: 0
+    Files only in OLD: 0
+    Common files - identical: 201
+    Common files - different: 4
+  [JSON File Comparison — hd/global/excel]
+    Total files examined: 12
+    Files only in NEW: 0
+    Files only in OLD: 0
+    Common files - identical: 10
+    Common files - different: 2

@@ -1,15 +1,21 @@
 """
-Compare UTF-8 no-BOM .txt files (TSV tables) between two directories
-and output the differences.
+Compare UTF-8 no-BOM .txt files (TSV tables) and .json files between two
+directory trees and output the differences.
 
 Usage:
     python compare_tsv.py [new_dir] [old_dir] [--output FILE]
 
 Defaults to the Warlock Patch CASC directories if no arguments are given.
+The script compares:
+  - global/excel   (.txt TSV files)
+  - global/ui/layouts (.json files)
+  - hd/global/excel   (.json files)
 """
 
 import os
 import sys
+import re
+import json
 import argparse
 import csv
 from pathlib import Path
@@ -151,44 +157,114 @@ def compare_files(new_path, old_path):
     return diffs
 
 
-def main():
-    parser = argparse.ArgumentParser(description="Compare TSV .txt files between two directories.")
-    parser.add_argument("new_dir", nargs="?", default=DEFAULT_NEW,
-                        help="Path to the NEW directory (default: data\\global\\excel)")
-    parser.add_argument("old_dir", nargs="?", default=DEFAULT_OLD,
-                        help="Path to the OLD directory (default: data_old\\global\\excel)")
-    parser.add_argument("--output", "-o", default=None,
-                        help="Output file path (default: print to console)")
-    args = parser.parse_args()
+# ---------------------------------------------------------------------------
+# JSON comparison helpers
+# ---------------------------------------------------------------------------
 
-    new_dir = Path(args.new_dir)
-    old_dir = Path(args.old_dir)
+def _flatten_json(obj, prefix=""):
+    """Flatten a nested JSON object into a dict of dotted-path -> value."""
+    items = {}
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            new_key = f"{prefix}.{k}" if prefix else k
+            items.update(_flatten_json(v, new_key))
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            new_key = f"{prefix}[{i}]"
+            items.update(_flatten_json(v, new_key))
+    else:
+        items[prefix] = obj
+    return items
 
-    if not new_dir.exists():
-        print(f"ERROR: New directory not found: {new_dir}")
-        sys.exit(1)
-    if not old_dir.exists():
-        print(f"ERROR: Old directory not found: {old_dir}")
-        sys.exit(1)
 
-    new_files = {f.name for f in new_dir.glob("*.txt")}
-    old_files = {f.name for f in old_dir.glob("*.txt")}
+def _strip_trailing_commas(text):
+    """Remove trailing commas before } or ] so json.loads can parse the data."""
+    return re.sub(r",\s*([}\]])", r"\1", text)
+
+
+def _load_json_lenient(filepath):
+    """Load a JSON file, tolerating trailing commas."""
+    with open(filepath, "r", encoding="utf-8-sig") as f:
+        raw = f.read()
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        return json.loads(_strip_trailing_commas(raw))
+
+
+def compare_json_files(new_path, old_path):
+    """Compare two JSON files and return a list of difference descriptions."""
+    diffs = []
+
+    old_data = _load_json_lenient(old_path)
+    new_data = _load_json_lenient(new_path)
+
+    old_flat = _flatten_json(old_data)
+    new_flat = _flatten_json(new_data)
+
+    old_keys = set(old_flat.keys())
+    new_keys = set(new_flat.keys())
+
+    added_keys = sorted(new_keys - old_keys)
+    removed_keys = sorted(old_keys - new_keys)
+    common_keys = sorted(old_keys & new_keys)
+
+    if added_keys:
+        if len(added_keys) <= 20:
+            diffs.append(f"  Keys ADDED ({len(added_keys)}): {', '.join(added_keys)}")
+        else:
+            diffs.append(f"  Keys ADDED ({len(added_keys)}): {', '.join(added_keys[:20])}... and {len(added_keys)-20} more")
+
+    if removed_keys:
+        if len(removed_keys) <= 20:
+            diffs.append(f"  Keys REMOVED ({len(removed_keys)}): {', '.join(removed_keys)}")
+        else:
+            diffs.append(f"  Keys REMOVED ({len(removed_keys)}): {', '.join(removed_keys[:20])}... and {len(removed_keys)-20} more")
+
+    changed = []
+    for k in common_keys:
+        if old_flat[k] != new_flat[k]:
+            changed.append(k)
+
+    if changed:
+        diffs.append(f"  Values changed ({len(changed)}):")
+        for k in changed:
+            old_display = old_flat[k] if old_flat[k] not in (None, "") else "(empty)"
+            new_display = new_flat[k] if new_flat[k] not in (None, "") else "(empty)"
+            diffs.append(f"    {k}: {old_display} -> {new_display}")
+
+    return diffs
+
+
+# ---------------------------------------------------------------------------
+# Generic directory comparison
+# ---------------------------------------------------------------------------
+
+def compare_directory_pair(new_dir, old_dir, glob_pattern, compare_func, section_title, output_lines):
+    """Compare files matching *glob_pattern* between two directories.
+
+    Appends results to *output_lines* and returns
+    (total_files, only_new, only_old, identical, different) counts.
+    """
+    if not new_dir.exists() and not old_dir.exists():
+        return 0, 0, 0, 0, 0
+
+    new_files = {f.name for f in new_dir.glob(glob_pattern)} if new_dir.exists() else set()
+    old_files = {f.name for f in old_dir.glob(glob_pattern)} if old_dir.exists() else set()
 
     all_files = sorted(new_files | old_files)
     only_in_new = sorted(new_files - old_files)
     only_in_old = sorted(old_files - new_files)
     common_files = sorted(new_files & old_files)
 
-    output_lines = []
+    output_lines.append("")
     output_lines.append("=" * 70)
-    output_lines.append("TSV File Comparison Report")
-    output_lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    output_lines.append(section_title)
     output_lines.append(f"NEW: {new_dir}")
     output_lines.append(f"OLD: {old_dir}")
     output_lines.append("=" * 70)
     output_lines.append("")
 
-    # Files only in one directory
     if only_in_new:
         output_lines.append(f"Files ONLY in NEW ({len(only_in_new)}):")
         for f in only_in_new:
@@ -201,7 +277,6 @@ def main():
             output_lines.append(f"  - {f}")
         output_lines.append("")
 
-    # Compare common files
     identical_count = 0
     diff_count = 0
 
@@ -214,7 +289,6 @@ def main():
         new_path = new_dir / filename
         old_path = old_dir / filename
 
-        # Quick binary comparison first
         with open(new_path, "rb") as f:
             new_bytes = f.read()
         with open(old_path, "rb") as f:
@@ -228,22 +302,86 @@ def main():
         output_lines.append(f">>> {filename}")
 
         try:
-            diffs = compare_files(str(new_path), str(old_path))
+            diffs = compare_func(str(new_path), str(old_path))
             output_lines.extend(diffs)
         except Exception as e:
             output_lines.append(f"  ERROR comparing: {e}")
 
         output_lines.append("")
 
+    return len(all_files), len(only_in_new), len(only_in_old), identical_count, diff_count
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Compare TSV .txt and .json files between two CASC data directories.")
+    parser.add_argument("new_dir", nargs="?", default=DEFAULT_NEW,
+                        help="Path to the NEW global/excel directory (default: data\\global\\excel)")
+    parser.add_argument("old_dir", nargs="?", default=DEFAULT_OLD,
+                        help="Path to the OLD global/excel directory (default: data_old\\global\\excel)")
+    script_dir = Path(__file__).resolve().parent
+    default_output = str(script_dir / "compare_output.txt")
+    parser.add_argument("--output", "-o", default=default_output,
+                        help="Output file path (default: compare_output.txt next to this script)")
+    args = parser.parse_args()
+
+    new_dir = Path(args.new_dir)
+    old_dir = Path(args.old_dir)
+
+    if not new_dir.exists():
+        print(f"ERROR: New directory not found: {new_dir}")
+        sys.exit(1)
+    if not old_dir.exists():
+        print(f"ERROR: Old directory not found: {old_dir}")
+        sys.exit(1)
+
+    # Derive the base data roots from the global/excel paths so we can locate
+    # the sibling folders (global/ui/layouts and hd/global/excel).
+    # Expected structure: <root>/data/global/excel  ->  <root>/data
+    new_data_root = new_dir.parent.parent  # …/data
+    old_data_root = old_dir.parent.parent  # …/data_old
+
+    # Define all directory pairs to compare
+    dir_pairs = [
+        # (new_dir, old_dir, glob, compare_func, section_title)
+        (new_dir, old_dir, "*.txt", compare_files,
+         "TSV File Comparison — global/excel"),
+        (new_data_root / "global" / "ui" / "layouts",
+         old_data_root / "global" / "ui" / "layouts",
+         "*.json", compare_json_files,
+         "JSON File Comparison — global/ui/layouts"),
+        (new_data_root / "hd" / "global" / "excel",
+         old_data_root / "hd" / "global" / "excel",
+         "*.json", compare_json_files,
+         "JSON File Comparison — hd/global/excel"),
+    ]
+
+    output_lines = []
+    output_lines.append("=" * 70)
+    output_lines.append("File Comparison Report")
+    output_lines.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    output_lines.append("=" * 70)
+
+    summary_rows = []
+
+    for pair_new, pair_old, glob, func, title in dir_pairs:
+        total, only_new, only_old, identical, different = compare_directory_pair(
+            pair_new, pair_old, glob, func, title, output_lines)
+        if total > 0:
+            summary_rows.append((title, total, only_new, only_old, identical, different))
+
     # Summary
+    output_lines.append("")
     output_lines.append("=" * 70)
     output_lines.append("SUMMARY")
     output_lines.append("=" * 70)
-    output_lines.append(f"  Total .txt files examined: {len(all_files)}")
-    output_lines.append(f"  Files only in NEW: {len(only_in_new)}")
-    output_lines.append(f"  Files only in OLD: {len(only_in_old)}")
-    output_lines.append(f"  Common files - identical: {identical_count}")
-    output_lines.append(f"  Common files - different: {diff_count}")
+    for title, total, only_new, only_old, identical, different in summary_rows:
+        output_lines.append(f"  [{title}]")
+        output_lines.append(f"    Total files examined: {total}")
+        output_lines.append(f"    Files only in NEW: {only_new}")
+        output_lines.append(f"    Files only in OLD: {only_old}")
+        output_lines.append(f"    Common files - identical: {identical}")
+        output_lines.append(f"    Common files - different: {different}")
 
     report = "\n".join(output_lines)
 
