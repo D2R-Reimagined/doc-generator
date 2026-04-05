@@ -218,7 +218,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionPriority = 34,
                 DescriptionFunction = 19, // lstValue
                 DescriptonStringPositive = Table.GetValue("ModStrAllMaxRes"),
-                DescriptionStringNegative = Table.GetValue("ModStrAllMaxResN"),
+                DescriptionStringNegative = Table.GetValue("ModStrAllMaxRes"),
                 DescriptionValue = 3 // Do not add value
             };
 
