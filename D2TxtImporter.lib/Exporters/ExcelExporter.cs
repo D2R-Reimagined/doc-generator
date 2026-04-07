@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
+using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Items;
@@ -52,6 +54,12 @@ namespace D2TxtImporter.lib.Exporters
             // Save into extras
             var path = Path.Combine(extrasDir, "D2RR_Holy_Grail.xlsx");
             wb.SaveAs(path);
+
+            // Remove the calcChain from the saved xlsx to prevent Excel repair errors.
+            // ClosedXML 0.97 generates a calcChain with incorrect dependency ordering
+            // which causes "Repaired Records: Cell information" errors when opened in Excel.
+            // Excel safely rebuilds the calcChain on open.
+            RemoveCalcChain(path);
         }
 
         private static void BuildUniquesSheet(IXLWorksheet ws, List<Unique> uniques)
@@ -68,8 +76,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(u => u.Name)
                 .Select(u => new
                 {
-                    // Default to 'n' (accept y/Y n/N or TRUE/FALSE typed by user)
-                    Found = "n",
+                    // Default to blank; any non-blank value counts as found
+                    Found = "",
                     u.Name,
                     Base = u?.Equipment?.Name,
                     BaseType = u?.Equipment?.Type?.Name,
@@ -106,8 +114,8 @@ namespace D2TxtImporter.lib.Exporters
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            // Count any of: boolean TRUE, text "TRUE"/"true", "Y"/"y"
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"true\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Count any non-blank cell in the Found column
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTA(UniquesTable[Found])";
             // Style the Total Found label and count as black background with white text
             ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
             ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
@@ -150,8 +158,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(x => x.Item?.Name)
                 .Select(x => new
                 {
-                    // Default to 'n'
-                    Found = "n",
+                    // Default to blank; any non-blank value counts as found
+                    Found = "",
                     ItemName = x.Item?.Name,
                     Base = x.Item?.Equipment?.Name,
                     BaseType = x.Item?.Equipment?.Type?.Name,
@@ -191,8 +199,8 @@ namespace D2TxtImporter.lib.Exporters
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            // Count any of: TRUE, "TRUE"/"true", "Y"/"y"
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"true\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Count any non-blank cell in the Found column
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTA(SetsTable[Found])";
             // Style the Total Found label and count as black background with white text
             ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
             ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
@@ -220,9 +228,9 @@ namespace D2TxtImporter.lib.Exporters
                 var setNameCell = ws.Cell(row, helperColStart);
                 setNameCell.Value = distinctSets[i];
                 var completedCell = ws.Cell(row, helperColStart + 1);
-                // Completed if there are zero rows for the set where Found is neither TRUE, "TRUE"/"true", nor "Y"/"y"
-                // =IF(COUNTIFS(SetsTable[Set Name], L2, SetsTable[Found], "<>TRUE", SetsTable[Found], "<>"TRUE"", SetsTable[Found], "<>"true"", SetsTable[Found], "<>"Y"", SetsTable[Found], "<>"y"")=0,1,0)
-                completedCell.FormulaA1 = $"=IF(COUNTIFS(SetsTable[Set Name],{setNameCell.Address.ToStringRelative()},SetsTable[Found],\"<>TRUE\",SetsTable[Found],\"<>\"\"TRUE\"\"\",SetsTable[Found],\"<>\"\"true\"\"\",SetsTable[Found],\"<>\"\"Y\"\"\",SetsTable[Found],\"<>\"\"y\"\"\")=0,1,0)";
+                // Completed if every item in the set has a non-blank Found value
+                // COUNTIFS counts rows where Set Name matches AND Found is blank; if zero, the set is complete
+                completedCell.FormulaA1 = $"=IF(COUNTIFS(SetsTable[Set Name],{setNameCell.Address.ToStringRelative()},SetsTable[Found],\"\")=0,1,0)";
             }
             // Hide helper columns
             ws.Column(helperColStart).Hide();
@@ -261,8 +269,8 @@ namespace D2TxtImporter.lib.Exporters
                 .ThenBy(rw => rw.Name)
                 .Select(rw => new
                 {
-                    // Default to 'n'
-                    Found = "n",
+                    // Default to blank; any non-blank value counts as found
+                    Found = "",
                     rw.Name,
                     RequiredLevel = rw.RequiredLevel,
                     Runes = JoinRunes(rw),
@@ -296,8 +304,8 @@ namespace D2TxtImporter.lib.Exporters
             int totalHeaderCol = headers.Length + 1;
             ws.Cell(1, totalHeaderCol).Value = "Total Found:";
             ws.Cell(1, totalHeaderCol).Style.Font.Bold = true;
-            // Count any of: TRUE, "TRUE", "Y", "y"
-            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTIF(A:A,TRUE)+COUNTIF(A:A,\"TRUE\")+COUNTIF(A:A,\"Y\")+COUNTIF(A:A,\"y\")";
+            // Count any non-blank cell in the Found column
+            ws.Cell(1, totalHeaderCol + 1).FormulaA1 = "=COUNTA(RunewordsTable[Found])";
             // Style the Total Found label and count as black background with white text
             ws.Cell(1, totalHeaderCol).Style.Fill.BackgroundColor = XLColor.Black;
             ws.Cell(1, totalHeaderCol).Style.Font.FontColor = XLColor.White;
@@ -404,7 +412,7 @@ namespace D2TxtImporter.lib.Exporters
             FormatCategoryRow(
                 rowNum++,
                 "Uniques",
-                "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"TRUE\")+COUNTIF(UniquesTable[Found],\"true\")+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(UniquesTable[Found],\"y\")",
+                "=COUNTA(UniquesTable[Found])",
                 "=ROWS(UniquesTable[Found])",
                 null,
                 uniquesBg,
@@ -414,7 +422,7 @@ namespace D2TxtImporter.lib.Exporters
             FormatCategoryRow(
                 rowNum++,
                 "Set Items",
-                "=COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"TRUE\")+COUNTIF(SetsTable[Found],\"true\")+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(SetsTable[Found],\"y\")",
+                "=COUNTA(SetsTable[Found])",
                 "=ROWS(SetsTable[Found])",
                 null,
                 setsBg,
@@ -434,7 +442,7 @@ namespace D2TxtImporter.lib.Exporters
             FormatCategoryRow(
                 rowNum++,
                 "Runewords",
-                "=COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"TRUE\")+COUNTIF(RunewordsTable[Found],\"true\")+COUNTIF(RunewordsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],\"y\")",
+                "=COUNTA(RunewordsTable[Found])",
                 "=ROWS(RunewordsTable[Found])",
                 null,
                 runewordsBg,
@@ -448,7 +456,7 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(rowNum, colCategory).Style.Font.Bold = true;
             ws.Cell(rowNum, colCategory).Style.Fill.BackgroundColor = XLColor.Black;
             ws.Cell(rowNum, colCategory).Style.Font.FontColor = XLColor.White;
-            ws.Cell(rowNum, colFound).FormulaA1 = "=COUNTIF(UniquesTable[Found],TRUE)+COUNTIF(UniquesTable[Found],\"TRUE\")+COUNTIF(UniquesTable[Found],\"true\")+COUNTIF(UniquesTable[Found],\"Y\")+COUNTIF(UniquesTable[Found],\"y\")+COUNTIF(SetsTable[Found],TRUE)+COUNTIF(SetsTable[Found],\"TRUE\")+COUNTIF(SetsTable[Found],\"true\")+COUNTIF(SetsTable[Found],\"Y\")+COUNTIF(SetsTable[Found],\"y\")+COUNTIF(RunewordsTable[Found],TRUE)+COUNTIF(RunewordsTable[Found],\"TRUE\")+COUNTIF(RunewordsTable[Found],\"true\")+COUNTIF(RunewordsTable[Found],\"Y\")+COUNTIF(RunewordsTable[Found],\"y\")";
+            ws.Cell(rowNum, colFound).FormulaA1 = "=COUNTA(UniquesTable[Found])+COUNTA(SetsTable[Found])+COUNTA(RunewordsTable[Found])";
             ws.Cell(rowNum, colTotal).FormulaA1 = "=ROWS(UniquesTable[Found])+ROWS(SetsTable[Found])+ROWS(RunewordsTable[Found])";
             ws.Range(rowNum, colFound, rowNum, colNotes).Style.Fill.BackgroundColor = XLColor.FromArgb(242, 242, 242); // light gray backdrop
             // Style Total (grand) as numeric and purple text
@@ -458,6 +466,81 @@ namespace D2TxtImporter.lib.Exporters
             ws.Cell(rowNum, colTotal).Style.Font.Bold = true;
 
             ws.Columns().AdjustToContents();
+        }
+
+        /// <summary>
+        /// Removes the calcChain part from a saved xlsx file.
+        /// ClosedXML 0.97 can generate a calcChain with incorrect dependency ordering,
+        /// which causes Excel to report "Repaired Records: Cell information" errors.
+        /// Excel safely rebuilds the calcChain when the workbook is opened.
+        /// </summary>
+        private static void RemoveCalcChain(string xlsxPath)
+        {
+            using (var zip = ZipFile.Open(xlsxPath, ZipArchiveMode.Update))
+            {
+                // Remove the calcChain part
+                var calcChainEntry = zip.GetEntry("xl/calcChain.xml");
+                if (calcChainEntry != null)
+                {
+                    calcChainEntry.Delete();
+                }
+
+                // Remove the calcChain reference from [Content_Types].xml
+                var contentTypesEntry = zip.GetEntry("[Content_Types].xml");
+                if (contentTypesEntry != null)
+                {
+                    string contentTypesXml;
+                    using (Stream stream = contentTypesEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        contentTypesXml = reader.ReadToEnd();
+                    }
+
+                    var cleaned = Regex.Replace(
+                        contentTypesXml,
+                        @"<Override[^>]*PartName\s*=\s*""/xl/calcChain\.xml""[^>]*/?>",
+                        string.Empty);
+
+                    if (cleaned != contentTypesXml)
+                    {
+                        contentTypesEntry.Delete();
+                        var newEntry = zip.CreateEntry("[Content_Types].xml", CompressionLevel.Optimal);
+                        using (Stream stream = newEntry.Open())
+                        using (var writer = new StreamWriter(stream))
+                        {
+                            writer.Write(cleaned);
+                        }
+                    }
+                }
+
+                // Remove the calcChain relationship from xl/_rels/workbook.xml.rels
+                var relsEntry = zip.GetEntry("xl/_rels/workbook.xml.rels");
+                if (relsEntry != null)
+                {
+                    string relsXml;
+                    using (Stream stream = relsEntry.Open())
+                    using (var reader = new StreamReader(stream))
+                    {
+                        relsXml = reader.ReadToEnd();
+                    }
+
+                    var cleaned = Regex.Replace(
+                        relsXml,
+                        @"<Relationship[^>]*Target\s*=\s*""calcChain\.xml""[^>]*/?>",
+                        string.Empty);
+
+                    if (cleaned != relsXml)
+                    {
+                        relsEntry.Delete();
+                        var newEntry = zip.CreateEntry("xl/_rels/workbook.xml.rels", CompressionLevel.Optimal);
+                        using (Stream stream = newEntry.Open())
+                        using (var writer = new StreamWriter(stream))
+                        {
+                            writer.Write(cleaned);
+                        }
+                    }
+                }
+            }
         }
     }
 }
