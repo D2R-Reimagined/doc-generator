@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -12,52 +13,46 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     {
         [JsonIgnore]
         public string Stat { get; set; }
-
         [JsonIgnore]
         public int Id { get; set; }
-
+        [JsonIgnore]
+        public int? SaveBits { get; set; }
+        [JsonIgnore]
+        public int? SaveAdd { get; set; }
+        [JsonIgnore]
+        public int? ValShift { get; set; }
+        [JsonIgnore]
+        public int? SaveParam { get; set; }
         [JsonIgnore]
         public int? Op { get; set; }
-
         [JsonIgnore]
         public int? OpParam { get; set; }
-
         [JsonIgnore]
         public int? DescriptionPriority { get; set; }
-
         [JsonIgnore]
         public int? DescriptionFunction { get; set; }
-
         [JsonIgnore]
         public int? DescriptionValue { get; set; }
-
+        [JsonIgnore]
+        public string DescStrPosKey { get; set; }
         [JsonIgnore]
         public string DescriptonStringPositive { get; set; }
-
         [JsonIgnore]
         public string DescriptionStringNegative { get; set; }
-
         [JsonIgnore]
         public string DescriptionString2 { get; set; }
-
         [JsonIgnore]
         public int? GroupDescription { get; set; }
-
         [JsonIgnore]
         public int? GroupDescriptionFunction { get; set; }
-
         [JsonIgnore]
         public int? GroupDescriptionValue { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptonStringPositive { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptionStringNegative { get; set; }
-
         [JsonIgnore]
         public string GroupDescriptionString2 { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, ItemStatCost> ItemStatCosts;
 
@@ -73,11 +68,17 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 {
                     Stat = row["Stat"],
                     Id = int.Parse(row["*ID"]),
+                    // Common header variants across D2 versions/mod tool exports
+                    SaveBits = Utility.ToNullableInt(row["Save Bits"]),
+                    SaveAdd = Utility.ToNullableInt(row["Save Add"]),
+                    ValShift = Utility.ToNullableInt(row["ValShift"]) ?? 0,
+                    SaveParam = Utility.ToNullableInt(row["Save Param Bits"]) ?? 0,
                     Op = Utility.ToNullableInt(row["op"]),
                     OpParam = Utility.ToNullableInt(row["op param"]),
                     DescriptionPriority = Utility.ToNullableInt(row["descpriority"]),
                     DescriptionFunction = Utility.ToNullableInt(row["descfunc"]),
                     DescriptionValue = Utility.ToNullableInt(row["descval"]),
+                    DescStrPosKey = row["descstrpos"],
                     DescriptonStringPositive = Table.GetValue(row["descstrpos"]),
                     DescriptionStringNegative = Table.GetValue(row["descstrneg"]),
                     DescriptionString2 = Table.GetValue(row["descstr2"]),
@@ -107,10 +108,10 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             {
                 Stat = "dmg%",
                 DescriptionPriority = 144, // 1 below attack speed (seems right)
-                DescriptionFunction = 4, // +val%
-                DescriptonStringPositive = "Enhanced Damage",
-                DescriptionStringNegative = "Enhanced Damage",
-                DescriptionValue = 1 // Add value before
+                DescriptionFunction = 19, // +val%
+                DescriptonStringPositive = Table.GetValue("strModEnhancedDamage"),
+                DescriptionStringNegative = Table.GetValue("strModEnhancedDamage"),
+                DescriptionValue = 3 // Add value before
             };
 
             ItemStatCosts[enhancedDamage.Stat] = enhancedDamage;
@@ -120,30 +121,80 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 Stat = "ethereal",
                 DescriptionPriority = 1, // Min priority
                 DescriptionFunction = 1, // lstValue
-                DescriptonStringPositive = "Ethereal (Cannot Be Repaired)",
-                DescriptionStringNegative = "Ethereal (Cannot Be Repaired)",
+                DescriptonStringPositive = Table.GetValue("strethereal"),
+                DescriptionStringNegative = Table.GetValue("strethereal"),
                 DescriptionValue = 0 // Do not add value
             };
 
             ItemStatCosts[ethereal.Stat] = ethereal;
 
-            var eledam = new ItemStatCost
+            var dmgLtng = new ItemStatCost
             {
-                Stat = "eledam",
-                DescriptionPriority = ItemStatCosts["firemindam"].DescriptionPriority,
-                DescriptionFunction = 30,
-                DescriptonStringPositive = "Adds %d %s damage",
+                Stat = "dmg-ltng",
+                DescriptionPriority = ItemStatCosts["lightmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModLightningDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModLightningDamageRange"),
                 DescriptionValue = 3
             };
 
-            ItemStatCosts["eledam"] = eledam;
-            
+            ItemStatCosts["dmg-ltng"] = dmgLtng;
+
+            var dmgCold = new ItemStatCost
+            {
+                Stat = "dmg-cold",
+                DescriptionPriority = ItemStatCosts["coldmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModColdDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModColdDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-cold"] = dmgCold;
+
+            var dmgFire = new ItemStatCost
+            {
+                Stat = "dmg-fire",
+                DescriptionPriority = ItemStatCosts["firemindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModFireDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModFireDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-fire"] = dmgFire;
+
+            var poisDamage = new ItemStatCost
+            {
+                Stat = "dmg-pois",
+                DescriptionPriority = 92,
+                DescriptionFunction = 30,
+                DescriptonStringPositive = Table.GetValue("strModPoisonDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModPoisonDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-pois"] = poisDamage;
+
+            var dmgMag = new ItemStatCost
+            {
+                Stat = "dmg-mag",
+                DescriptionPriority = ItemStatCosts["magicmindam"].DescriptionPriority,
+                DescriptionFunction = 31,
+                DescriptonStringPositive = Table.GetValue("strModMagicDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModMagicDamageRange"),
+                DescriptionValue = 3
+            };
+
+            ItemStatCosts["dmg-mag"] = dmgMag;
+
             var dmgNorm = new ItemStatCost
             {
                 Stat = "dmg-norm",
                 DescriptionPriority = ItemStatCosts["mindamage"].DescriptionPriority,
                 DescriptionFunction = 31,
-                DescriptonStringPositive = "Adds %min-%max to Damage",
+                DescriptonStringPositive = Table.GetValue("strModMinDamageRange"),
+                DescriptionStringNegative = Table.GetValue("strModMinDamageRange"),
                 DescriptionValue = 3
             };
 
@@ -153,38 +204,38 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             {
                 Stat = "res-all",
                 DescriptionPriority = 34,
-                DescriptionFunction = 4, // lstValue
+                DescriptionFunction = 19, // lstValue
                 DescriptonStringPositive = Table.GetValue("strModAllResistances"),
                 DescriptionStringNegative = Table.GetValue("strModAllResistances"),
-                DescriptionValue = 2 // Do not add value
+                DescriptionValue = 3 // Do not add value
             };
 
             ItemStatCosts["res-all"] = resAll;
-            
+
             var resAllMax = new ItemStatCost
             {
                 Stat = "res-all-max",
                 DescriptionPriority = 34,
-                DescriptionFunction = 4, // lstValue
+                DescriptionFunction = 19, // lstValue
                 DescriptonStringPositive = Table.GetValue("ModStrAllMaxRes"),
                 DescriptionStringNegative = Table.GetValue("ModStrAllMaxRes"),
-                DescriptionValue = 2 // Do not add value
+                DescriptionValue = 3 // Do not add value
             };
-            
+
             ItemStatCosts["res-all-max"] = resAllMax;
 
             var allStats = new ItemStatCost
             {
                 Stat = "all-stats",
                 DescriptionPriority = 34,
-                DescriptionFunction = 1, // lstValue
+                DescriptionFunction = 19, // lstValue
                 DescriptonStringPositive = Table.GetValue("Moditem2allattrib"),
                 DescriptionStringNegative = Table.GetValue("Moditem2allattrib"),
-                DescriptionValue = 2 // Do not add value
+                DescriptionValue = 3 // Do not add value
             };
-            
+
             ItemStatCosts["all-stats"] = allStats;
-            
+
             var allElemDmg = new ItemStatCost
             {
                 Stat = "extra-elem",
@@ -194,9 +245,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("allelemskilldmg"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["extra-elem"] = allElemDmg;
-            
+
             var pierceAllElem = new ItemStatCost
             {
                 Stat = "pierce-elem",
@@ -206,21 +257,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("PenetrateElePen"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["pierce-elem"] = pierceAllElem;
 
-            var poisDamage = new ItemStatCost
-            {
-                Stat = "dmg-pois",
-                DescriptionPriority = 92,
-                DescriptionFunction = 19,
-                DescriptonStringPositive = Table.GetValue("strModPoisonDamage"),
-                DescriptionStringNegative = Table.GetValue("strModPoisonDamage"),
-                DescriptionValue = 2
-            };
-            
-            ItemStatCosts["dmg-pois"] = poisDamage;
-            
             var fireSkillStat = new ItemStatCost
             {
                 Stat = "fireskill",
@@ -230,9 +269,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("ModStr3i"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["fireskill"] = fireSkillStat;
-            
+
             var coldSkillStat = new ItemStatCost
             {
                 Stat = "coldskill",
@@ -242,9 +281,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("ModStrcoldskill"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["coldskill"] = coldSkillStat;
-            
+
             var lightningSkillStat = new ItemStatCost
             {
                 Stat = "lightningskill",
@@ -254,9 +293,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("ModStrlightningskill"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["lightningskill"] = lightningSkillStat;
-            
+
             var poisonSkillStat = new ItemStatCost
             {
                 Stat = "poisonskill",
@@ -266,9 +305,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("ModStrpoisonskill"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["poisonskill"] = poisonSkillStat;
-            
+
             var magicSkillStat = new ItemStatCost
             {
                 Stat = "magicskill",
@@ -278,23 +317,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 DescriptionStringNegative = Table.GetValue("ModStrmagicskill"),
                 DescriptionValue = 3
             };
-            
+
             ItemStatCosts["magicskill"] = magicSkillStat;
         }
-        
 
         public static void FixBrokenEntries()
         {
             var sockets = ItemStatCosts["item_numsockets"];
             sockets.DescriptionPriority = 1;
             sockets.DescriptionFunction = 29;
-            sockets.DescriptonStringPositive = "Socketed";
-            sockets.GroupDescriptionStringNegative = "Socketed";
+            sockets.DescriptonStringPositive = Table.GetValue("Socketable");
+            sockets.GroupDescriptionStringNegative = Table.GetValue("Socketable");
             sockets.DescriptionValue = 3; // Use value as is
         }
 
         public string PropertyString(int? value, int? value2, string parameter, int itemLevel)
         {
+
             string lstValue;
             var valueString = GetValueString(value, value2);
 
@@ -325,15 +364,19 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                         case 1:
                             valueString = $"+{valueString}";
                             break;
+
                         case 2:
                             valueString = $"{valueString}%";
                             break;
+
                         case 3:
                             valueString = $"{valueString}";
                             break;
+
                         case 4:
                             valueString = $"+{valueString}%";
                             break;
+
                         case 5:
                             if (value.HasValue)
                             {
@@ -344,8 +387,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 value2 = value2 * 100 / 128;
                             }
                             valueString = GetValueString(value, value2);
-                            valueString = $"{valueString}% {lstValue}";
+                            valueString = lstValue.Replace("%+d%", '+' + valueString);
                             break;
+
                         case 6:
                             double val1 = 0;
                             double val2 = 0;
@@ -364,8 +408,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"+({valueString} Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} (Based on Character Level)";
+                            valueString = $"+({valueString} {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
+
                         case 7:
                             val1 = 0;
                             val2 = 0;
@@ -384,8 +429,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"({valueString}% Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)}% {lstValue} (Based on Character Level)";
+                            valueString = $"({valueString}% {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)}% {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
+
                         case 8:
                             val1 = 0;
                             val2 = 0;
@@ -404,8 +450,9 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"+({valueString} Per Character Level) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} (Based on Character Level)";
+                            valueString = $"+({valueString} {Table.GetValue("increaseswithplaylevelX")}) {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} {lstValue} {Table.GetValue("increaseswithplaylevelX")}";
                             break;
+
                         case 9:
                             val1 = 0;
                             val2 = 0;
@@ -424,20 +471,24 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             valueString = GetValueString(val1, val2);
                             lstValue = DescriptonStringPositive;
                             DescriptionValue = 3;
-                            valueString = $"{lstValue} {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} ({valueString} Per Character Level)";
+                            valueString = $"{lstValue} {Math.Floor(val1).ToString(CultureInfo.InvariantCulture)}-{Math.Floor(val2 * 99).ToString(CultureInfo.InvariantCulture)} ({valueString} {Table.GetValue("increaseswithplaylevelX")})";
                             break;
+
                         case 11:
                             valueString = lstValue.Replace("%d", $"{((double)(Utility.ToNullableInt(parameter).Value / 100f)).ToString(CultureInfo.InvariantCulture)}");
                             DescriptionValue = 3;
                             break;
+
                         case 12:
                             valueString = $"+{valueString}";
                             break;
+
                         case 13:
                             var classReplace = "";
                             valueString = $"+{valueString}";
 
-                            var regex = Regex.Match(parameter, @"randclassskill(\d+)"); // Work with custom randclasskill(digit) 
+                            var regex = Regex.Match(parameter, @"randclassskill(\d+)"); // Work with custom randclasskill(digit)
+
                             if (regex.Success)
                             {
                                 classReplace = "(Random Class)";
@@ -446,7 +497,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             else if (parameter == "randclassskill")
                             {
                                 classReplace = "(Random Class)";
-                                valueString = "+3";
                             }
                             else
                             {
@@ -456,33 +506,50 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                 }
                                 classReplace = CharStat.CharStats[parameter].Class;
                             }
-                            lstValue = lstValue.Replace("%d", classReplace);
-                            valueString = $"{valueString} {lstValue}";
+
+                            valueString = lstValue.Replace("%+d", valueString).Replace("+%d", valueString).Replace("%s", classReplace);
                             break;
+
                         case 14:
                             var par = Utility.ToNullableInt(parameter);
                             if (!par.HasValue)
                             {
-                                throw ItemStatCostException.Create($"Could not convert parameter '{parameter}' to a valid integer");
+                                if (parameter == "21-23")
+                                {
+                                    parameter = "war";
+                                }
+
+                                // Support class name string like in case 13 or error as usual
+                                if (CharStat.CharStats.ContainsKey(parameter))
+                                {
+                                    // Set lstValue to parsed class name and a fixed valueString
+                                    lstValue = CharStat.CharStats[parameter].Class;
+                                    valueString = $"+{value} Random Skill Tab ({lstValue} Only)";
+                                    break;
+                                }
+                                throw ItemStatCostException.Create(
+                                    $"Could not convert parameter '{parameter}' to a valid integer");
                             }
 
                             if (!CharStat.SkillTabs.ContainsKey(par.Value))
                             {
-                                throw ItemStatCostException.Create($"Could not find skill tab with id {par.Value}");
+                                throw ItemStatCostException.Create(
+                                    $"Could not find skill tab with id {par.Value}");
                             }
 
                             var skillTab = CharStat.SkillTabs[par.Value];
-
                             var className = CharStat.CharStats.Values.First(x => x.StrSkillTab1 == skillTab || x.StrSkillTab2 == skillTab || x.StrSkillTab3 == skillTab).Class;
 
                             if (!Table.Tables.ContainsKey(skillTab))
                             {
-                                throw ItemStatCostException.Create($"Could not find translation key '{skillTab}' in any .tbl file");
+                                throw ItemStatCostException.Create(
+                                    $"Could not find translation key '{skillTab}' in any .tbl or .json file");
                             }
 
                             lstValue = Table.Tables[skillTab];
-                            valueString = $"{lstValue.Replace("%d", valueString)} ({className} only)";
+                            valueString = $"+{lstValue.Replace("%+d", valueString).Replace("+%d", valueString)} ({className} Only)";
                             break;
+
                         case 15:
                             valueString = value2.Value.ToString();
                             var skill = Skill.GetSkill(parameter);
@@ -496,20 +563,21 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                             }
 
                             valueString = lstValue.Replace("%d%", value.Value.ToString())
-                                .Replace("%d", valueString)
-                                .Replace("%s", CultureInfo.CurrentCulture.TextInfo.ToTitleCase(skill.SkillDesc));
+                                .Replace("%d", valueString)                                                                                                                                                                                                              
+                                .Replace("%s", skill.LocalizedName);
 
                             if (string.IsNullOrEmpty(skill.SkillDesc))
                             {
                                 throw ItemStatCostException.Create($"Skill for property has missing 'skilldesc' in Skills.txt: name: '{skill.Name}', id: '{skill.Id}'");
                             }
-
                             break;
+
                         case 16:
                             valueString = lstValue.Replace("%d", valueString)
-                                .Replace("%s", Skill.GetSkill(parameter).Name);
+                                .Replace("%s", Skill.GetSkill(parameter).LocalizedName);
                             DescriptionValue = 3;
                             break;
+
                         case 19:
                             // Splash Charm Damage Display Fix
                             if (Stat.Contains("pl_mindamage"))
@@ -523,252 +591,129 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                                     valueString = $"+{value}% Player Damage";
                                 }
                             }
+
                             //Per Level Display Fix
-                            else if (Stat.Contains("perlevel"))
+                            else if (Stat.Contains("perlevel") || Stat.Contains("perlvl"))
                             {
-                                double opMath;
-                                double opMath2;
-                                double opMath3 = OpParam != null ? Math.Pow(2, OpParam.Value) : 0;
+                                var opMath = OpParam != null ? Math.Pow(2, OpParam.Value) : 0;
+                                double.TryParse(parameter, out var lvlGrowth);
+                                string perLvlCalc;
 
                                 // Try to use 'parameter' first
-                                if (!string.IsNullOrEmpty(parameter) && double.TryParse(parameter, out opMath))
+                                if (!string.IsNullOrEmpty(parameter))
                                 {
-                                    opMath = Math.Round(opMath / opMath3, 2);
-                                    valueString = $"+{opMath}% {lstValue} (Per Character Level)";
+                                    perLvlCalc = Math.Round(lvlGrowth / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
                                 // Fallback: check value1 and value2
                                 else if (value == value2)
                                 {
-                                    opMath = Math.Round(value.Value / opMath3, 2);
-                                    valueString = $"+{opMath}% {lstValue} (Per Character Level)";
+                                    perLvlCalc = Math.Round(value.Value / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
                                 else if (value != value2)
                                 {
-                                    opMath = Math.Round(value.Value / opMath3, 2);
-                                    opMath2 = Math.Round(value2.Value / opMath3, 2);
-                                    valueString = $"+{opMath}%-{opMath2}% {lstValue} (Per Character Level)";
+                                    perLvlCalc = Math.Round(value.Value / opMath, 2).ToString(CultureInfo.InvariantCulture) + " - " + Math.Round(value2.Value / opMath, 2).ToString(CultureInfo.InvariantCulture);
                                 }
                                 else
                                 {
                                     throw new Exception(
                                         $"Invalid parameter and fallback values for level-based stat: parameter='{parameter}', value1='{value}', value2='{value2}'");
                                 }
+                                valueString = lstValue.Replace("%+d%", '+' + perLvlCalc).Replace("%+d", '+' + perLvlCalc).Replace("%d%", perLvlCalc).Replace("%d", perLvlCalc) + " " + Table.GetValue("increaseswithplaylevelX");
+                            }
 
-                            }
-                            // Handle All Elemental Skills
-                            else if (Stat.Contains("item_elemskill"))
-                            {
-                                valueString = parameter;
-                            }
-                            // Handle weapon poison damage here because I can't get it to work properly anywhere else and ChatGPT can't either. :D
-                           else if (lstValue.Contains("Poison Damage Over") && value.HasValue && value2.HasValue && parameter != null)
-                            {
-                                int len = int.Parse(parameter);
-                                int minPoison = (int)Math.Ceiling(value.Value * len / 256.0);
-                                int maxPoison = (int)Math.Ceiling(value2.Value * len / 256.0);
-                                int seconds = len / 25;
-
-                                if (minPoison == maxPoison)
-                                {
-                                    valueString = $"+{minPoison} Poison Damage Over {seconds} Seconds";
-                                }
-                                else
-                                {
-                                    valueString = $"Adds {minPoison}-{maxPoison} Poison Damage Over {seconds} Seconds";
-                                }
-
-                                lstValue = null; //Empty this to prevent string duplication
-                                
-                            }
-                            else if (lstValue.Contains("to Raven D") || lstValue.Contains("Max Ravens"))
-                            {
-                                valueString = lstValue;
-                            }
-                            else if (lstValue.Contains("Damage to") || lstValue.Contains("bonus to Attack"))
-                            {
-                                valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if (lstValue.Contains(" Damage of"))
-                            {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString;
-                            }
-                            else if (lstValue.Contains("to Mana") || lstValue.Contains("to Life") || lstValue.Contains("to Max") || lstValue.Contains("to Min") || lstValue.Contains("to Attack Rating") || lstValue.Contains("to Light ") || lstValue.Contains(" Skills") || lstValue.Contains("to Raven") || lstValue.Contains("to Level Requirement"))
-                            {
-                                valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if ((lstValue.Contains("Target Defense") || lstValue.Contains("to Enemy ")) && !lstValue.Contains("Ignore") || lstValue.Contains("to All Enemy"))
-                            {
-                                valueString = '-' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if (lstValue.Contains("Resist"))
-                            {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + valueString + '%';
-                            }
-                            else if (lstValue.Contains("Stamina Drain") || lstValue.IndexOf("chance of", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.IndexOf("chance for", StringComparison.OrdinalIgnoreCase) >= 0 || lstValue.Contains("Experience Gained") || lstValue.Contains("extra gold") || lstValue.Contains("Damage Taken") || lstValue.Contains("Deadly Strike") || lstValue.Contains("Faster ") || lstValue.Contains("Increased A") || lstValue.Contains("Enhanced De") || lstValue.Contains(" Skill Damage") || lstValue.Contains(" Maximum Life") || lstValue.Contains(" Maximum Mana") || lstValue.Contains(" Damage Reduction") || lstValue.Contains("stolen per hit") || lstValue.Contains("Piercing "))
-                            {
-                                valueString = '+' + valueString + '%' + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if ((lstValue.Contains("to Dexterity") || lstValue.Contains("to Strength") || lstValue.Contains("to Vitality") || lstValue.Contains("to Energy")) && value < 0) 
-                            {
-                                valueString = "-" + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if ((lstValue.Contains("to Dexterity") || lstValue.Contains("to Strength") || lstValue.Contains("to Vitality") || lstValue.Contains("to Energy")) && value > 0) 
-                            {
-                                valueString = "+" + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if (lstValue.Contains("to "))
-                            {
-                                valueString = valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
-                            }
-                            else if (lstValue.Contains("Regenerate Mana"))
-                            {
-                                if (value == value2)
-                                {
-                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
-                                }
-                                else
-                                {
-                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '-' + value2 + '%';
-                                }
-                            }
-                            else if (lstValue.Contains("Damage Reduced by"))
-                            {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value;
-                            }
-                            else if (lstValue.Contains("Requirements") && value < 0 || lstValue.Contains("Length Reduced by") || lstValue.Contains("Slows target by") || lstValue.Contains("Reduces all Vendor"))
-                            {
-                                if (value!=value2) 
-                                {
-                                    valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '-' + value2 + '%';
-                                    break;
-                                }
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + value + '%';
-                            }
-                            else if (lstValue.Contains("Requirements") && value > 0)
-                            {
-                                valueString = lstValue.Replace("%d", valueString).Replace("%+d", valueString) + ' ' + '+' + value + '%';
-                            }
-                            else if (lstValue.Contains("Slain Monsters Rest in Peace") || lstValue.Contains("Cannot Be Frozen") || lstValue.Contains("Half Freeze Duration") || lstValue.Contains("Half Freeze Duration") || lstValue.Contains("Ignore") || lstValue.Contains("Prevent Monster") || lstValue.Contains("You feel inco") || lstValue.Contains("Knockback") || lstValue.Contains("Replenishes") || lstValue.Contains("Indestructible"))
-                            {
-                                valueString = lstValue;
-                            }
-                            else if (lstValue.Contains("% Fire") || lstValue.Contains("% Cold") || lstValue.Contains("% Lightning") || lstValue.Contains("% Magic"))
-                            {
-                                valueString = '+' + lstValue.Replace("%", valueString + '%');
-                            }
                             else
                             {
-                                valueString = '+' + valueString + ' ' + lstValue.Replace("%d", valueString).Replace("%+d", valueString);
+                                valueString = lstValue.Replace("%d%", valueString).Replace("%+d%", '+' + valueString).Replace("%d", valueString).Replace("%+d", '+' + valueString);
                             }
-
                             break;
+
                         case 20:
                             valueString = $"{GetValueString(value * -1, value2 * -1)}%";
                             break;
+
                         case 23:
                             if (!MonStat.MonStats.ContainsKey(parameter))
                             {
                                 throw ItemStatCostException.Create($"Could not find monster with id '{parameter}' in MonStats.txt");
                             }
-                            valueString = $"{valueString}% {lstValue} {MonStat.MonStats[parameter].NameStr}";
+
+                            valueString = lstValue.Replace("%0%", valueString).Replace("%1", MonStat.MonStats[parameter].NameStr);
                             DescriptionValue = 3;
                             break;
+
                         case 24:
-                            valueString = $"Level {value2} {Skill.GetSkill(parameter).Name} ({value} Charges)";
+                            valueString = lstValue.Replace("%d/%d", $"{value}").Replace("%d", $"{value2}").Replace("%s", Skill.GetSkill(parameter).LocalizedName);
+
                             break;
+
                         case 27:
-                            var charClass = Skill.GetSkill(parameter).CharClass;
-                            var reqString = "";
+
+                            var skillRandSkill = Skill.GetSkill(parameter);
+                            var charClass = skillRandSkill.CharClass;
+                            string reqString;
 
                             if (!string.IsNullOrEmpty(parameter))
                             {
-                                int classNumber;
-                                bool isNumber = int.TryParse(parameter, out classNumber);
-
-                                if (isNumber)
+                                if (int.TryParse(parameter, out _))
                                 {
-                                    // Ensure value1 and value2 are in scope and valid
-                                    if (value >= 6 && value2 <= 35)
-                                    {
-                                        reqString = $"Amazon";
-                                    }
-                                    else if (value >= 36 && value2 <= 65)
-                                    {
-                                        reqString = $"Sorceress";
-                                    }
-                                    else if (value >= 66 && value2 <= 95)
-                                    {
-                                        reqString = $"Necromancer";
-                                    }
-                                    else if (value >= 96 && value2 <= 125)
-                                    {
-                                        reqString = $"Paladin";
-                                    }
-                                    else if (value >= 126 && value2 <= 155)
-                                    {
-                                        reqString = $"Barbarian";
-                                    }
-                                    else if (value >= 221 && value2 <= 250)
-                                    {
-                                        reqString = $"Druid";
-                                    }
-                                    else if (value >= 251 && value2 <= 280)
-                                    {
-                                        reqString = $"Assassin";
-                                    }
-                                    else
-                                    {
-                                        throw ItemStatCostException.Create(
-                                            $"Invalid skill ID range {value} - {value2} for Random Class Skill. Verify the range in Skills.txt "
-                                        );
-                                    }
-                                    //with IDs {value} to {value2} <- Considered adding to string in the cases where skills don't span the full class IDs but did not to reduce confusion.
-                                    valueString = $"+{parameter} to random {reqString} Skill";
+                                    var skillRandName = GetClassNameForRange(value, value2);
+                                    valueString = $"+{parameter} Random {skillRandName} Skill";
                                 }
                                 else
                                 {
-                                    // CharClass is a named class (non-numeric)
-                                    if (!CharStat.CharStats.ContainsKey(charClass))
+                                    // Named class / skill
+                                    if (!CharStat.CharStats.TryGetValue(charClass, out var charInfo))
                                     {
-                                        throw ItemStatCostException.Create(
-                                            $"Could not find character skill tab '{charClass}' property"
-                                        );
+                                        throw ItemStatCostException.Create($"Could not find character skill tab '{charClass}' property");
                                     }
 
-                                    reqString = $" ({CharStat.CharStats[charClass].Class} Only)";
-                                    valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}{reqString}";
+                                    reqString = $" ({charInfo.Class} Only)";
+                                    valueString = $"+{valueString} to {skillRandSkill.LocalizedName}{reqString}";
                                 }
                             }
+
                             else
                             {
                                 // No CharClass given — fallback to normal
-                                valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}";
+                                valueString = $"+{valueString} to {skillRandSkill.LocalizedName}";
                             }
+                            break;
 
-                            break;
                         case 28:
-                            valueString = $"+{valueString} to {Skill.GetSkill(parameter).Name}";
+                            valueString = lstValue.Replace("%+d", '+' + valueString).Replace("%s", Skill.GetSkill(parameter).LocalizedName);
                             break;
+
                         case 29: // Custom for sockets
                             if (string.IsNullOrEmpty(valueString))
                             {
                                 valueString = parameter;
                             }
 
-                            valueString = $"{lstValue} ({valueString})";
+                            valueString = lstValue.Replace("%i", valueString);
                             break;
-                        case 30: // Custom for elemental damage
-                            valueString = lstValue.Replace("%d", valueString).Replace("%s", parameter);
+
+                        case 30: // Custom for poison damage
+                            int lenFrames = Utility.ToNullableInt(parameter) ?? 0;
+                            int minPois = value.HasValue ? (int)Math.Ceiling(value.Value * lenFrames / 256.0) : 0;
+                            int maxPois = value2.HasValue ? (int)Math.Ceiling(value2.Value * lenFrames / 256.0) : 0;
+                            double seconds = lenFrames / 25.0;
+
+                            if (minPois == maxPois)
+                            {
+                                valueString = $"{minPois}";
+                            }
+                            else
+                            {
+                                valueString = $"{minPois}-{maxPois}";
+                            }
+
+                            valueString = lstValue.Replace("%d-%d", valueString).Replace("%d", $"{seconds}");
                             break;
-                        case 31: // Custom for normal damage spread
-                            if (value!=value2)
-                            { 
-                                valueString = lstValue.Replace("%min", value.ToString()).Replace("%max", value2.ToString());
-                                break;
-                            } 
-                            
-                            valueString = lstValue.Replace("%min", value.ToString()).Replace("-%max", "");
+
+                        case 31: // Custom for damage spread
+                            valueString = lstValue.Replace("%d-%d", valueString);
                             break;
+
                         default:
                             // Not implemented function
                             valueString = UnimplementedFunction(value, value2, parameter, Op, OpParam, DescriptionFunction.Value);
@@ -778,91 +723,63 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 }
             }
 
-            // Check for and replace Skill Names for those reworked but not renamed in Skills.txt or are mispelled or just completely different
-            if (!string.IsNullOrEmpty(valueString))
-            {
-                var replacements = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-                {
-                    { "stun", "Tectonic Slam" },
-                    { "concentrate", "Carnage" },
-                    { "poison explosion", "Poison Volley" },
-                    { "hunger", "Toxic Fangs" },
-                    { "quickness", "Burst of Speed" },
-                    { "wearwolf", "Werewolf" },
-                    { "wearbear", "Werebear" },
-                    { "shape shifting", "Lycanthropy" },
-                    { "dopplezon", "Decoy" },
-                    { "bloodgolem", "Blood Golem" },
-                    { "irongolem", "Iron Golem" },
-                    { "firegolem", "Fire Golem" },
-                    { "plague poppy", "Poison Creeper" },
-                    { "cycle of life", "Carrion Vine" },
-                    { "fenris", "Dire Wolf" },
-                    { "vines", "Solar Creeper" },
-                    { "fire trauma", "Fire Blast" },
-                    { "royal strike", "Phoenix Strike" }
-                };
-
-                foreach (var pair in replacements)
-                {
-                    if (valueString.IndexOf(" skills", StringComparison.OrdinalIgnoreCase) < 0)
-                    {
-                        valueString = Regex.Replace(valueString, $@"\b{Regex.Escape(pair.Key)}\b", pair.Value, RegexOptions.IgnoreCase);
-                    }
-                }
-            }
-            
-            // Remove +- in case it happens
-            valueString = valueString.Replace("+-", "-");
-            valueString = valueString.Replace("++", "+");
-            valueString = valueString.Replace("--", "-");
 
             if (DescriptionValue.HasValue && !string.IsNullOrEmpty(lstValue))
             {
-                switch (DescriptionValue.Value)
+                if (!valueString.Contains("Gems:"))
                 {
-                    case 0:
-                        valueString = lstValue;
-                        break;
-                    case 1:
-                        valueString = $"{valueString} {lstValue}";
-                        break;
-                    case 2:
-                        valueString = $"{lstValue} {valueString}";
-                        break;
-                    case 3:
-                        // Used if the value already contain all information
-                        break;
+                    switch (DescriptionValue.Value)
+                    {
+                        case 0:
+                            valueString = lstValue;
+                            break;
+
+                        case 1:
+                            valueString = $"{valueString} {lstValue}";
+                            break;
+
+                        case 2:
+                            valueString = $"{lstValue} {valueString}";
+                            break;
+
+                        case 3:
+                            break;
+                    }
                 }
             }
 
-            if (lstValue == "item_levelreq")
+            switch (lstValue)
             {
-                valueString = "+" + value + " To Required Level";
+                case "item_levelreq":
+                    valueString = "+" + value + " to Required Level";
+                    break;
+
+                case "fade":
+                    valueString = "Fade";
+                    break;
+
+                case "item_extrablood":
+                    valueString = "Extra Blood";
+                    break;
+
+                case "item_nonclassskill":
+                    valueString = "PASS THROUGH, I DID, LUL";
+                    break;
+
             }
 
-            if (lstValue == "fade")
-            {
-                valueString = "Fade";
-            }
-
-            if (lstValue == "item_extrablood")
-            {
-                valueString = "Extra Blood";
-            }
-            
-            //Assign value to verify removal after export via search
-            if (lstValue == "item_nonclassskill")
-            {
-                valueString = "I_Shall_Not_Pass";  
-            }
+            // Remove duplicate symbols in case it happens
+            valueString = valueString.Replace("+-", "-");
+            valueString = valueString.Replace("++", "+");
+            valueString = valueString.Replace("--", "-");
+            valueString = valueString.Replace("%%", "%");
 
             // Trim whitespace and remove trailing newline as we sometimes see those in the properties
             valueString = valueString.Trim().Replace("\\n", "");
             return valueString;
         }
 
-        private static double CalculatePerLevel(string parameter, int? op, int? op_param, string stat)
+        private static double CalculatePerLevel(string parameter, int? op, int? opParam, string stat)
         {
             var para = Utility.ToNullableInt(parameter);
             if (!para.HasValue)
@@ -876,6 +793,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         private static string GetValueString(double? value = null, double? value2 = null)
         {
+
             var valueString = "";
 
             if (value.HasValue)
@@ -896,6 +814,22 @@ namespace D2TxtImporter.lib.Model.Dictionaries
             }
 
             return valueString;
+        }
+
+        private static string GetClassNameForRange(int? value, int? value2)
+        {
+            if (value >= 6 && value2 <= 35) return "Amazon";
+            if (value >= 36 && value2 <= 65) return "Sorceress";
+            if (value >= 66 && value2 <= 95) return "Necromancer";
+            if (value >= 96 && value2 <= 125) return "Paladin";
+            if (value >= 126 && value2 <= 155) return "Barbarian";
+            if (value >= 221 && value2 <= 250) return "Druid";
+            if (value >= 251 && value2 <= 280) return "Assassin";
+            if (value >= 373 && value2 <= 402) return "Warlock";
+
+            throw ItemStatCostException.Create(
+                $"Invalid skill ID range {value} - {value2} for Random Class Skill. Verify the range in Skills.txt "
+            );
         }
 
         private static string UnimplementedFunction(int? value1, int? value2, string paramter, int? op, int? opParam, int function)

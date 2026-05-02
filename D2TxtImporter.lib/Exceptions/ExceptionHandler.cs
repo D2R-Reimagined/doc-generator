@@ -10,27 +10,27 @@ namespace D2TxtImporter.lib.Exceptions
     {
         public static bool ContinueOnException { get; set; }
 
-        private readonly static string _exceptionFile =
+        private static readonly string ExceptionFile =
             $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/errorlog.txt";
 
-        private readonly static string _debugFile =
+        private static readonly string DebugFile =
             $"{Path.GetDirectoryName(System.Reflection.Assembly.GetEntryAssembly().Location)}/debuglog.txt";
 
-        public static List<string> _exceptionsWritten;
+        public static List<string> ExceptionsWritten;
 
         public static void Initialize()
         {
-            _exceptionsWritten = new List<string>();
+            ExceptionsWritten = new List<string>();
 
             // Empty output files
-            if (File.Exists(_exceptionFile))
+            if (File.Exists(ExceptionFile))
             {
-                File.Delete(_exceptionFile);
+                File.Delete(ExceptionFile);
             }
 
-            if (File.Exists(_debugFile))
+            if (File.Exists(DebugFile))
             {
-                File.Delete(_debugFile);
+                File.Delete(DebugFile);
             }
         }
 
@@ -56,12 +56,12 @@ namespace D2TxtImporter.lib.Exceptions
                 ex = ex.InnerException;
             } while (ex != null);
 
-            if (!_exceptionsWritten.Contains(debugMessage))
+            if (!ExceptionsWritten.Contains(debugMessage))
             {
-                _exceptionsWritten.Add(debugMessage);
+                ExceptionsWritten.Add(debugMessage);
 
-                File.AppendAllText(_exceptionFile, errorMessage + "\n");
-                File.AppendAllText(_debugFile, debugMessage + "\n");
+                File.AppendAllText(ExceptionFile, errorMessage + "\n");
+                File.AppendAllText(DebugFile, debugMessage + "\n");
             }
 
             if (!ContinueOnException)
@@ -91,9 +91,10 @@ namespace D2TxtImporter.lib.Exceptions
         {
             var resultMessage = "";
 
-            resultMessage += $"Exception loading properties for item: '{Item.CurrentItem.Index}'\n";
+            var itemIndex = Model.Items.Item.CurrentItem != null ? Model.Items.Item.CurrentItem.Index : "<unknown>";
+            resultMessage += $"Exception loading properties for item: '{itemIndex}'\n";
             resultMessage +=
-                $"\tCould not generate properties for property '{ItemProperty.CurrentItemProperty.Property.Code}' with parameter '{ItemProperty.CurrentItemProperty.Parameter}' min '{ItemProperty.CurrentItemProperty.Min}' max '{ItemProperty.CurrentItemProperty.Max}' index '{ItemProperty.CurrentItemProperty.Index}' itemlvl '{ItemProperty.CurrentItemProperty.ItemLevel}'\n";
+                $"\tCould not generate properties for property '{(ItemProperty.CurrentItemProperty != null ? ItemProperty.CurrentItemProperty.Property?.Code : "<unknown>")}' with parameter '{ItemProperty.CurrentItemProperty?.Parameter}' min '{ItemProperty.CurrentItemProperty?.Min}' max '{ItemProperty.CurrentItemProperty?.Max}' index '{ItemProperty.CurrentItemProperty?.Index}' itemlvl '{ItemProperty.CurrentItemProperty?.ItemLevel}'\n";
             resultMessage += $"\t\t{message}";
 
             return new ItemStatCostException(resultMessage);
@@ -110,7 +111,8 @@ namespace D2TxtImporter.lib.Exceptions
         {
             var resultMessage = "";
 
-            resultMessage += $"Exception loading properties for item: '{Item.CurrentItem.Index}'\n";
+            var itemIndex = Model.Items.Item.CurrentItem != null ? Model.Items.Item.CurrentItem.Index : "<unknown>";
+            resultMessage += $"Exception loading properties for item: '{itemIndex}'\n";
             resultMessage += $"\t{message}";
 
             return new ItemPropertyException(resultMessage, e);

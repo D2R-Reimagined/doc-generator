@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
 using D2TxtImporter.lib.Model.Equipment;
@@ -13,30 +14,53 @@ namespace D2TxtImporter.lib.Model.Items
     {
         public string Type { get; set; }
         public string Set { get; set; }
-
+        [JsonIgnore]
+        public string DropConditionCalc { get; set; }
+        [JsonIgnore]
+        public string Vanilla { get; set; }
         [JsonIgnore]
         public List<ItemProperty> SetProperties { get; set; }
-
         public List<string> SetPropertiesString { get; set; }
-
         [JsonIgnore]
         public static List<SetItem> SetItems { get; set; }
-
         [JsonIgnore]
         public int AddFunc { get; set; }
 
         public static void Import(string excelFolder)
         {
             SetItems = new List<SetItem>();
-
+            // Build a map of raw line numbers (including header) from the source file
+            var rawLines = Importer.ReadTxtFileToList(excelFolder + "/SetItems.txt");
+            var rawIndexByName = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            for (int i = 0; i < rawLines.Count; i++)
+            {
+                var line = rawLines[i];
+                if (string.IsNullOrWhiteSpace(line)) continue;
+                var parts = line.Split('\t');
+                if (parts.Length == 0) continue;
+                var idx = parts[0]; // index column
+                if (!string.IsNullOrWhiteSpace(idx))
+                {
+                    if (!rawIndexByName.ContainsKey(idx)) rawIndexByName[idx] = i + 1; // 1-based with header included
+                }
+            }
+            
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/SetItems.txt");
 
             foreach (var row in table)
             {
+                if (string.IsNullOrWhiteSpace(row["item"]))
+                {
+                    continue;
+                }
+
+                if (row.ContainsKey("disabled") && row["disabled"] == "1")
+                {
+                    continue;
+                }
+
                 var addFunc = Utility.ToNullableInt(row["add func"]);
-                
                 var name = row["index"];
-                
                 var rarity = Utility.ToNullableInt(row["rarity"]);
                 
                 var itemLevel = Utility.ToNullableInt(row["lvl"]);
@@ -55,25 +79,34 @@ namespace D2TxtImporter.lib.Model.Items
                 {
                     Index = name,
                     Set = row["set"],
-                    Enabled = true,
+                    Enabled = row.ContainsKey("spawnable") ? row["spawnable"] == "1" : true,
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
                     Rarity = rarity.Value,
                     ItemLevel = itemLevel.Value,
                     RequiredLevel = requiredLevel.Value,
                     Code = row["item"],
                     DamageArmorEnhanced = false,
-                    AddFunc = addFunc.HasValue ? addFunc.Value : 0
+                    AddFunc = addFunc.HasValue ? addFunc.Value : 0,
+                    Vanilla = "N"
                 };
-
-
+                // Determine absolute raw line number from the file (includes header as line 1)
+                if (rawIndexByName.TryGetValue(setItem.Index, out var rawRow) && rawRow <= 142)
+                {
+                    setItem.Vanilla = "Y";
+                }
+                
                 Equipment.Equipment eq = null;
                 if (Armor.Armors.ContainsKey(setItem.Code))
                 {
-                    eq = Armor.Armors[setItem.Code];
+                    // Clone the base armor to prevent base armor/weapon changes
+                    eq = (Armor)Armor.Armors[setItem.Code].Clone();
                 }
+                
                 else if (Weapon.Weapons.ContainsKey(setItem.Code))
                 {
-                    eq = Weapon.Weapons[setItem.Code];
+                    eq = (Weapon)Weapon.Weapons[setItem.Code].Clone();
                 }
+                
                 else if (Misc.MiscItems.ContainsKey(setItem.Code))
                 {
                     var misc = Misc.MiscItems[setItem.Code];
@@ -81,10 +114,12 @@ namespace D2TxtImporter.lib.Model.Items
                     eq = new Equipment.Equipment
                     {
                         Code = misc.Code,
+                        NameStr = misc.NameStr,
                         EquipmentType = EquipmentType.Jewelery,
                         Type = misc.Type
                     };
                 }
+                
                 else
                 {
                     ExceptionHandler.LogException(new Exception($"Could not find code '{setItem.Code}' in Weapons.txt, Armor.txt, or Misc.txt for set item '{setItem.Name}' in SetItems.txt"));
@@ -94,7 +129,7 @@ namespace D2TxtImporter.lib.Model.Items
                 setItem.Type = eq.Type.Index;
 
                 var propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the base item properties
                 for (int i = 1; i <= 9; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"prop{i}"], row[$"par{i}"], row[$"min{i}"], row[$"max{i}"]));
@@ -105,13 +140,17 @@ namespace D2TxtImporter.lib.Model.Items
                     var properties = ItemProperty.GetProperties(propList, setItem.ItemLevel).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
                     setItem.Properties = properties;
                 }
+                
                 catch (Exception e)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get properties for item '{setItem.Name}' in SetItems.txt", e));
                 }
 
+                // Adjust required level ensuring at least base armor/weapon requirement before item_levelreq and skill/oskill logic
+                setItem.RequiredLevel = RequiredLevelReport.ComputeAdjustedRequiredLevel("SetItem", setItem.Name, setItem.RequiredLevel, setItem.Properties, setItem?.Equipment?.BaseRequiredLevel);
+
                 propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the set bonus properties
                 for (int i = 1; i <= 5; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"aprop{i}a"], row[$"apar{i}a"], row[$"amin{i}a"], row[$"amax{i}a"]));
@@ -123,6 +162,7 @@ namespace D2TxtImporter.lib.Model.Items
                     var setProperties = ItemProperty.GetProperties(propList, setItem.ItemLevel).OrderByDescending(x => x.ItemStatCost == null ? 0 : x.ItemStatCost.DescriptionPriority).ToList();
                     setItem.SetProperties = setProperties;
                 }
+                
                 catch (Exception e)
                 {
                     ExceptionHandler.LogException(new Exception($"Could not get set properties for item '{setItem.Name}' in SetItems.txt", e));
@@ -150,19 +190,19 @@ namespace D2TxtImporter.lib.Model.Items
                     case 0:
                         setItem.Properties.Add(prop);
                         break;
+                    
                     case 1:
-                        var setItems = SetItem.SetItems.Where(x => x.Set == setItem.Set && x.Name != setItem.Name).ToList();
+                        var setItems = SetItems.Where(x => x.Set == setItem.Set && x.Name != setItem.Name).ToList();
                         var index = (int)Math.Floor(prop.Index / 2f);
 
                         setItem.SetPropertiesString.Add($"{prop.PropertyString} ({setItems[index].Name})");
                         break;
+                    
                     case 2:
                         setItem.SetPropertiesString.Add($"{prop.PropertyString} ({Math.Floor(prop.Index / 2f) + 2} Items)");
                         break;
                 }
-            }
-
-
+            } 
         }
     }
 }

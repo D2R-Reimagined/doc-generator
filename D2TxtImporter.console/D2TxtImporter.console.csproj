@@ -60,4 +60,8 @@
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <!-- Ensure no stale running console process keeps referenced DLLs locked during Debug builds -->
+  <Target Name="KillRunningConsole" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' ">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -Command &quot;$p=Get-Process -Name 'D2TxtImporter.console' -ErrorAction SilentlyContinue; if($p){$p | Stop-Process -Force}&quot;" IgnoreExitCode="true" />
+  </Target>
 </Project>

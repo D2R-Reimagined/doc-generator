@@ -22,13 +22,8 @@ To function correctly you need the following .tbl files (they can be named howev
 To get information use:
 .\D2TxtImporter.console.exe --help
 
-# To do
-- Rework cube recipes
-- Rework hard coded values (enhanced damage, skill tree names, etc.)
-- Add support for all DescFunc from ItemStatCosts.txt, I do not have text files that use all of them and can't really test it all with vanilla .txt files. If a "todo" shows up in your output, please post the todo in a new issue along with how it is supposed to look so I can correctly generate the output.
-- Cleanup the mess of a code this entire project is..
-- Add better searching on web part
-- Internet Explorer not supported, and I am not doing it either.
+## Contributing
+Have an idea or found a gap? Please open an issue with details and sample files so it can be reproduced and addressed.
 
 # Issues
 If you open an issue, please provide the required .txt and .tbl files so I can debug it. As mentioned above, I only have the vanilla files for 1.13c to test with. Also attach the errorlog.txt file.

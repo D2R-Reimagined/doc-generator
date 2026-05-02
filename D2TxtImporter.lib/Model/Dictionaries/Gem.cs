@@ -10,7 +10,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 {
     public class Gem : Item
     {
-        public new string Name { get { return Index; } }
+        public new string Name
+        {
+            get
+            {
+                if (!string.IsNullOrEmpty(Code) && Misc.MiscItems != null && Misc.MiscItems.ContainsKey(Code))
+                {
+                    var misc = Misc.MiscItems[Code];
+                    if (!string.IsNullOrEmpty(misc.NameStr))
+                    {
+                        var tableName = Table.GetValue(misc.NameStr);
+                        if (!string.IsNullOrEmpty(tableName))
+                            return tableName;
+                    }
+                }
+                return Index;
+            }
+        }
         [JsonIgnore]
         public string Letter { get; set; }
         [JsonIgnore]
@@ -21,7 +37,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         public List<ItemProperty> HelmProperties { get; set; }
         [JsonIgnore]
         public List<ItemProperty> ShieldProperties { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, Gem> Gems;
 
@@ -33,11 +48,10 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
             foreach (var row in table)
             {
-                //var numMods = Utility.ToNullableInt(row["nummods"]);
-                //if (!numMods.HasValue)
-                //{
-                //    ExceptionHandler.LogException(new Exception($"Invalid nummods for '{row["name"]}' in Gems.txt"));
-                //}
+                if (string.IsNullOrWhiteSpace(row["code"]))
+                {
+                    continue;
+                }
 
                 var gem = new Gem
                 {

@@ -1,27 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Dictionaries;
-using D2TxtImporter.lib.Model.Types;
 using Newtonsoft.Json;
+using D2TxtImporter.lib.Model.Types;
 
 namespace D2TxtImporter.lib.Model.Equipment
 {
     public class Weapon : Equipment
     {
+        // ── Serialized properties (included in JSON output) ───────────────
         public List<DamageType> DamageTypes { get; set; }
+        public int Speed { get; set; }
+        public int StrBonus { get; set; }
+        public int DexBonus { get; set; }
 
-        [JsonIgnore]
-        public static Dictionary<string, Weapon> Weapons;
+        // Export sockets as a level-range string computed from ItemTypes thresholds
+        [JsonProperty("GemSockets")]
+        public string GemSocketsString => Equipment.BuildSocketRangeString(Type, GemSockets);
+
+        // Aggregated Automagic group properties attached at export time
+        public List<AutoMagicExportProperty> Properties { get; set; }
+
+        // Grouped representation: groups by Name + Level + RequiredLevel across the entire list
+        public List<AutoMagicExportPropertyGroup> AutoMagicGroups { get; set; }
+
+        // ── Conditional serialization (Newtonsoft.Json ShouldSerialize convention) ──
+        public bool ShouldSerializeProperties()      => Properties != null;
+        public bool ShouldSerializeAutoMagicGroups() => AutoMagicGroups != null;
+
+        // ── Internal properties (excluded from JSON output) ──────────────
+        [JsonIgnore] public string DropConditionCalc { get; set; }
+        [JsonIgnore] public string UICatOverride { get; set; }
+        [JsonIgnore] public static Dictionary<string, Weapon> Weapons;
+        // Preserve import order (Weapons.txt order)
+        [JsonIgnore] public static List<Weapon> WeaponOrder;
 
         public static void Import(string excelFolder)
         {
             Weapons = new Dictionary<string, Weapon>();
+            WeaponOrder = new List<Weapon>();
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Weapons.txt");
 
             foreach (var row in table)
             {
+                if (string.IsNullOrWhiteSpace(row["code"]))
+                {
+                    continue;
+                }
+
                 var damageTypes = new List<DamageType>();
 
                 var isOneOrTwoHanded = row["1or2handed"] == "1";
@@ -91,33 +120,64 @@ namespace D2TxtImporter.lib.Model.Equipment
                 {
                     DamageTypes = damageTypes,
                     Code = row["code"],
+                    NameStr = row.ContainsKey("namestr") ? row["namestr"] : null,
+                    BaseRequiredLevel = Utility.ToNullableInt(row.ContainsKey("levelreq") ? row["levelreq"] : (row.ContainsKey("lvl req") ? row["lvl req"] : null)),
                     EquipmentType = EquipmentType.Weapon,
-                    RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? int.Parse(row["reqstr"]) : 0,
-                    RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? int.Parse(row["reqdex"]) : 0,
+                    RequiredStrength = !string.IsNullOrEmpty(row["reqstr"]) ? row["reqstr"] : "0",
+                    RequiredDexterity = !string.IsNullOrEmpty(row["reqdex"]) ? row["reqdex"] : "0",
+                    StrBonus = Utility.ToNullableInt(row.ContainsKey("StrBonus") ? row["StrBonus"] : "0") ?? 0,
+                    DexBonus = Utility.ToNullableInt(row.ContainsKey("DexBonus") ? row["DexBonus"] : "0") ?? 0,
                     Durability = row["nodurability"] == "1" ? 0 : int.Parse(row["durability"]),
                     ItemLevel = itemLevel.Value,
-                    Type = ItemType.ItemTypes[row["type"]]
+                    Type = ItemType.ItemTypes[row["type"]],
+                    Speed = Utility.ToNullableInt(row.ContainsKey("speed") ? row["speed"] : "0") ?? 0,
+                    NormCode = row.ContainsKey("normcode") ? row["normcode"] : null,
+                    UberCode = row.ContainsKey("ubercode") ? row["ubercode"] : null,
+                    UltraCode = row.ContainsKey("ultracode") ? row["ultracode"] : null,
+                    GemSockets = Utility.ToNullableInt(row.ContainsKey("gemsockets") ? row["gemsockets"] : "0") ?? 0,
+                    AutoPrefix = row.ContainsKey("auto prefix") ? row["auto prefix"] : (row.ContainsKey("autoprefix") ? row["autoprefix"] : null),
+                    DropConditionCalc = row.ContainsKey("DropConditionCalc") ? row["DropConditionCalc"] : null,
+                    UICatOverride = row.ContainsKey("UICatOverride") ? row["UICatOverride"] : null
                 };
+                
+                foreach (var dt in weapon.DamageTypes)
+                {
+                    dt.DamageString = $"{dt.MinDamage} to {dt.MaxDamage}";
+                    dt.AverageDamage = (dt.MinDamage + dt.MaxDamage) / 2.0;
+                }
 
                 Weapons[weapon.Code] = weapon;
+                WeaponOrder.Add(weapon);
             }
         }
 
         public new object Clone()
         {
             var dmgTypes = new List<DamageType>();
-            this.DamageTypes.ForEach(x => dmgTypes.Add((DamageType)x.Clone()));
+            DamageTypes.ForEach(x => dmgTypes.Add((DamageType)x.Clone()));
 
             return new Weapon
             {
-                EquipmentType = this.EquipmentType,
-                Code = this.Code,
-                RequiredStrength = this.RequiredStrength,
-                RequiredDexterity = this.RequiredDexterity,
-                Durability = this.Durability,
-                ItemLevel = this.ItemLevel,
-                Type = this.Type,
-                DamageTypes = dmgTypes
+                EquipmentType = EquipmentType,
+                Code = Code,
+                NameStr = NameStr,
+                BaseRequiredLevel = BaseRequiredLevel,
+                RequiredStrength = RequiredStrength,
+                RequiredDexterity = RequiredDexterity,
+                StrBonus = StrBonus,
+                DexBonus = DexBonus,
+                Durability = Durability,
+                ItemLevel = ItemLevel,
+                Type = Type,
+                NormCode = NormCode,
+                UberCode = UberCode,
+                UltraCode = UltraCode,
+                GemSockets = GemSockets,
+                AutoPrefix = AutoPrefix,
+                DropConditionCalc = DropConditionCalc,
+                UICatOverride = UICatOverride,
+                DamageTypes = dmgTypes,
+                Speed = Speed
             };
         }
 

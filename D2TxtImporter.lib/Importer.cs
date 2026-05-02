@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Data;
 using System.IO;
 using System.Linq;
+
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Exporters;
 using D2TxtImporter.lib.Model.Dictionaries;
@@ -13,13 +13,26 @@ namespace D2TxtImporter.lib
 {
     public class Importer
     {
+        public const int DISPLAY_LEVEL = 100;
+
         private string _outputPath;
         private string _excelPath;
         private string _tablePath;
 
+        public bool ExportJson { get; set; } = true;
+        public bool ExportWeb { get; set; } = true;
+        public bool PrettyPrintJson { get; set; } = true;
+        public bool ExportExcel { get; set; } = false;
+        // Toggle for ItemStatCost TSV export
+        public bool ExportItemStatCostReport { get; set; } = false;
+        // Toggle for Cube Recipes V2 export
+        public bool ExportCubeRecipesV2 { get; set; } = false;
+        // Toggle for optional Sets grouped-by-base JSON export
+        public bool ExportSetsByBase { get; set; } = false;
+
         public List<Unique> Uniques { get; set; }
         public List<Runeword> Runewords { get; set; }
-        public List<CubeRecipe> CubeRecipes { get; set; }
+        public List<Model.Items.CubeRecipeV2> CubeRecipesV2 { get; set; }
         public List<Set> Sets { get; set; }
 
         public Importer(string excelPath, string tablePath, string outputDir)
@@ -33,12 +46,12 @@ namespace D2TxtImporter.lib
 
             if (!Directory.Exists(excelPath))
             {
-                throw new Exception($"Could not find excel directory at '{_excelPath}'");
+                throw new Exception($"Could not find excel directory at '{excelPath}'");
             }
 
             if (!Directory.Exists(tablePath))
             {
-                throw new Exception($"Could not find table directory at '{_tablePath}'");
+                throw new Exception($"Could not find table directory at '{tablePath}'");
             }
 
             _outputPath = outputDir.Trim('/', '\\');
@@ -51,16 +64,18 @@ namespace D2TxtImporter.lib
             try
             {
                 Table.ImportFromTbl(_tablePath);
-                MagicPrefix.Import(_excelPath);
-                MagicSuffix.Import(_excelPath);
                 ItemStatCost.Import(_excelPath);
                 EffectProperty.Import(_excelPath);
                 ItemType.Import(_excelPath);
-                Armor.Import(_excelPath);
-                Weapon.Import(_excelPath);
                 Skill.Import(_excelPath);
                 CharStat.Import(_excelPath);
                 MonStat.Import(_excelPath);
+                PropertyGroup.Import(_excelPath);
+                MagicPrefix.Import(_excelPath);
+                MagicSuffix.Import(_excelPath);
+                AutoMagic.Import(_excelPath);
+                Armor.Import(_excelPath);
+                Weapon.Import(_excelPath);
                 Misc.Import(_excelPath);
                 Gem.Import(_excelPath);
                 SetItem.Import(_excelPath);
@@ -68,6 +83,11 @@ namespace D2TxtImporter.lib
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    // Re-throw so callers receive the exception (e.g., missing key)
+                    throw;
+                }
             }
         }
 
@@ -75,14 +95,22 @@ namespace D2TxtImporter.lib
         {
             try
             {
+                // Start a fresh required-level report to avoid duplication across runs
+                RequiredLevelReport.Clear();
                 Uniques = Unique.Import(_excelPath);
                 Runewords = Runeword.Import(_excelPath);
-                CubeRecipes = CubeRecipe.Import(_excelPath);
                 Sets = Set.Import(_excelPath);
+
+                // New Cube Recipes V2 (validated & structured)
+                CubeRecipesV2 = Model.Items.CubeRecipeV2.Import(_excelPath, Uniques, Model.Items.SetItem.SetItems);
             }
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    throw; // propagate
+                }
             }
         }
 
@@ -90,13 +118,63 @@ namespace D2TxtImporter.lib
         {
             try
             {
-                //TxtExporter.ExportTxt(_outputPath, Uniques, Runewords, CubeRecipes, Sets); // Out of date
-                JsonExporter.ExportJson(_outputPath, Uniques, Runewords, CubeRecipes, Sets);
-                WebExporter.ExportWeb(_outputPath);
+                // Compute output root (caller controls exact path)
+                var docsDir = _outputPath;
+                if (!Directory.Exists(docsDir))
+                {
+                    Directory.CreateDirectory(docsDir);
+                }
+
+                // Subfolders are created on-demand by individual exporters to avoid unused directories.
+
+                if (ExportJson)
+                {
+                    JsonExporter.ExportJson(docsDir, Uniques, Runewords, Sets, PrettyPrintJson);
+                    // Optional: write grouped-by-base sets file when enabled
+                    if (ExportSetsByBase)
+                    {
+                        JsonExporter.ExportSetsByBase(docsDir, Sets, PrettyPrintJson);
+                    }
+                }
+
+                // Write duplicate table key report next to JSON exports directory (guarded by toggle)
+                if (Table.EnableDuplicateReport)
+                {
+                    Table.WriteDuplicateReport(docsDir);
+                }
+
+                // Write required-level property report if enabled
+                RequiredLevelReport.WriteReport(docsDir);
+
+                // Export ItemStatCost summary (stat, resolved descstrpos, decoded min..max, param range, per-level)
+                if (ExportItemStatCostReport)
+                {
+                    StatsExporter.ExportItemStatCosts(docsDir);
+                }
+
+                // Export Cube Recipes V2 if enabled
+                if (ExportCubeRecipesV2 && CubeRecipesV2 != null)
+                {
+                    CubeRecipesExporter.ExportV2(docsDir, CubeRecipesV2, PrettyPrintJson);
+                }
+
+                if (ExportWeb)
+                {
+                    WebExporter.ExportWeb(docsDir);
+                }
+
+                if (ExportExcel)
+                {
+                    ExcelExporter.ExportExcel(docsDir, Uniques, Runewords, Sets);
+                }
             }
             catch (Exception e)
             {
                 ExceptionHandler.WriteException(e);
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    throw; // propagate
+                }
             }
         }
 
@@ -124,15 +202,23 @@ namespace D2TxtImporter.lib
                 var dataArray = fileArray.Skip(1);
                 foreach (var valueLine in dataArray)
                 {
+                    if (string.IsNullOrWhiteSpace(valueLine))
+                    {
+                        continue;
+                    }
+
                     var values = valueLine.Split('\t');
-                    if (string.IsNullOrEmpty(values[1]))
+
+                    // Skip rows where only the index (first column) is populated
+                    // (the final column may also contain a "0" which should still be treated as empty)
+                    if (values.Length <= 1 || values.Skip(1).All(v => string.IsNullOrWhiteSpace(v) || v.Trim() == "0"))
                     {
                         continue;
                     }
 
                     var row = new Dictionary<string, string>();
 
-                    for (var i = 0; i < values.Length; i++)
+                    for (var i = 0; i < values.Length && i < headerArray.Length; i++)
                     {
                         row[headerArray[i]] = values[i];
                     }
@@ -140,10 +226,15 @@ namespace D2TxtImporter.lib
                     table.Add(row);
                 }
 
-                return table;   
+                return table;
             } catch (Exception e)
             {
-                ExceptionHandler.WriteException(e);
+                ExceptionHandler.WriteException(new Exception($"Failed to read or parse txt file '{path}'", e));
+                if (!ExceptionHandler.ContinueOnException)
+                {
+                    // WriteException already rethrows when ContinueOnException is false, but guard here for clarity
+                    throw;
+                }
                 return null;
             }
         }

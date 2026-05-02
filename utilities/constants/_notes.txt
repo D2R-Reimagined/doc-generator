@@ -1,0 +1,7 @@
+runes.txt = required casc extracted vanilla runes.txt file for the vanilla y/n comparison to work with the runewords export due to the mod completely reordering and reworking the index names from runeword1-200 to the names themselves. Mod must maintain *Rune Name column in runes.txt as well as completed column being 1 for the comparison to work.
+
+cubeinout.txt = used to update/humanify the names of the input/output tags in cuberecipesv2 during export if they aren't hardcoded already
+
+cubemod.txt = reference and unused at this time
+
+cubeop.txt = reference and unused at this time

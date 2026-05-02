@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using Newtonsoft.Json;
 
 namespace D2TxtImporter.lib.Model.Dictionaries
@@ -7,31 +8,44 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     public class Skill
     {
         public string Name { get; set; }
-
         [JsonIgnore]
         public int? Id { get; set; }
-        
         public string CharClass { get; set; }
-
         [JsonIgnore]
         public string SkillDesc { get; set; }
-        
+        [JsonIgnore]
+        public string StrNameKey { get; set; }
+        public string LocalizedName { get; set; }
         public int RequiredLevel { get; set; }
+        [JsonIgnore]
+        private static Dictionary<int?, Skill> _idSkillDictionary;
+        [JsonIgnore]
+        private static Dictionary<string, Skill> _nameSkillDictionary;
+        [JsonIgnore]
+        private static Dictionary<string, Skill> _descSkillDictionary;
 
+        // Maps skilldesc.txt skilldesc value -> str name key
         [JsonIgnore]
-        private static Dictionary<int?, Skill> IdSkillDictionary;
-        
-        [JsonIgnore]
-        private static Dictionary<string, Skill> NameSkillDictionary;
-
-        [JsonIgnore]
-        private static Dictionary<string, Skill> DescSkillDictionary;
+        private static Dictionary<string, string> _skillDescToStrName;
 
         public static void Import(string excelFolder)
         {
-            IdSkillDictionary = new Dictionary<int?, Skill>();
-            NameSkillDictionary = new Dictionary<string, Skill>();
-            DescSkillDictionary = new Dictionary<string, Skill>();
+            _idSkillDictionary = new Dictionary<int?, Skill>();
+            _nameSkillDictionary = new Dictionary<string, Skill>();
+            _descSkillDictionary = new Dictionary<string, Skill>();
+
+            // Load skilldesc.txt to build skilldesc -> str name mapping
+            _skillDescToStrName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var skillDescTable = Importer.ReadTxtFileToDictionaryList(excelFolder + "/skilldesc.txt");
+            foreach (var descRow in skillDescTable)
+            {
+                var skilldesc = descRow["skilldesc"];
+                var strName = descRow["str name"];
+                if (!string.IsNullOrEmpty(skilldesc) && !string.IsNullOrEmpty(strName))
+                {
+                    _skillDescToStrName[skilldesc] = strName;
+                }
+            }
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Skills.txt");
 
@@ -41,7 +55,23 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                 if (!reqLevel.HasValue || reqLevel.Value < 1)
                 {
                     reqLevel = 1;
-                    //ExceptionHandler.LogException(new Exception($"Invalid required level for skill '{row["reqlevel"]}' in Skills.txt, should be an integer value 1 or above"));
+                }
+
+                var skilldescValue = row["skilldesc"];
+                string strNameKey = null;
+                string localizedName = null;
+
+                if (!string.IsNullOrEmpty(skilldescValue) && _skillDescToStrName.TryGetValue(skilldescValue, out strNameKey))
+                {
+                    if (!string.IsNullOrEmpty(strNameKey) && Table.Tables.ContainsKey(strNameKey))
+                    {
+                        localizedName = Table.GetValue(strNameKey);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(localizedName))
+                {
+                    localizedName = row["skill"];
                 }
 
                 var skill = new Skill
@@ -49,13 +79,18 @@ namespace D2TxtImporter.lib.Model.Dictionaries
                     Name = row["skill"],
                     Id = Utility.ToNullableInt(row["*Id"]),
                     CharClass = row["charclass"],
-                    SkillDesc = row["skilldesc"],
+                    SkillDesc = skilldescValue,
+                    StrNameKey = strNameKey,
+                    LocalizedName = localizedName,
                     RequiredLevel = reqLevel.Value
                 };
 
-                IdSkillDictionary[skill.Id] = skill;
-                NameSkillDictionary[skill.Name] = skill;
-                DescSkillDictionary[skill.SkillDesc] = skill;
+                _idSkillDictionary[skill.Id] = skill;
+                _nameSkillDictionary[skill.Name] = skill;
+                if (!string.IsNullOrEmpty(skill.SkillDesc))
+                {
+                    _descSkillDictionary[skill.SkillDesc] = skill;
+                }
             }
         }
 
@@ -63,17 +98,17 @@ namespace D2TxtImporter.lib.Model.Dictionaries
         {
             if (Utility.ToNullableInt(skill).HasValue)
             {
-                return IdSkillDictionary[Utility.ToNullableInt(skill)];
+                return _idSkillDictionary[Utility.ToNullableInt(skill)];
             }
 
-            if (NameSkillDictionary.ContainsKey(skill))
+            if (_nameSkillDictionary.ContainsKey(skill))
             {
-                return NameSkillDictionary[skill];
+                return _nameSkillDictionary[skill];
             }
 
-            if (DescSkillDictionary.ContainsKey(skill))
+            if (_descSkillDictionary.ContainsKey(skill))
             {
-                return DescSkillDictionary[skill];
+                return _descSkillDictionary[skill];
             }
 
             throw new Exception($"Could not find skill with id, name, or description '{skill}' in Skills.txt");
@@ -81,7 +116,7 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
         public override string ToString()
         {
-            return Name;
+            return LocalizedName ?? Name;
         }
     }
 }

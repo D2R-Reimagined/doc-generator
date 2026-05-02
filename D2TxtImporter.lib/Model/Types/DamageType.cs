@@ -6,22 +6,22 @@ namespace D2TxtImporter.lib.Model.Types
     public class DamageType : ICloneable
     {
         public DamageTypeEnum Type { get; set; }
-
         [JsonIgnore]
         public int MinDamage { get; set; }
-
         [JsonIgnore]
         public int MaxDamage { get; set; }
         public string DamageString { get; set; }
+        public double AverageDamage { get; set; }
 
         public object Clone()
         {
             return new DamageType
             {
-                DamageString = this.DamageString,
-                Type = this.Type,
-                MaxDamage = this.MaxDamage,
-                MinDamage = this.MinDamage
+                DamageString = DamageString,
+                Type = Type,
+                MaxDamage = MaxDamage,
+                MinDamage = MinDamage,
+                AverageDamage = AverageDamage
             };
         }
 
@@ -36,6 +36,7 @@ namespace D2TxtImporter.lib.Model.Types
         OneHanded,
         TwoHanded,
         Thrown,
-        Normal
+        Normal,
+        Elemental
     }
 }

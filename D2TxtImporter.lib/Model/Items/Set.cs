@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using D2TxtImporter.lib.Exceptions;
 using D2TxtImporter.lib.Model.Types;
+using D2TxtImporter.lib.Model.Dictionaries;
 
 namespace D2TxtImporter.lib.Model.Items
 {
@@ -14,6 +15,7 @@ namespace D2TxtImporter.lib.Model.Items
         public List<ItemProperty> PartialProperties { get; set; }
         public List<ItemProperty> FullProperties { get; set; }
         public int Level { get; set; }
+        public string Vanilla { get; set; }
 
         public static List<Set> Import(string excelFolder)
         {
@@ -38,7 +40,7 @@ namespace D2TxtImporter.lib.Model.Items
                 set.Level = level.Value;
 
                 var propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the partial set properties
                 for (int i = 2; i <= 5; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"PCode{i}a"], row[$"PParam{i}a"], row[$"PMin{i}a"], row[$"PMax{i}a"]));
@@ -56,7 +58,7 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 propList = new List<PropertyInfo>();
-                // Add the properties
+                // Add the full set properties
                 for (int i = 1; i <= 8; i++)
                 {
                     propList.Add(new PropertyInfo(row[$"FCode{i}"], row[$"FParam{i}"], row[$"FMin{i}"], row[$"FMax{i}"]));
@@ -73,7 +75,10 @@ namespace D2TxtImporter.lib.Model.Items
                 }
 
                 set.SetItems = SetItem.SetItems.Where(x => x.Set == set.Index).ToList();
-
+                // Vanilla flag: default N; becomes Y if any child set item is Vanilla Y
+                var anyVanilla = set.SetItems != null && set.SetItems.Any(si => string.Equals(si.Vanilla, "Y", StringComparison.OrdinalIgnoreCase));
+                set.Vanilla = anyVanilla ? "Y" : "N";
+                
                 result.Add(set);
             }
 

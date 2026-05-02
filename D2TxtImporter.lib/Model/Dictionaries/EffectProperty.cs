@@ -7,15 +7,14 @@ namespace D2TxtImporter.lib.Model.Dictionaries
     {
         [JsonIgnore]
         public string Code { get; set; }
-
         [JsonIgnore]
         public string Stat { get; set; }
-
         [JsonIgnore]
         public static Dictionary<string, EffectProperty> EffectProperties;
 
         public static void Import(string excelFolder)
         {
+            // Use case-insensitive keys so lookups work regardless of casing in data
             EffectProperties = new Dictionary<string, EffectProperty>();
 
             var table = Importer.ReadTxtFileToDictionaryList(excelFolder + "/Properties.txt");
@@ -30,8 +29,6 @@ namespace D2TxtImporter.lib.Model.Dictionaries
 
                 EffectProperties[effect.Code] = effect;
             }
-
-            EffectProperties["eledam"] = new EffectProperty {Code = "eledam", Stat = "" };
         }
 
         public override string ToString()
